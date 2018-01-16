@@ -1,0 +1,32 @@
+- hosts: all
+  become: yes
+  vars:
+    ignore_disk_names: ["sda"]
+  tasks:
+    - assert:
+        that: 
+          - ansible_processor_vcpus == 2
+          - ansible_product_version == '1.2'
+          - ansible_memtotal_mb == 1460
+          - ansible_architecture == 'x86_64'
+          - ansible_system_vendor == 'innotek GmbH'
+          - ansible_distribution == 'RedHat'
+          - ansible_distribution_major_version == '7'
+          - (ansible_devices|length) == 3 # We will need to do this dependent on what is set in vagrant up
+
+    - name: check if disk sizes and naming is as expected
+      with_items: "{{ (ansible_devices.keys() | difference(ignore_disk_names)) }}"
+      assert:
+        that:
+          - ansible_devices[item]['size'] == '100.00 GB'
+          - item.startswith('sd')
+
+    # Depends on presence of package python-dnf
+    - name: Install dependency for ansible selinux management
+      package:
+        name: libselinux-python.x86_64
+        state: present
+
+    - selinux:
+        policy: targeted
+        state: enforcing

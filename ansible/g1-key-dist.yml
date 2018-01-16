@@ -1,0 +1,45 @@
+- hosts: all
+  become: yes
+  gather_facts: False
+  tasks:
+    - name: Remove current (unsecure) ssh public key
+      file: path=/home/ansible/.ssh/id_rsa.pub state=absent
+
+    - name: Remove current (unsecure) ssh private key
+      file: path=/home/ansible/.ssh/id_rsa state=absent
+
+    - name: Regenerate safe ssh keys for ansible user
+      delegate_to: 127.0.0.1
+      run_once: true
+      user: name=ansible generate_ssh_key=yes
+      register: ansible_id_rsa
+
+    - name: Get new SSH private key
+      delegate_to: 127.0.0.1
+      run_once: true
+      set_fact:
+        ansible_ssh_private: "{{ lookup('file', '/home/ansible/.ssh/id_rsa') }}"
+
+    - name: Install new ansible public key as authorized_key
+      copy: 
+        owner=ansible
+        group=ansible
+        mode=0600
+        content="{{ ansible_id_rsa.ssh_public_key }}"
+        dest=/home/ansible/.ssh/authorized_keys
+
+    - name: Distribute new ansible public key
+      copy: 
+        owner=ansible
+        group=ansible
+        mode=0700
+        content="{{ ansible_id_rsa.ssh_public_key }}"
+        dest=/home/ansible/.ssh/id_rsa.pub
+
+    - name: Distribute new ansible private key
+      copy: 
+        owner=ansible
+        group=ansible
+        mode=0700
+        content="{{ ansible_ssh_private }}"
+        dest=/home/ansible/.ssh/id_rsa

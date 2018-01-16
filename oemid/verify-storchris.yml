@@ -1,0 +1,32 @@
+- hosts: all
+  become: yes
+  vars:
+    ignore_disk_names: ["sr0", "sdd", "dff"]
+  tasks:
+    - assert:
+        that: 
+          - ansible_processor_vcpus == 8
+          - ansible_product_version == 'NA'
+          - ansible_memtotal_mb == 24095
+          - ansible_architecture == 'x86_64'
+          - ansible_system_vendor == 'Dell Inc.'
+          - ansible_distribution == 'Fedora'
+          - ansible_distribution_major_version == '25'
+          - (ansible_devices|length) == 8
+
+    - name: check if disk sizes and naming is as expected
+      with_items: "{{ (ansible_devices.keys() | difference(ignore_disk_names)) }}"
+      assert:
+        that:
+          - ansible_devices[item]['size'] == '2.00 TB'
+          - item.startswith('sd')
+
+    # Depends on presence of package python-dnf
+    - name: Install dependency for ansible selinux management
+      package:
+        name: libselinux-python.x86_64
+        state: present
+
+    - selinux:
+        policy: targeted
+        state: enforcing

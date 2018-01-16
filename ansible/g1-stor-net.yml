@@ -1,0 +1,30 @@
+- shell: /bin/bash -c 'echo "Setting hostnames..." > {{ fifo }}'
+
+- name: set node hostname
+  with_dict: '{{ network_config }}'
+  when: item.value.ifname | match(storage_interface)
+  delegate_to: '{{ item.value.runOn }}'
+  run_once: true
+  hostname:
+    name: '{{ item.value.hostname }}'
+
+- shell: /bin/bash -c 'echo "Updating network interface configurations..." > {{ fifo }}'
+
+- name: Update permanent storage network settings with NetworkManager
+  with_dict: '{{ network_config }}'
+  when: item.value.ifname | match(storage_interface)
+  delegate_to: '{{ item.value.runOn }}'
+  run_once: true
+  shell: /bin/nmcli con modify {{ item['value']['ifname'] }} ipv4.method manual ipv6.method ignore connection.autoconnect yes ipv4.addr {{ item['value']['ifip'] }}/{{ item['value']['netprefix'] }} ipv4.gateway "{{ item['value']['gwaddress'] | default('') }}" ipv4.dns "{{ item.value.dnsaddress.0 | default('') }}" +ipv4.dns "{{ item.value.dnsaddress.1 | default('') }}"
+
+- shell: /bin/bash -c 'echo "Starting network interfaces..." > {{ fifo }}'
+
+- shell: /bin/nmcli con up {{ item['value']['ifname'] }}; /bin/nmcli -f ipv4.addresses con show {{ item['value']['ifname'] }}
+  with_dict: '{{ network_config }}'
+  when: item.value.ifname | match(storage_interface)
+  delegate_to: '{{ item.value.runOn }}'
+  run_once: true
+  register: result
+  until: item['value']['ifip'] | string in result['stdout']
+  retries: 10
+  delay: 1

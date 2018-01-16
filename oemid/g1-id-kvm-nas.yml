@@ -1,0 +1,28 @@
+# Colonizer example flavor ID file for KVM (test lab) deployment
+
+flavor:
+    name: NAS
+    g1_path: /root/g1/
+    node:
+        name: KVM-node
+        verify_file_name: verify-qemu.yml
+        mgmt_interface: eth0
+        storage_interface: eth1
+        backend_devices:
+          - /dev/vdb
+        cache_devices:
+          - /dev/sda
+        disktype: RAID         #JBOD|RAID
+        diskcount: 10          #Number of data disks; for 12 disk RAID 6 this is 10
+        dalign: 128            #<integer in KB>
+        tuned: rhgs-random-io  #tuned profile name
+        gluster_vol_set:
+            server.event-threads: 4
+            client.event-threads: 4
+            cluster.lookup-optimize: on
+            features.cache-invalidation: on
+            performance.cache-invalidation: on
+            performance.stat-prefetch: on
+    voltype: replica           #replica|disperse
+    #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
+    arbiter_size: 1            #<integer in GB>|None

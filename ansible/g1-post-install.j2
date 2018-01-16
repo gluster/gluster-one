@@ -1,0 +1,61 @@
+Your {{ brand_parent }} {{ brand_project }} deployment has completed
+successfully as of {{ finish_time }}.
+
+You may now manage your volumes using the gluster(8) command line interface.
+
+Below is your default storage volume information:
+
+====================
+{{ vol_info }}
+====================
+
+{% if use_nfs %}
+Your volume has been configured for the NFS client. The volume can be accessed
+via the virtual IP addresses (VIPs) configured during the deployment:
+
+{% for vip in vips %}
+{{ vip }}
+{% endfor %}
+
+These VIPs are part of a high-availability subsystem and will automatically
+migrate between a subset of your Gluster nodes in the case of a node outage.
+
+No load balancing for these VIPs is provided by Gluster. It is recommended
+that you implement an external load balancer.
+
+{% else %}
+Your volume has been configured for the Gluster native client (FUSE). The volume
+can be accessed via the storage network hostnames or IP addressed configured
+during the deployment:
+
+{% for hostname in hostnames %}
+{{ hostname }}.{{ domain_name }}
+{% endfor %}
+
+The Gluster native client utilizes client-side intelligence for data placement
+and by design is highly available and load balanced among the Gluster nodes.
+
+Use of the Gluster native client requires the client-side packages to be
+installed on any node that will be mounting the Gluster volume.
+ 
+{% endif %}
+
+Example command for mounting your volume on a Linux system:
+
+mount -t {{ mount_protocol }} {{ mount_host }}:/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
+
+
+Example /etc/fstab entry for mounting your volume at boot time:
+
+{{ mount_host }}:/{{ default_volname }}    [mountpoint]    {{ mount_protocol }}    {{ mount_opts }}  0 0
+
+Your default volume has been configured on {{ nodes_min }} out of your {{ nodes_deployed }}
+total Gluster nodes.
+
+{% if nodes_deployed|int > nodes_min|int %}
+Gluster brick file systems have been pre-configured on the remaining
+nodes and may be used to expand the default volume or create new volumes.
+{% endif %}
+
+Please see the documentation for instructions regarding the creation,
+expansion, and deletion of Gluster volumes.

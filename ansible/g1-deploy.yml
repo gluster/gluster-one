@@ -1,0 +1,590 @@
+- hosts: gluster_nodes
+  become: yes
+  vars:
+    ha_base_dir: "/var/run/gluster/shared_storage/nfs-ganesha"
+    ha_name: "gluster-ganesha-ha"
+
+  tasks:
+    - name: Build mntpath variable
+      set_fact:
+        mntpaths: "{{ mntpaths | default([]) }} + [{\"path\": \"/gluster/bricks/{{ item.thinLV }}\", \"lv_path\": \"/dev/mapper/{{ item.vg }}-{{ item.thinLV }}\"}]"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Build arbiter_mntpath variable
+      set_fact:
+        arbiter_mntpaths: "{{ arbiter_mntpaths | default([]) }} + [{\"path\": \"/gluster/bricks/arbiter-{{ item.thinLV }}\", \"lv_path\": \"/dev/mapper/{{ item.vg }}-arbiter--{{ item.thinLV }}\"}]"
+      with_items: "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: Set PV data alignment for RAID
+      set_fact:
+        pv_dalign: "{{ diskcount|int * dalign|int }}"
+      when: disktype == 'RAID'
+
+    - name: Set PV data alignment for JBOD
+      set_fact:
+        pv_dalign: "{{ dalign }}"
+      when: disktype != 'RAID'
+
+    - shell: /bin/bash -c 'echo "Cleaning up any existing Gluster configurations..." > {{ fifo }}'
+
+    - name: Stop glusterd service
+      systemd:
+        name: glusterd
+        state: stopped
+
+    - name: Kill all Gluster processes
+      shell: /bin/bash -c 'pkill -9 {{ item }}'
+      with_items:
+        - glusterfs
+        - glusterfsd
+      ignore_errors: yes
+
+    - name: Clear existing Gluster configuration
+      file:
+        path: "/var/lib/glusterd/{{ item }}"
+        state: absent
+      with_items:
+        - glusterd.info
+        - glustershd
+        - bitd
+        - glusterfind
+        - glustershd
+        - nfs
+        - peers
+        - quotad
+        - scrub
+        - snaps
+        - ss_brick
+        - vols
+      ignore_errors: yes
+
+    - name: Start glusterd service
+      systemd:
+        name: glusterd
+        state: started
+
+    - name: Unmount data bricks
+      mount:
+        name: "{{ item.0.path }}"
+        state: "{{ item.1 }}"
+      with_nested:
+        - "{{ mntpaths }}"
+        - ['absent', 'unmounted']
+
+    - name: Unmount arbiter bricks
+      mount:
+        name: "{{ item.0.path }}"
+        state: "{{ item.1 }}"
+      with_nested:
+        - "{{ arbiter_mntpaths }}"
+        - ['absent', 'unmounted']
+      when: arbiter == True
+
+    - name: Deactivate VGs
+      shell: /bin/bash -c 'vgchange -a n --activationmode partial {{ item.vg }}'
+      with_items: "{{ backend_configuration }}"
+      register: result
+      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+
+    - name: Clear LVM
+      lvg:
+        vg: "{{ item.vg }}"
+        state: absent
+        force: yes
+      with_items: "{{ backend_configuration }}"
+
+    - name: Clear cache LVM
+      lvg:
+        vg: "FAST{{ item.vg }}"
+        state: absent
+        force: yes
+      with_items: "{{ backend_configuration }}"
+
+    #TODO: Add a play or enhance the above to clear fast device LVM
+
+    - name: Remove PV
+      shell: /bin/bash -c 'pvremove --force {{ item.device }}'
+      register: result
+      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Remove cache PV
+      #FIXME: The 'p' is needed below for nvme drives, but should not be
+      #       there for devices with normal /dev/sdX disk paths.
+      shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      register: result
+      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+
+    - name: Final cleanup of data devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
+      with_items: "{{ backend_configuration }}"
+
+    - name: Final cleanup of cache devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
+      with_items: "{{ cache_devices }}"
+
+    - shell: /bin/bash -c 'echo "Creating LVM structures..." > {{ fifo }}'
+
+    - name: Create data volume groups
+      vg: 
+        action: create
+        disks: "{{ item.device }}"
+        vgname: "{{ item.vg }}"
+        diskcount: "{{ diskcount }}"
+        disktype: "{{ disktype }}"
+        stripesize: "{{ dalign }}"
+        # dalign value is passed through to pvcreate command
+        # For data volumes, this is based on calculation above
+        dalign: "{{ pv_dalign }}"
+      with_items: "{{ backend_configuration }}"
+      register: result
+      failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
+
+    - name: Create data thin pools
+      lvol: 
+        vg: "{{ item.vg }}"
+        lv: "{{ item.tp }}"
+        size: "100%FREE"
+        #NOTE: Hard-coding poolmetadatasize here assumes sufficiently large brick volumes
+        opts: "--thin --chunksize {{ pv_dalign }}k --poolmetadatasize 16G"
+      with_items: "{{ backend_configuration }}"
+
+    - shell: /bin/bash -c 'echo "Creating cache partitions..." > {{ fifo }}'
+
+    - set_fact:
+        part_start: 0
+
+    # NOTE: The GPT partition table is not being created correctly when
+    #       included in the 'Create cache partitions' play below (bug?).
+    #       The below two plays are a hack to work around this problem.
+    - name: Set cache disk labels
+      parted:
+        label: gpt
+        state: present
+        number: 1
+        name: p1
+        part_start: 0%
+        part_end: 1%
+        device: "{{ item }}"
+        unit: s
+      with_items: "{{ cache_devices }}"
+      register: result
+
+    - name: Get size of fast device
+      set_fact:
+        fast_dev_end: "{{ result['results'][0]['disk']['size']|int }}"
+
+    - name: Delete temporary partition
+      parted:
+        state: absent
+        device: "{{ item }}"
+        number: 1
+      with_items: "{{ cache_devices }}"
+
+    - name: Create arbiter partitions
+      parted:
+        state: present
+        device: "{{ item[0] }}"
+        number: 1
+        name: p1
+        flags: [ lvm ]
+        part_start: 0%
+        part_end: "{{ item[1]['arbiter_size'] }}GiB"
+        unit: s
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+      register: result
+
+    - name: Get end point of arbiter partition
+      set_fact:
+        arbiter_end: "{{ result['results'][0]['partitions'][0]['end']|int }}"
+      when: arbiter == True
+
+    - name: Calculate cache partition sizes
+      set_fact:
+        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices }}"
+    
+    - name: Define partition incrementer
+      set_fact:
+        part_incr: 1
+
+    - set_fact:
+        part_incr: "{{ part_incr|int + 1 }}"
+      when: arbiter == True
+
+    - name: Create cache partitions
+      parted:
+        state: present
+        device: "{{ item[0] }}"
+        number: "{{ item[1]['id']|int + part_incr|int }}"
+        name: "p{{ item[1]['id']|int + part_incr|int }}"
+        flags: [ lvm ]
+        part_start: "{{ (arbiter_end|default(50)|int + (item[1]['id']|int * cache_part_size|int)) + 1|int }}s"
+        part_end: "{{ (arbiter_end|default(50)|int + ((item[1]['id']|int + 1) * cache_part_size|int))|int }}s"
+        unit: s
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+
+    - name: Create fast volume groups, initially only with arbiter PVs
+      vg: 
+        action: create
+        #FIXME: Hard-coded the p again for NVMe devices
+        disks: "{{ item[0] }}p1"
+        vgname: "FAST{{ item[1]['vg'] }}"
+        diskcount: "{{ diskcount }}"
+        disktype: "{{ disktype }}"
+        stripesize: "{{ dalign }}"
+        # dalign value is passed through to pvcreate command
+        # For cache volumes, this is same as other dalign
+        dalign: "{{ dalign }}"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+      register: result
+      failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
+
+    - name: Create arbiter thin pools
+      lvol:
+        vg: "FAST{{ item['vg'] }}"
+        lv: "arbiter-{{ item['tp'] }}"
+        size: 100%FREE
+        #TODO: Revisit metadata size
+        #NOTE: dalign here is based on expectation that arbiter is on a fast JBOD device
+        opts: "--thin --chunksize {{ dalign }}k --poolmetadatasize 4M --poolmetadataspare n"
+      with_items: "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: Set data thin pool zeroing mode off
+      shell: bash -c "/sbin/lvchange --zero n {{ item.vg }}/{{ item.tp }}"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Add cache partitions to fast VGs
+      vg:
+        action: create
+        #FIXME: Hard-coded the p again for NVMe devices
+        disks: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        vgname: "FAST{{ item[1]['vg'] }}"
+        diskcount: "{{ diskcount }}"
+        disktype: "{{ disktype }}"
+        stripesize: "{{ dalign }}"
+        # dalign value is passed through to pvcreate command
+        # For cache volumes, this is same as other dalign
+        dalign: "{{ dalign }}"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+      when: arbiter != True
+      register: result
+      failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
+
+    - shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + 2}}"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: Create cache pools
+      lvol:
+        vg: "FAST{{ item[1]['vg'] }}"
+        lv: "cpool{{ item[1]['id']|int + 1 }}"
+        opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
+        #FIXME: Hard-coded p again for NVMe
+        pvs: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        size: "100%FREE"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+
+    - name: Deactivate fast VG volumes
+      shell: /bin/bash -c "vgchange -an FAST{{ item['vg'] }}"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Merge VGs
+      shell: /bin/bash -c "vgmerge {{ item['vg'] }} FAST{{ item['vg'] }}"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Reactivate VG volumes
+      shell: /bin/bash -c "vgchange -ay {{ item['vg'] }}"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Attach cache pool to thinpool tdata LV
+      lv:
+        action: convert
+        lvtype: cache
+        cachepool: "cpool{{ item['id']|int + 1}}"
+        lvname: "{{ item['tp'] }}"
+        vgname: "{{ item['vg'] }}"
+      with_items: "{{ backend_configuration }}"
+      register: result
+
+    - name: Get thin pool size
+      shell: "/sbin/lvs --units h | grep '^\ *{{ item['tp'] }}\ ' | awk '{print toupper($4)}'"
+      with_items: "{{ backend_configuration }}"
+      register: result
+
+    - set_fact:
+        volsize: "{{ result['results'][0]['stdout'] }}"
+
+    - name: Create data logical volumes
+      lv:
+        action: create
+        lvtype: thinlv
+        poolname: "{{ item.tp }}"
+        vgname: "{{ item.vg }}"
+        lvname: "{{ item.thinLV }}"
+        virtualsize: "{{ volsize }}"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Create arbiter logical volumes
+      lv:
+        action: create
+        lvtype: thinlv
+        poolname: "arbiter-{{ item.tp }}"
+        vgname: "{{ item.vg }}"
+        lvname: "arbiter-{{ item.thinLV }}"
+        virtualsize: "{{ item['arbiter_size'] }}G"
+      with_items: "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - debug: var=mntpaths verbosity=2
+
+    - shell: /bin/bash -c 'echo "Creating and mounting file systems..." > {{ fifo }}'
+
+    - name: Create data XFS filesystems
+      filesystem:
+        fstype: xfs
+        dev: "{{ item.lv_path }}"
+        opts: "-f -i size=512 -n size=8192 -d su={{ dalign }}k,sw={{ diskcount }}"
+      with_items: "{{ mntpaths }}"
+
+    - name: Create arbiter XFS filesystems
+      filesystem:
+        fstype: xfs
+        dev: "{{ item.0.lv_path }}"
+        opts: "-f -i size=512 -n size=8192 -d su={{ dalign }}k,sw={{ diskcount }}"
+      with_nested:
+        - "{{ arbiter_mntpaths }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: Create the data brick mount points, skips if present
+      file: path={{ item.path }} state=directory
+      with_items: "{{ mntpaths }}"
+
+    - name: Create the arbiter brick mount points, skips if present
+      file: path={{ item.0.path }} state=directory
+      with_nested: 
+        - "{{ arbiter_mntpaths }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: Mount the data filesystems
+      mount: name={{ item.path }} src={{ item.lv_path }} fstype=xfs
+             opts="inode64,noatime,nodiratime" state=mounted
+      with_items: "{{ mntpaths }}"
+
+    - name: Mount the arbiter filesystems
+      mount: name={{ item.0.path }} src={{ item.0.lv_path }} fstype=xfs
+             opts="inode64,noatime,nodiratime" state=mounted
+      with_nested:
+        - "{{ arbiter_mntpaths }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: Set the data mount SELinux context
+      file: path={{ item.path }} setype=glusterd_brick_t
+      with_items: "{{ mntpaths }}"
+
+    - name: Set the arbiter mount SELinux context
+      file: path={{ item.0.path }} setype=glusterd_brick_t
+      with_nested: 
+        - "{{ arbiter_mntpaths }}"
+        - "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - shell: /bin/bash -c 'echo "Enabling glusterd services..." > {{ fifo }}'
+
+    - name: Start and enable the glusterd service
+      service:
+        name: glusterd
+        enabled: yes
+        state: started
+
+    - shell: /bin/bash -c 'echo "Configuring firewall..." > {{ fifo }}'
+
+    - name: Open firewalld services for glusterfs
+      firewalld:
+        service: "{{ item }}"
+        permanent: True
+        immediate: True
+        state: enabled
+      with_items:
+        - glusterfs
+        - ntp
+        #For nfs-ganesha
+        - high-availability
+        - nfs
+        - rpc-bind
+        - mountd
+        - nlm
+        - rquota
+          
+    - name: Open firewalld ports for glusterfs
+      firewalld:
+        port: "{{ item }}"
+        permanent: True
+        immediate: True
+        state: enabled
+      with_items:
+        - 111/tcp
+        - 2049/tcp
+        - 54321/tcp
+        - 5900/tcp
+        - 5900-6923/tcp
+        - 5666/tcp
+        - 16514/tcp
+        - 662/tcp
+        - 662/udp
+
+    - shell: /bin/bash -c 'echo "Configuring storage network..." > {{ fifo }}'
+
+    - include: g1-stor-net.yml
+
+    - include: g1-etc-hosts.yml
+
+    - shell: /bin/bash -c 'echo "Creating trusted storage pool..." > {{ fifo }}'
+
+    - name: Create a Trusted Storage Pool
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      peer:
+        action: probe
+        hosts: "{{ hostnames }}"
+        master: "{{ hostnames[0] }}"
+      register: result
+      until: result.rc == 0
+      retries: 10
+      delay: 3
+
+    - name: Pause briefly
+      pause:
+        seconds: 5
+
+    - shell: /bin/bash -c 'echo "Creating Gluster volumes..." > {{ fifo }}'
+
+    - name: Build brick path for non-arbitrated volumes
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      set_fact:
+        brickstring_fuse: "{{ brickstring_fuse | default('') }},{{ item.1 }}:{{ item.0['path'] }}/{{ default_volname }}"
+      with_nested:
+        - "{{ mntpaths }} "
+        - "{{ hostnames }}"
+      when: arbiter != True
+
+    - name: Build brick path for arbitrated volumes
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      set_fact:
+        brickstring_fuse: "{{ brickstring_fuse | default('') }},{{ item['node'] }}:{{ item['brick'] }}/{{ default_volname }}"
+      with_items: "{{ replica_peers }}"
+      when: arbiter == True
+
+    - debug: var=brickstring_fuse verbosity=2
+    - debug: var=brickstring_nfs verbosity=2
+    - debug: var=brickstring_smb verbosity=2
+      
+    - name: Create Gluster volume for FUSE
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      volume:  
+        action:         create
+        volume:         "{{ default_volname }}"
+        bricks:         "{{ brickstring_fuse }}"
+        hosts:          "{{ play_hosts }}"
+        replica:        "{{ replica }}"
+        # Below values need to be quoted as they are appended to the command line
+        replica_count:  "{{ replica_count }}"
+        arbiter_count:  "{{ arbiter_count }}"
+        disperse:       "{{ disperse }}"
+        disperse_count: "{{ disperse_count }}"
+        redundancy_count: "{{ redundancy_count }}"
+        force:          "{{ force | default(False) }}"
+      register: result
+      failed_when: "result.rc != 0 and ('already exists' not in result.msg)"
+
+    - shell: /bin/bash -c 'echo "Applying performance tuning..." > {{ fifo }}'
+
+    - name: Set tuned profile
+      shell: tuned-adm profile {{ tuned_profile }}
+
+    - name: Set gluster volume parameters
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      volume_set:
+        action: set
+        volume: "{{ default_volname }}"
+        key: "{{ item.key }}"
+        value: "{{ item.value }}"
+      with_dict: "{{ gluster_vol_set }}"
+
+    - shell: /bin/bash -c 'echo "Initializing NFS-Ganesha..." > {{ fifo}}'
+      when: use_nfs == True
+
+    - include: g1-nfs-ganesha.yml
+      when: use_nfs == True
+
+    - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
+
+    - name: Starts a volume
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      volume: 
+        action: start
+        volume: "{{ item }}"
+        force: "{{ force | default(False) }}"
+      with_items:
+        - "{{ default_volname }}"
+      register: result
+      failed_when: "result.rc != 0 and ('already started' not in result.msg)"
+
+    - shell: /bin/bash -c 'echo "Updating root password..." > {{ fifo }}'
+
+    - name: Update root password on all the cluster nodes
+      user:
+        name: root
+        password: "{{ root_password_hashed }}"
+
+    - shell: /bin/bash -c 'echo "Collecting post-install information..." > {{ fifo }}'
+
+    - name: Get timestamp at finish
+      shell: /bin/date -u
+      register: result
+
+    - set_fact:
+        finish_time: "{{ result['stdout'] }}"
+
+    - name: Get volume information
+      shell: /sbin/gluster volume info {{ default_volname }}
+      register: result
+
+    - set_fact:
+        vol_info: "{{ result['stdout'] }}"
+
+    - shell: /bin/bash -c 'echo "Generating post-install instructions..." > {{ fifo }}'
+
+    - name: Create post-install instructions file
+      template:
+        src: g1-post-install.j2
+        dest: "{{ readme_file }}"
+        owner: root
+        group: root
+        mode: 0644

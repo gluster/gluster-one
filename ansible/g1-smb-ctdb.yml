@@ -1,0 +1,55 @@
+---
+- shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
+
+- name: Open firewalld ports for CTDB
+  firewalld:
+    port: "{{ item }}"
+    permanent: True
+    immediate: True
+    state: enabled
+    with_items:
+      - 4379/tcp
+
+- shell: /bin/bash -c 'echo "Creating CTDB lock volume..." > {{ fifo }}'
+
+#TODO -- First automate the number and enumeration of nodes in python
+- name: Create Gluster volume for CTDB lock
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  volume:
+    action:         create
+    volume:         "{{ ctdb_volname }}"
+    bricks:         "{{ ctdb_brickstring }}"
+    hosts:          "{{ play_hosts }}"
+    replica:        yes
+    # Below values need to be quoted as they are appended to the command line
+    replica_count:  "{{ ctdb_replica_count }}"
+    force:          "{{ force | default(False) }}"
+  register: result
+  failed_when: "result.rc != 0 and ('already exists' not in result.msg)"
+
+- name: Add volume name to ctdb setup/teardown scripts
+  replace: dest={{ item }} regexp='^META="?all"?' replace='META="{{ ctdb_volname }}"'
+  with_items:
+      - /var/lib/glusterd/hooks/1/stop/pre/S29CTDB-teardown.sh
+      - /var/lib/glusterd/hooks/1/start/post/S29CTDBsetup.sh
+  ignore_errors: yes
+
+- name: Enable clustering in Samba
+  lineinfile:
+      dest=/etc/samba/smb.conf
+      line="clustering=yes"
+      insertafter='^\[global\]'
+
+- name: Start CTDB lock volume
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  volume:
+    action: start
+    volume: "{{ item }}"
+    force: "{{ force | default(False) }}"
+  with_items:
+    - "{{ ctdb_volname }}"
+  register: result
+  failed_when: "result.rc != 0 and ('already started' not in result.msg)"
+

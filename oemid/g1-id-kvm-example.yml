@@ -1,0 +1,14 @@
+# Colonizer example flavor ID file for KVM (test lab) deployment
+
+flavor:
+    name: Example
+    g1_path: /root/g1/
+    node:
+        name: KVM-node
+        verify_file_name: verify-qemu.yml
+        mgmt_interface: eth0
+        storage_interface: eth1
+        backend_devices:
+          - /dev/vdb
+        disktype: JBOD
+        dalign: 256

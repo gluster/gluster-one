@@ -1,0 +1,11 @@
+# Provide a unique name for the cluster.
+HA_NAME="{{ ha_name }}"
+
+# The subset of nodes of the Gluster Trusted Storage Pool that forms the ganesha
+# HA cluster. Hostname should specified, IP addresses are not allowed.
+# Maximum number of 16 nodes are supported.
+
+HA_CLUSTER_NODES="{{ ha_cluster_nodes }}"
+
+# Virtual IPs of each of the nodes specified above.
+{{ vip_entries }}

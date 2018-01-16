@@ -1,0 +1,43 @@
+[global]
+directory=/mnt/fio
+ioengine=sync
+blocksize=4m
+unlink=1
+direct=1
+fsync_on_close=1
+group_reporting
+startdelay=0
+numjobs=4
+stonewall
+exec_prerun=sync; echo 3 > /proc/sys/vm/drop_caches
+
+[seqwrite]
+description=Sequential Write Test 90/10
+readwrite=readwrite
+rwmixwrite=90
+filesize=4g
+
+[seqread]
+description=Sequential Read Test 90/10
+readwrite=readwrite
+rwmixread=90
+filesize=4g
+
+[create]
+description=Small File Create Test
+readwrite=write
+create_on_open=1
+filesize=32k
+blocksize=32k
+nrfiles=1000
+iodepth=1000
+
+[randomrw]
+description=Small File Random Test
+ioengine=libaio
+readwrite=randrw
+rwmixread=50
+filesize=4m
+norandommap
+nrfiles=300
+iodepth=300

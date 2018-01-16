@@ -1,0 +1,91 @@
+- hosts: all
+  become: yes
+  gather_facts: False
+  tasks:
+    - shell: /bin/bash -c 'echo "Setting up performance tests..." > {{ fifo }}'
+
+    - name: Mount default Gluster volume
+      mount:
+        path: /mnt
+        src: "{{ play_hosts[0] }}:{{ default_volname }}"
+        fstype: glusterfs
+        opts: _netdev
+        state: mounted
+
+    - name: Create fio working directory
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      file:
+        dest: /mnt/fio
+        mode: 0777
+        state: directory
+
+    - name: Start fio servers
+      shell: /bin/bash -c '/bin/fio --server --daemonize=/var/run/fio-server.pid'
+
+    - name: Open fio server firewall ports
+      firewalld:
+        port: 8765/tcp
+        permanent: False
+        immediate: True
+        state: enabled
+
+    - name: Setup fio job file on this node
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      template:
+        src: g1-jobfile-fio.j2
+        dest: "/root/g1-perf-jobfile.fio"
+
+    - name: Create server list file
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      file:
+        dest: /root/g1-perf-server.list
+        mode: 0644
+        state: touch
+
+    - name: Populate server list file
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      lineinfile:
+        dest: /root/g1-perf-server.list
+        state: present
+        regexp: "^{{ item['node'] }}"
+        line: "{{ item['node'] }}"
+      with_items: "{{ replica_peers }}"
+      when: arbiter == True
+
+    #TODO: server list for non-arbiter
+
+    - shell: /bin/bash -c 'echo "Starting performance tests..." > {{ fifo }}'
+    
+    - name: Start fio client request
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      shell: /bin/bash -c '/bin/fio --output=/root/g1-perf-results.out --client=/root/g1-perf-server.list /root/g1-perf-jobfile.fio'
+
+      #- name: Analyze performance results
+      #TODO
+
+    - name: Delete fio working directory
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      file:
+        dest: /mnt/fio
+        state: absent
+ 
+    - name: Unmount Gluster default volume
+      mount:
+        path: /mnt
+        state: unmounted
+
+    - name: Close fio server firewall ports
+      firewalld:
+        port: 8765/tcp
+        permanent: False
+        immediate: True
+        state: disabled
+
+    - name: Stop fio server daemons
+      shell: /bin/bash -c 'kill $(cat /var/run/fio-server.pid)'
