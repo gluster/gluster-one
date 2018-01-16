@@ -16,6 +16,8 @@
 #                         https://github.com/dustinblack                       *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
+#
+# Maintainer:           Dustin Black <dustin@redhat.com>
 #                                                                              *
 #*******************************************************************************
 
