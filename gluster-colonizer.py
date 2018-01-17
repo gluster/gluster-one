@@ -213,7 +213,7 @@ def set_ha_node_count():
     elif int(ha_node_count) > int(max_ha_nodes):
         ha_node_count = int(max_ha_nodes)
     logger.debug("HA node count is %i" % int(ha_node_count))
-    return ha_hode_count
+    return ha_node_count
 
 def ipValidator(user_message,
                 null_valid=False,
