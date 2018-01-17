@@ -917,19 +917,19 @@ try:
 
     # Enumerate the HA node hostname list for NFS-Ganesha
     ha_cluster_nodes = ''
-    if use_nfs:
+    ha_cluster_ips = ''
+    if use_nfs or use_smb:
         for i in range(int(ha_node_count)):
             if i != 0:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
                 hostnames[i]) + '.' + str(domain_name)
     # Enumerate the HA node IP list for CTDB
-    elif use_smb:
+    if use_smb:
         for i in range(int(ha_node_count)):
             if i != 0:
-                ha_cluster_nodes = ha_cluster_nodes + ","
-            ha_cluster_nodes = ha_cluster_nodes + str(
-                ips[i])
+                ha_cluster_ips = ha_cluster_ips + ","
+            ha_cluster_ips = ha_cluster_ips + str(ips[i])
 
     logger.debug("HA nodes are %s" % str(ha_cluster_nodes))
 
@@ -1220,6 +1220,7 @@ try:
     if use_smb:
         playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
         playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
+        playbook_args += ',ha_cluster_ips: ' + str(ha_cluster_ips)
 
     global arbiter
     if str(oem_id['flavor']['arbiter_size']) != "None":
