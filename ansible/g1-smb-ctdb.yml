@@ -19,8 +19,8 @@
     permanent: True
     immediate: True
     state: enabled
-    with_items:
-      - 4379/tcp
+  with_items:
+    - 4379/tcp
 
 - shell: /bin/bash -c 'echo "Creating CTDB lock volume..." > {{ fifo }}'
 
