@@ -202,6 +202,18 @@ def yes_no(answer, do_return=False):
         else:
             print "Please enter either 'yes' or 'no'\r\n"
 
+def set_ha_node_count():
+    #TODO: Double-check that this calculation works correctly.
+    #      The quotient should be a float value, and the math.ceil
+    #      function should round this up.
+    ha_node_count = int(
+        math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
+    if int(ha_node_count) < int(min_ha_nodes):
+        ha_node_count = int(min_ha_nodes)
+    elif int(ha_node_count) > int(max_ha_nodes):
+        ha_node_count = int(max_ha_nodes)
+    logger.debug("HA node count is %i" % int(ha_node_count))
+    return ha_hode_count
 
 def ipValidator(user_message,
                 null_valid=False,
@@ -843,26 +855,17 @@ try:
             mount_protocol = "glusterfs"
             ha_node_count = 0
             break
-        #WORKING HERE
         elif str(input_string) is "3":
             logger.info("SMB Client selected")
             mount_protocol = "cifs"
             use_smb = True
+            ha_node_count = set_ha_node_count()
             break
         elif str(input_string) is "1" or input_string is "":
             logger.info("NFS Client selected")
             mount_protocol = "nfs"
             use_nfs = True
-            #TODO: Double-check that this calculation works correctly.
-            #      The quotient should be a float value, and the math.ceil
-            #      function should round this up.
-            ha_node_count = int(
-                math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
-            if int(ha_node_count) < int(min_ha_nodes):
-                ha_node_count = int(min_ha_nodes)
-            elif int(ha_node_count) > int(max_ha_nodes):
-                ha_node_count = int(max_ha_nodes)
-            logger.debug("HA node count is %i" % int(ha_node_count))
+            ha_node_count = set_ha_node_count()
             break
         else:
             logger.warning("Please select from the list.\r\n")
