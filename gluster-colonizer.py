@@ -836,27 +836,22 @@ try:
     # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
     ha_node_factor = 1.5
     global mount_protocol
-    global mount_protocol_name
     while True:
         input_string = user_input("Client method? [1] ")
         if str(input_string) is "2":
             logger.info("Gluster Native Client selected")
             mount_protocol = "glusterfs"
-            mount_protocol_name = "Gluster native client"
             ha_node_count = 0
             break
         #WORKING HERE
         elif str(input_string) is "3":
             logger.info("SMB Client selected")
             mount_protocol = "cifs"
-            #TODO: Looks like we don't use this var anywhere, so clean up
-            mount_protocol_name = "SMB"
             use_smb = True
             break
         elif str(input_string) is "1" or input_string is "":
             logger.info("NFS Client selected")
             mount_protocol = "nfs"
-            mount_protocol_name = "NFS"
             use_nfs = True
             #TODO: Double-check that this calculation works correctly.
             #      The quotient should be a float value, and the math.ceil
