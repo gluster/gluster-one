@@ -1211,6 +1211,10 @@ try:
     if 'peer_set' in globals():
         playbook_args += ',replica_peers: ' + str(peer_list_min)
 
+    if use_smb:
+        playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
+        playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
+
     global arbiter
     if str(oem_id['flavor']['arbiter_size']) != "None":
         arbiter = True

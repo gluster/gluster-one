@@ -1,4 +1,16 @@
 ---
+- name: Set CTDB lock volume name
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  set_fact:
+    ctdb_volname: ctdb
+
+- name: Build brick path for CTDB lock volume
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  set_fact:
+    ctdb_brickstring: /gluster/bricks/{{ ctdb_volname }}
+
 - shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
 
 - name: Open firewalld ports for CTDB
@@ -12,7 +24,6 @@
 
 - shell: /bin/bash -c 'echo "Creating CTDB lock volume..." > {{ fifo }}'
 
-#TODO -- First automate the number and enumeration of nodes in python
 - name: Create Gluster volume for CTDB lock
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
@@ -20,7 +31,7 @@
     action:         create
     volume:         "{{ ctdb_volname }}"
     bricks:         "{{ ctdb_brickstring }}"
-    hosts:          "{{ play_hosts }}"
+    hosts:          "{{ ha_cluster_nodes.split(',') | join(' ') }}"
     replica:        yes
     # Below values need to be quoted as they are appended to the command line
     replica_count:  "{{ ctdb_replica_count }}"
@@ -29,17 +40,20 @@
   failed_when: "result.rc != 0 and ('already exists' not in result.msg)"
 
 - name: Add volume name to ctdb setup/teardown scripts
-  replace: dest={{ item }} regexp='^META="?all"?' replace='META="{{ ctdb_volname }}"'
+  replace:
+    dest: "{{ item }}"
+    regexp: '^META="?all"?'
+    replace: 'META="{{ ctdb_volname }}"'
   with_items:
-      - /var/lib/glusterd/hooks/1/stop/pre/S29CTDB-teardown.sh
-      - /var/lib/glusterd/hooks/1/start/post/S29CTDBsetup.sh
+    - /var/lib/glusterd/hooks/1/stop/pre/S29CTDB-teardown.sh
+    - /var/lib/glusterd/hooks/1/start/post/S29CTDBsetup.sh
   ignore_errors: yes
 
 - name: Enable clustering in Samba
   lineinfile:
-      dest=/etc/samba/smb.conf
-      line="clustering=yes"
-      insertafter='^\[global\]'
+    dest: /etc/samba/smb.conf
+    line: "clustering=yes"
+    insertafter: '^\[global\]'
 
 - name: Start CTDB lock volume
   delegate_to: "{{ play_hosts[0] }}"
@@ -53,3 +67,24 @@
   register: result
   failed_when: "result.rc != 0 and ('already started' not in result.msg)"
 
+- name: Add HA node IPs to /etc/ctdb/nodes
+  lineinfile:
+    dest: /etc/ctdb/nodes
+    line: "{{ item }}"
+  with_items:
+    - "{{ ha_cluster_nodes.split(',') | join(' ') }}"
+
+- name: Add VIPs to /etc/ctdb/public_addresses
+    lineinfile:
+      dest: /etc/ctdb/public_addresses
+      line: "{{ item }}/{{ storage_subnet_prefix }} {{ storage_interface }}"
+    with_items:
+      - "{{ vip_list }}"
+
+- name: Start ctdb service
+  service:
+    name: ctdb
+    state: started
+
+#- name: Enable ctdb service
+  #service: name=ctdb enabled=yes
