@@ -75,11 +75,11 @@
     - "{{ ha_cluster_nodes.split(',') | join(' ') }}"
 
 - name: Add VIPs to /etc/ctdb/public_addresses
-    lineinfile:
-      dest: /etc/ctdb/public_addresses
-      line: "{{ item }}/{{ storage_subnet_prefix }} {{ storage_interface }}"
-    with_items:
-      - "{{ vip_list }}"
+  lineinfile:
+    dest: /etc/ctdb/public_addresses
+    line: "{{ item }}/{{ storage_subnet_prefix }} {{ storage_interface }}"
+  with_items:
+    - "{{ vip_list }}"
 
 - name: Start ctdb service
   service:
