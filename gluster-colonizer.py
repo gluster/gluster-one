@@ -919,6 +919,14 @@ try:
         s = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
         passlen = 20
         hacluster_password = "".join(random.sample(s, passlen))
+    #WORKING HERE
+    # Enumerate the HA node list for CTDB
+    elif use_smb:
+        for i in range(int(ha_node_count)):
+            if i != 0:
+                ha_cluster_nodes = ha_cluster_nodes + ","
+            ha_cluster_nodes = ha_cluster_nodes + str(
+                hostnames[i]) + '.' + str(domain_name)
 
     logger.debug("HA nodes are %s" % str(ha_cluster_nodes))
 
