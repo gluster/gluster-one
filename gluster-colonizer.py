@@ -906,7 +906,7 @@ try:
 
     logger.debug("Hostnames are %s" % str(hostnames))
 
-    # Enumerate the HA node list for NFS-Ganesha
+    # Enumerate the HA node hostname list for NFS-Ganesha
     ha_cluster_nodes = ''
     if use_nfs:
         for i in range(int(ha_node_count)):
@@ -915,13 +915,13 @@ try:
             ha_cluster_nodes = ha_cluster_nodes + str(
                 hostnames[i]) + '.' + str(domain_name)
     #WORKING HERE
-    # Enumerate the HA node list for CTDB
+    # Enumerate the HA node IP list for CTDB
     elif use_smb:
         for i in range(int(ha_node_count)):
             if i != 0:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
-                hostnames[i]) + '.' + str(domain_name)
+                nodeInfo[i]['ip'])
 
     logger.debug("HA nodes are %s" % str(ha_cluster_nodes))
 
