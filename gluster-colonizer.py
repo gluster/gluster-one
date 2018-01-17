@@ -825,10 +825,12 @@ try:
     print "automatically created during deployment, and the method can be"
     print "changed manually post-install.\r\n"
     print "    1. NFS"
-    print "    2. Gluster Native Client (FUSE)\r\n"
+    print "    2. Gluster Native Client (FUSE)"
+    print "    3. SMB\r\n"
 
     # User selects client access method
     use_nfs = False
+    use_smb = False
     min_ha_nodes = 4
     max_ha_nodes = 16
     # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
@@ -842,6 +844,14 @@ try:
             mount_protocol = "glusterfs"
             mount_protocol_name = "Gluster native client"
             ha_node_count = 0
+            break
+        #WORKING HERE
+        elif str(input_string) is "3":
+            logger.info("SMB Client selected")
+            mount_protocol = "cifs"
+            #TODO: Looks like we don't use this var anywhere, so clean up
+            mount_protocol_name = "SMB"
+            use_smb = True
             break
         elif str(input_string) is "1" or input_string is "":
             logger.info("NFS Client selected")
