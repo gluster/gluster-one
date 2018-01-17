@@ -584,9 +584,9 @@ def collectNodeInformation():
     vips = []
 
     # Enumerate the list of VIPs if we are using the NFS client
-    if use_nfs:
-        print "\r\nYour deployment will be configured with %i NFS-Ganesha HA nodes." % int(
-            ha_node_count)
+    if use_nfs or use_smb:
+        print "\r\nYour deployment will be configured with %i %s HA nodes." % (int(
+            ha_node_count), str(ha_protocol_name))
         print "You will need to provide a VIP from the %s subnet for each of the nodes.\r\n" % str(
             storage_subnet)
         for i in range(int(ha_node_count)):
@@ -667,7 +667,7 @@ def autoNodeInformation():
     vips = []
 
     # Enumerate the list of VIPs if we are using the NFS client
-    if use_nfs:
+    if use_nfs or use_smb:
         logger.debug("Assigning VIPs")
         for i in range(int(ha_node_count)):
             storageIPCounter += 1
@@ -848,6 +848,7 @@ try:
     # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
     ha_node_factor = 1.5
     global mount_protocol
+    global ha_protocol_name
     while True:
         input_string = user_input("Client method? [1] ")
         if str(input_string) is "2":
@@ -858,12 +859,14 @@ try:
         elif str(input_string) is "3":
             logger.info("SMB Client selected")
             mount_protocol = "cifs"
+            ha_protocol_name = "CTDB"
             use_smb = True
             ha_node_count = set_ha_node_count()
             break
         elif str(input_string) is "1" or input_string is "":
             logger.info("NFS Client selected")
             mount_protocol = "nfs"
+            ha_protocol_name = "NFS-Ganesha"
             use_nfs = True
             ha_node_count = set_ha_node_count()
             break
@@ -914,7 +917,6 @@ try:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
                 hostnames[i]) + '.' + str(domain_name)
-    #WORKING HERE
     # Enumerate the HA node IP list for CTDB
     elif use_smb:
         for i in range(int(ha_node_count)):
@@ -953,7 +955,7 @@ try:
                                      (str(v['hostname']), str(domain_name)),
                                      str(v['ip']))
 
-    if use_nfs:
+    if use_nfs or use_smb:
         print "\r"
         print "Virtual IPs (VIPs):"
         for vip in vips:
@@ -967,7 +969,7 @@ try:
 
     # Define the default mount host and mount options
     mount_opts = "defaults,_netdev"
-    if use_nfs:
+    if use_nfs or use_smb:
         mount_host = str(vips[0])
     else:
         mount_host = "%s.%s" % (str(nodeInfo['1']['hostname']),
