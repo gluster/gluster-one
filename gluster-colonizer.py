@@ -907,6 +907,12 @@ try:
     for node in sorted(nodeInfo):
         hostnames.append(str(nodeInfo[node]['hostname']))
 
+    if use_smb:
+      # Add all IPs to a list for CTDB use
+      ips = []
+      for node in sorted(nodeInfo):
+          hostnames.append(str(nodeInfo[node]['ip']))
+
     logger.debug("Hostnames are %s" % str(hostnames))
 
     # Enumerate the HA node hostname list for NFS-Ganesha
@@ -923,7 +929,7 @@ try:
             if i != 0:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
-                nodeInfo[i]['ip'])
+                ips[i])
 
     logger.debug("HA nodes are %s" % str(ha_cluster_nodes))
 
