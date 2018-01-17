@@ -5,11 +5,19 @@
   set_fact:
     ctdb_volname: ctdb
 
-- name: Build brick path for CTDB lock volume
+- name: Set CTDB brick path
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
   set_fact:
-    ctdb_brickstring: /gluster/bricks/{{ ctdb_volname }}
+    ctdb_brick_path: /gluster/bricks/
+
+- name: Build brick string for CTDB lock volume
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  set_fact:
+    ctdb_brickstring: "{{ ctdb_brickstring | default('') }},{{ item }}:{{ ctdb_brick_path }}{{ ctdb_volname }}"
+  with_items:
+    - "{{ ha_cluster_nodes.split(',') | join(' ') }}"
 
 - shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
 
@@ -31,7 +39,7 @@
     action:         create
     volume:         "{{ ctdb_volname }}"
     bricks:         "{{ ctdb_brickstring }}"
-    hosts:          "{{ ha_cluster_nodes.split(',') | join(' ') }}"
+    hosts:          "{{ ha_cluster_nodes }}"
     replica:        yes
     # Below values need to be quoted as they are appended to the command line
     replica_count:  "{{ ctdb_replica_count }}"
