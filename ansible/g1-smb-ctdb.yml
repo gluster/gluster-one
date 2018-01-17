@@ -17,7 +17,7 @@
   set_fact:
     ctdb_brickstring: "{{ ctdb_brickstring | default('') }},{{ item }}:{{ ctdb_brick_path }}{{ ctdb_volname }}"
   with_items:
-    - "{{ ha_cluster_nodes.split(',') | join(' ') }}"
+    - "{{ ha_cluster_nodes.split(',') }}"
 
 - shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
 
@@ -81,7 +81,7 @@
     dest: /etc/ctdb/nodes
     line: "{{ item }}"
   with_items:
-    - "{{ ha_cluster_nodes.split(',') | join(' ') }}"
+    - "{{ ha_cluster_nodes.split(',') }}"
 
 - name: Add VIPs to /etc/ctdb/public_addresses
   lineinfile:
