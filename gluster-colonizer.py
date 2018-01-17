@@ -908,17 +908,12 @@ try:
 
     # Enumerate the HA node list for NFS-Ganesha
     ha_cluster_nodes = ''
-    hacluster_password = ''
     if use_nfs:
         for i in range(int(ha_node_count)):
             if i != 0:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
                 hostnames[i]) + '.' + str(domain_name)
-        # Generate random hacluster password
-        s = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
-        passlen = 20
-        hacluster_password = "".join(random.sample(s, passlen))
     #WORKING HERE
     # Enumerate the HA node list for CTDB
     elif use_smb:
@@ -1192,8 +1187,6 @@ try:
         vip_list
     ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
-    ) + '\'' + ',hacluster_password: \'' + str(
-        hacluster_password
     ) + '\'' + ',default_volname: ' + str(
         default_volname) + ',network_config: ' + str(
             host_interface_information
