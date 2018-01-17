@@ -542,6 +542,12 @@
     - include: g1-nfs-ganesha.yml
       when: use_nfs == True
 
+    - shell: /bin/bash -c 'echo "Initializing SMB & CTDB..." > {{ fifo}}'
+      when: use_smb == True
+
+    - include: g1-nfs-ganesha.yml
+      when: use_smb == True
+
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 
     - name: Starts a volume
