@@ -911,7 +911,7 @@ try:
       # Add all IPs to a list for CTDB use
       ips = []
       for node in sorted(nodeInfo):
-          hostnames.append(str(nodeInfo[node]['ip']))
+          ips.append(str(nodeInfo[node]['ip']))
 
     logger.debug("Hostnames are %s" % str(hostnames))
 
