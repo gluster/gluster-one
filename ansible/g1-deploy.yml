@@ -545,7 +545,7 @@
     - shell: /bin/bash -c 'echo "Initializing SMB & CTDB..." > {{ fifo}}'
       when: use_smb == True
 
-    - include: g1-nfs-ganesha.yml
+    - include: g1-smb-ctdb.yml
       when: use_smb == True
 
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
