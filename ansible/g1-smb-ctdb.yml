@@ -158,3 +158,15 @@
 
 #- name: Enable ctdb service
   #service: name=ctdb enabled=yes
+
+- shell: /bin/bash -c 'echo "Tuning default volume for Samba..." > {{ fifo }}'
+
+- name: Set Gluster volume parameters for SMB
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  volume_set:
+    action: set
+    volume: "{{ default_volname }}"
+    key:
+    value:
+  with_dict: 
