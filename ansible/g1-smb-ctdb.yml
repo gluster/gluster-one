@@ -9,13 +9,13 @@
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
   set_fact:
-    ctdb_brick_path: /gluster/bricks/
+    ctdb_brick_path: /gluster/bricks/{{ ctdb_volname }}
 
 - name: Build brick string for CTDB lock volume
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
   set_fact:
-    ctdb_brickstring: "{{ ctdb_brickstring | default('') }},{{ item }}:{{ ctdb_brick_path }}{{ ctdb_volname }}"
+    ctdb_brickstring: "{{ ctdb_brickstring | default('') }},{{ item }}:{{ ctdb_brick_path }}"
   with_items:
     - "{{ ha_cluster_nodes.split(',') }}"
 
@@ -30,7 +30,44 @@
   with_items:
     - 4379/tcp
 
-- shell: /bin/bash -c 'echo "Creating CTDB lock volume..." > {{ fifo }}'
+- shell: /bin/bash -c 'echo "Creating thin LV for CTDB lock volume..." > {{ fifo }}'
+
+- name: Create CTDB logical volumes on first thin pool and volume group
+  lv:
+    action: create
+    lvtype: thinlv
+    poolname: "{{ backend_configuration.0.tp }}"
+    vgname: "{{ backend_configuration.0.vg }}"
+    lvname: "{{ ctdb_volname }}"
+    virtualsize: 1M
+
+- shell: /bin/bash -c 'echo "Creating and mounting CTDB lock volume file systems..." > {{ fifo }}'
+
+- name: Create CTDB XFS filesystems
+  filesystem:
+    fstype: xfs
+    dev: /dev/{{ backend_configuration.0.vg }}/{{ ctdb_volname }}
+    opts: "-f -i size=512 -n size=8192 -d su={{ dalign }}k,sw={{ diskcount }}"
+
+- name: Create the CTDB brick mount points, skips if present
+  file:
+    path: "{{ ctdb_brick_path }}"
+    state: directory
+
+- name: Mount the CTDB filesystems
+  mount:
+    name: "{{ ctdb_brick_path }}"
+    src: /dev/{{ backend_configuration.0.vg }}/{{ ctdb_volname }}
+    fstype: xfs
+    opts: "inode64,noatime,nodiratime"
+    state: mounted
+
+- name: Set the CTDB mount SELinux context
+  file:
+    path: "{{ ctdb_brick_path }}"
+    setype: glusterd_brick_t
+
+- shell: /bin/bash -c 'echo "Creating CTDB lock Gluster volume..." > {{ fifo }}'
 
 - name: Create Gluster volume for CTDB lock
   delegate_to: "{{ play_hosts[0] }}"
@@ -47,6 +84,8 @@
     force:          "{{ force | default(False) }}"
   register: result
   failed_when: "result.rc != 0 and ('already exists' not in result.msg)"
+
+- shell: /bin/bash -c 'echo "Configuring CTDB and Samba..." > {{ fifo }}'
 
 - name: Add volume name to ctdb setup/teardown scripts
   replace:
@@ -89,6 +128,8 @@
     line: "{{ item }}/{{ storage_subnet_prefix }} {{ storage_interface }}"
   with_items:
     - "{{ vip_list }}"
+
+- shell: /bin/bash -c 'echo "Starting CTDB..." > {{ fifo }}'
 
 - name: Start ctdb service
   service:
