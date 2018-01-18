@@ -15,7 +15,7 @@
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
   set_fact:
-    ctdb_brickstring: "{{ ctdb_brickstring | default('') }},{{ item }}:{{ ctdb_brick_path }}"
+    ctdb_brickstring: "{{ ctdb_brickstring | default('') }},{{ item }}:{{ ctdb_brick_path }}/{{ ctdb_volname }}"
   with_items:
     - "{{ ha_cluster_nodes.split(',') }}"
 
@@ -39,7 +39,7 @@
     poolname: "{{ backend_configuration.0.tp }}"
     vgname: "{{ backend_configuration.0.vg }}"
     lvname: "{{ ctdb_volname }}"
-    virtualsize: 1M
+    virtualsize: 10M
 
 - shell: /bin/bash -c 'echo "Creating and mounting CTDB lock volume file systems..." > {{ fifo }}'
 
