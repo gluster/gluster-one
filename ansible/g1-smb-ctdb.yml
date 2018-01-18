@@ -167,6 +167,19 @@
   volume_set:
     action: set
     volume: "{{ default_volname }}"
-    key:
-    value:
-  with_dict: 
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_dict:  "{{ gluster_vol_set_smb }}"
+
+- shell: /bin/bash -c 'echo "Configuring and restarting glusterd..." > {{ fifo }}'
+
+- name: Configure glusterd for insecure ports
+  lineinfile:
+      dest: /etc/glusterfs/glusterd.vol
+      line: "    option rpc-auth-allow-insecure on"
+      insertbefore: 'end-volume'
+
+- name: Restart glusterd services
+  service:
+    name: glusterd
+    state: restarted
