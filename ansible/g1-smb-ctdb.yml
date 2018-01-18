@@ -39,7 +39,7 @@
     poolname: "{{ backend_configuration.0.tp }}"
     vgname: "{{ backend_configuration.0.vg }}"
     lvname: "{{ ctdb_volname }}"
-    virtualsize: 10M
+    virtualsize: "{{ dalign | default('128') }}M"
 
 - shell: /bin/bash -c 'echo "Creating and mounting CTDB lock volume file systems..." > {{ fifo }}'
 
@@ -114,6 +114,26 @@
     - "{{ ctdb_volname }}"
   register: result
   failed_when: "result.rc != 0 and ('already started' not in result.msg)"
+
+- name: Clean up /etc/ctdb/nodes
+  file:
+    path: /etc/ctdb/nodes
+    state: absent
+
+- name: Clean /etc/ctdb/public_addresses
+  file:
+    path: /etc/ctdb/public_addresses
+    state: absent
+
+- name: Create /etc/ctdb/nodes
+  file:
+    path: /etc/ctdb/nodes
+    state: touch
+
+- name: Create /etc/ctdb/public_addresses
+  file:
+    path: /etc/ctdb/public_addresses
+    state: touch
 
 - name: Add HA node IPs to /etc/ctdb/nodes
   lineinfile:
