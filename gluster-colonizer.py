@@ -1218,8 +1218,10 @@ try:
         playbook_args += ',replica_peers: ' + str(peer_list_min)
 
     if use_smb:
+        #TODO: Add try/except to catch missing parameters
         playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
         playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
+        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
 
     global arbiter
     if str(oem_id['flavor']['arbiter_size']) != "None":
