@@ -147,7 +147,7 @@
     dest: /etc/ctdb/public_addresses
     line: "{{ item }}/{{ storage_subnet_prefix }} {{ storage_interface }}"
   with_items:
-    - "{{ vip_list }}"
+    - "{{ vips }}"
 
 - shell: /bin/bash -c 'echo "Starting CTDB..." > {{ fifo }}'
 
