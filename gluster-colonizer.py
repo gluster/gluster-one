@@ -716,6 +716,48 @@ try:
     logger.info("Your deployment flavor is \t\033[31m" +
                 oem_id['flavor']['name'] + "\033[0m")
 
+    print "\r\nPlease choose the client access method you will use for the"
+    print "default storage volume. This applies only to the volume that is"
+    print "automatically created during deployment, and the method can be"
+    print "changed manually post-install.\r\n"
+    print "    1. NFS"
+    print "    2. Gluster Native Client (FUSE)"
+    print "    3. SMB\r\n"
+
+    # User selects client access method
+    use_nfs = False
+    use_smb = False
+    min_ha_nodes = 4
+    max_ha_nodes = 16
+    # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
+    ha_node_factor = 1.5
+    global mount_protocol
+    global ha_protocol_name
+    while True:
+        input_string = user_input("Client method? [1] ")
+        if str(input_string) is "2":
+            logger.info("Gluster Native Client selected")
+            mount_protocol = "glusterfs"
+            ha_node_count = 0
+            break
+        elif str(input_string) is "3":
+            logger.info("SMB Client selected")
+            mount_protocol = "cifs"
+            ha_protocol_name = "CTDB"
+            use_smb = True
+            ha_node_count = set_ha_node_count()
+            break
+        elif str(input_string) is "1" or input_string is "":
+            logger.info("NFS Client selected")
+            mount_protocol = "nfs"
+            ha_protocol_name = "NFS-Ganesha"
+            use_nfs = True
+            ha_node_count = set_ha_node_count()
+            break
+        else:
+            logger.warning("Please select from the list.\r\n")
+            continue
+
     # Collect the global deployment details from the user
     collectDeploymentInformation()
 
@@ -831,48 +873,6 @@ try:
 
     logger.info("Inventory complete.")
     logger.debug("Ansible inventory: " + g1_inventory)
-
-    print "\r\nPlease choose the client access method you will use for the"
-    print "default storage volume. This applies only to the volume that is"
-    print "automatically created during deployment, and the method can be"
-    print "changed manually post-install.\r\n"
-    print "    1. NFS"
-    print "    2. Gluster Native Client (FUSE)"
-    print "    3. SMB\r\n"
-
-    # User selects client access method
-    use_nfs = False
-    use_smb = False
-    min_ha_nodes = 4
-    max_ha_nodes = 16
-    # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
-    ha_node_factor = 1.5
-    global mount_protocol
-    global ha_protocol_name
-    while True:
-        input_string = user_input("Client method? [1] ")
-        if str(input_string) is "2":
-            logger.info("Gluster Native Client selected")
-            mount_protocol = "glusterfs"
-            ha_node_count = 0
-            break
-        elif str(input_string) is "3":
-            logger.info("SMB Client selected")
-            mount_protocol = "cifs"
-            ha_protocol_name = "CTDB"
-            use_smb = True
-            ha_node_count = set_ha_node_count()
-            break
-        elif str(input_string) is "1" or input_string is "":
-            logger.info("NFS Client selected")
-            mount_protocol = "nfs"
-            ha_protocol_name = "NFS-Ganesha"
-            use_nfs = True
-            ha_node_count = set_ha_node_count()
-            break
-        else:
-            logger.warning("Please select from the list.\r\n")
-            continue
 
     print "\r\nYou may choose to either assign production storage network"
     print "hostnames and static IP addresses to your nodes manually, or"
