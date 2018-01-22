@@ -757,6 +757,48 @@ try:
             logger.warning("Please select from the list.\r\n")
             continue
 
+    #WORKING HERE
+    # Collect Active Directory configuration or skip
+    if use_smb:
+        print "\r\nFor SMB, basic Active Directory integration can be configured."
+        print "The provided method will use winbind to connect the Gluster nodes"
+        print "to Active Directory and join the domain. This will require an"
+        print "Active Directory username and password for an account with rights"
+        print "to add systems to the domain."
+
+        print "\r\nMore complicated Active Directory configurations will need to be"
+        print "done manually post-install.\r\n"
+
+        config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, True)
+
+        #FIXME
+        #TODO: Add loop to enforce input below
+        if config_ad:
+            logger.info("Proceeding with Active Directory configuration")
+            print "\r\nThe SMB HA cluster requires a single NetBIOS name for reference"
+            print "in the Active Directory tree.\r\n"
+
+            ad_netbios_name = user_input("   SMB Cluster NetBIOS Name: ")
+
+            logger.info("SMB NetBIOS name is %s" % ad_netbios_name)
+
+            print "\r\nPlease provide the Active Directory domain name and the"
+            print "credentials for a user with rights to add systems to the domain.\r\n"
+
+            ad_domain_name = user_input("   Active Directory domain name: ")
+
+            ad_workgroup = ad_domain_name.split(".")[0].upper()
+
+            logger.info("Active Directory domain is %s" % ad_domain_name)
+            logger.info("Active Directory workgroup is %s" % ad_workgroup)
+
+            ad_admin_user = user_input("   Active Directory admin username: ")
+            logger.info("Active Directory user is %s" % ad_admin_user)
+            ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
+            logger.info("Active Directory password collected")
+        else:
+            logger.info("Active Directory configuration skipped")
+
     # Collect the global deployment details from the user
     collectDeploymentInformation()
 
