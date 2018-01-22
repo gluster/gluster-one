@@ -115,6 +115,12 @@ ansible_ssh_key = "/home/ansible/.ssh/id_rsa"
 # TODO: Move this to OEMID file
 nodes_max = 24
 
+# Set HA node min, max, and factor
+min_ha_nodes = 4
+max_ha_nodes = 16
+# Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
+ha_node_factor = 1.5
+
 # Initialize variables
 hostlist = []
 desiredNumOfNodes = 0
@@ -727,10 +733,6 @@ try:
     # User selects client access method
     use_nfs = False
     use_smb = False
-    min_ha_nodes = 4
-    max_ha_nodes = 16
-    # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
-    ha_node_factor = 1.5
     global mount_protocol
     global ha_protocol_name
     while True:
@@ -738,21 +740,18 @@ try:
         if str(input_string) is "2":
             logger.info("Gluster Native Client selected")
             mount_protocol = "glusterfs"
-            ha_node_count = 0
             break
         elif str(input_string) is "3":
             logger.info("SMB Client selected")
             mount_protocol = "cifs"
             ha_protocol_name = "CTDB"
             use_smb = True
-            ha_node_count = set_ha_node_count()
             break
         elif str(input_string) is "1" or input_string is "":
             logger.info("NFS Client selected")
             mount_protocol = "nfs"
             ha_protocol_name = "NFS-Ganesha"
             use_nfs = True
-            ha_node_count = set_ha_node_count()
             break
         else:
             logger.warning("Please select from the list.\r\n")
@@ -873,6 +872,12 @@ try:
 
     logger.info("Inventory complete.")
     logger.debug("Ansible inventory: " + g1_inventory)
+
+    # Set the HA node count
+    if use_nfs or use_smb:
+        ha_node_count = set_ha_node_count()
+    else:
+        ha_node_count = 0
 
     print "\r\nYou may choose to either assign production storage network"
     print "hostnames and static IP addresses to your nodes manually, or"
