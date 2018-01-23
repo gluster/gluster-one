@@ -757,7 +757,6 @@ try:
             logger.warning("Please select from the list.\r\n")
             continue
 
-    #WORKING HERE
     # Collect Active Directory configuration or skip
     if use_smb:
         print "\r\nFor SMB, Active Directory integration can be configured."
@@ -775,20 +774,20 @@ try:
             print "\r\nThe SMB HA cluster requires a single NetBIOS name for reference"
             print "in the Active Directory tree.\r\n"
 
-        while True:
-            ad_netbios_name = user_input("   SMB Cluster NetBIOS Name: ")
-            if len(ad_netbios_name) < 1 or len(ad_netbios_name) > 15:
-                logger.warning("A NetBIOS name must be 1 to 15 characters in length.")
-                continue
-            # Check against allowed NetBIOS character set
-            netbios_name_check = re.compile(r"(^[A-Za-z\d_!@#$%^()\-'{}\.~]{1,15}$)")
-            isnetbiosname = netbios_name_check.match(ad_netbios_name)
-            if isnetbiosname is None:
-                logger.warning("The NetBIOS name entered is invalid.")
-                continue
-            break
+            while True:
+                ad_netbios_name = user_input("   SMB Cluster NetBIOS Name: ")
+                if len(ad_netbios_name) < 1 or len(ad_netbios_name) > 15:
+                    logger.warning("A NetBIOS name must be 1 to 15 characters in length.")
+                    continue
+                # Check against allowed NetBIOS character set
+                netbios_name_check = re.compile(r"(^[A-Za-z\d_!@#$%^()\-'{}\.~]{1,15}$)")
+                isnetbiosname = netbios_name_check.match(ad_netbios_name)
+                if isnetbiosname is None:
+                    logger.warning("The NetBIOS name entered is invalid.")
+                    continue
+                break
 
-            logger.info("SMB NetBIOS name is %s" % ad_netbios_name)
+            logger.debug("SMB NetBIOS name is %s" % ad_netbios_name)
 
             print "\r\nPlease provide the Active Directory domain name and the"
             print "credentials for a user with rights to add systems to the domain.\r\n"
@@ -797,13 +796,75 @@ try:
 
             ad_workgroup = ad_domain_name.split(".")[0].upper()
 
-            logger.info("Active Directory domain is %s" % ad_domain_name)
-            logger.info("Active Directory workgroup is %s" % ad_workgroup)
+            logger.debug("Active Directory domain is %s" % ad_domain_name)
+            logger.debug("Active Directory workgroup is %s" % ad_workgroup)
 
             ad_admin_user = user_input("   Active Directory admin username: ")
-            logger.info("Active Directory user is %s" % ad_admin_user)
+            logger.debug("Active Directory user is %s" % ad_admin_user)
             ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
-            logger.info("Active Directory password collected")
+            logger.debug("Active Directory password collected")
+
+            print "\r\nSamba uses an identity mapping (idmap) module to map Active Directory"
+            print "SIDs to POSIX UIDs. You will need to select an idmap module that is"
+            print "appropriate for your environment."
+
+            print "\r\nNOTE: Changing the idmap module after data has been written to the"
+            print "storage can be very complicated and time consuming. If you are unsure"
+            print "which module to choose, or if you have special requirements, select"
+            print "option 3 to skip the module selection for now. You will need to configure"
+            print "the idmap module manually before you can access your volume over SMB."
+
+            print "\r\nWhich idmap module would you like to use?\r\n"
+            print "   1. TDB (Samba default)"
+            print "   2. AutoRID"
+            print "   3. Skip selection and configure manually\r\n"
+
+            idmap_module = ''
+            while True:
+                input_string = user_input("idmap module? [1] ")
+                if str(input_string) is "2":
+                    logger.info("AutoRID idmap module selected")
+                    idmap_module = "autorid"
+                    break
+                elif str(input_string) is "3":
+                    logger.info("Skipping idmap module selection")
+                    print "Please see the documentation for information on manually configuring"
+                    print "the idmap module."
+                    break
+                elif str(input_string) is "1" or input_string is "":
+                    logger.info("TDB idmap module selected")
+                    idmap_module = "tdb"
+                    break
+                else:
+                    logger.warning("Please select from the list.\r\n")
+                    continue
+
+    #WORKING HERE
+            if idmap_module:
+                print "\r\nThe default idmap range is 1000000-4000000. If you would like to change"
+                print "this, enter a new value here with the same notation (m-n)."
+
+                idmap_range = "1000000-4000000"
+                idmap_range_check = re.compile("^[10000-4294967297]\-[10000-4294967297]$")
+                while True:
+                    input_string = user_input("\r\nidmap range? [1000000-4000000] ")
+                    if input_string is "":
+                        break
+                    idmap_range_start = idmap_range.split("-")[0]
+                    idmap_range_end = idmap_range.split("-")[1]
+                    # Let's start at 10000 to be safe
+                    if int(idmap_range_start) < 10000:
+                        logger.warning("Please select a starting value 10000 or above")
+                        continue
+                    # Maximum UIDs is 2^32
+                    elif int(idmap_range_end) > 4294967296:
+                        logger.warning("Please select an ending value below 4294967297")
+                        continue
+                    elif idmap_range_check.match(idmap_range) is None:
+                        logger.warning("Invalid format. Please use \'m-n\' for the range.")
+                        continue
+                    idmap_range = str(input_string)
+                    break
         else:
             logger.info("Active Directory configuration skipped")
 
