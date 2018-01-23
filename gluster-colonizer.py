@@ -760,25 +760,33 @@ try:
     #WORKING HERE
     # Collect Active Directory configuration or skip
     if use_smb:
-        print "\r\nFor SMB, basic Active Directory integration can be configured."
+        print "\r\nFor SMB, Active Directory integration can be configured."
         print "The provided method will use winbind to connect the Gluster nodes"
         print "to Active Directory and join the domain. This will require an"
         print "Active Directory username and password for an account with rights"
-        print "to add systems to the domain."
-
-        print "\r\nMore complicated Active Directory configurations will need to be"
-        print "done manually post-install.\r\n"
+        print "to add systems to the domain.\r\n"
 
         config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, True)
 
         #FIXME
-        #TODO: Add loop to enforce input below
+        #TODO: Enforce input and do validation below
         if config_ad:
             logger.info("Proceeding with Active Directory configuration")
             print "\r\nThe SMB HA cluster requires a single NetBIOS name for reference"
             print "in the Active Directory tree.\r\n"
 
+        while True:
             ad_netbios_name = user_input("   SMB Cluster NetBIOS Name: ")
+            if len(ad_netbios_name) < 1 or len(ad_netbios_name) > 15:
+                logger.warning("A NetBIOS name must be 1 to 15 characters in length.")
+                continue
+            # Check against allowed NetBIOS character set
+            netbios_name_check = re.compile(r"(^[A-Za-z\d_!@#$%^()\-'{}\.~]{1,15}$)")
+            isnetbiosname = netbios_name_check.match(ad_netbios_name)
+            if isnetbiosname is None:
+                logger.warning("The NetBIOS name entered is invalid.")
+                continue
+            break
 
             logger.info("SMB NetBIOS name is %s" % ad_netbios_name)
 
