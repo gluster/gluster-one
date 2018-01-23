@@ -845,26 +845,28 @@ try:
                 print "this, enter a new value here with the same notation (m-n)."
 
                 idmap_range = "1000000-4000000"
-                idmap_range_check = re.compile("^[10000-4294967297]\-[10000-4294967297]$")
                 while True:
                     input_string = user_input("\r\nidmap range? [1000000-4000000] ")
                     if input_string is "":
                         break
-                    idmap_range_start = idmap_range.split("-")[0]
-                    idmap_range_end = idmap_range.split("-")[1]
+                    try:
+                        idmap_range_start = input_string.split("-")[0]
+                        idmap_range_end = input_string.split("-")[1]
+                    except:
+                        logger.warning("Invalid format. Please use \'m-n\' for the range.")
+                        continue
                     # Let's start at 10000 to be safe
                     if int(idmap_range_start) < 10000:
                         logger.warning("Please select a starting value 10000 or above")
                         continue
                     # Maximum UIDs is 2^32
                     elif int(idmap_range_end) > 4294967296:
-                        logger.warning("Please select an ending value below 4294967297")
-                        continue
-                    elif idmap_range_check.match(idmap_range) is None:
-                        logger.warning("Invalid format. Please use \'m-n\' for the range.")
+                        logger.warning("Please select an ending value 4294967296 or below")
                         continue
                     idmap_range = str(input_string)
                     break
+                logger.debug("idmap range is %s" % idmap_range)
+            logger.info("Active Directory configuration complete")
         else:
             logger.info("Active Directory configuration skipped")
 
