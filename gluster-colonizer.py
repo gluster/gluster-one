@@ -850,8 +850,8 @@ try:
                     if input_string is "":
                         break
                     try:
-                        idmap_range_start = input_string.split("-")[0]
-                        idmap_range_end = input_string.split("-")[1]
+                        idmap_range_start = int(input_string.split("-")[0])
+                        idmap_range_end = int(input_string.split("-")[1])
                     except:
                         logger.warning("Invalid format. Please use \'m-n\' for the range.")
                         continue
