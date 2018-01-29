@@ -492,22 +492,33 @@ def collectDeploymentInformation():
 
     logger.debug("Storage network is %s" % str(storage_subnet))
 
-    print "\r\nGateway and DNS fields may be left blank for now, if you prefer.\r\n"
+    if not config_ad:
+        print "\r\nGateway and DNS fields may be left blank for now, if you prefer.\r\n"
 
     global gatewayAddress
-    gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True)
-
-    if gatewayAddress is not '':
-        global dnsServerAddress
-        for i in range(2):
-            dnsnum = i + 1
-            dns = ipValidator(
-                "   DNS%i server address: " % dnsnum,
-                null_valid=True,
-                check_dupes=False,
-                check_subnet=False)
-            if dns is not '':
-                dnsServerAddress.append(str(dns))
+    while True:
+        gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True)
+        if gatewayAddress is '' and config_ad:
+            logger.warning("Gateway address is required for Active Directory connection")
+            continue
+        elif gatewayAddress is not '':
+            global dnsServerAddress
+            for i in range(2):
+                dnsnum = i + 1
+                while True:
+                    dns = ipValidator(
+                        "   DNS%i server address: " % dnsnum,
+                        null_valid=True,
+                        check_dupes=False,
+                        check_subnet=False)
+                    if dns is not '':
+                        dnsServerAddress.append(str(dns))
+                        break
+                    elif dns is '' and config_ad and int(dnsnum) is 1:
+                        logger.warning("One DNS server address is required for Active Directory connection")
+                        continue
+                    break
+        break
 
     #TODO: Implement subscription registration
     #print "\r\nNext we need to collect your RHN credentials."
