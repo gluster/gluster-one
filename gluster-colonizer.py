@@ -815,6 +815,10 @@ try:
             ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
             logger.debug("Active Directory password collected")
 
+            print "\r\nPlease provide the FQDN for an Active Directory domain controller."
+
+            ad_controller_fqdn = user_input("   AD Controller FQDN: ")
+
             print "\r\nSamba uses an identity mapping (idmap) module to map Active Directory"
             print "SIDs to POSIX UIDs. You will need to select an idmap module that is"
             print "appropriate for your environment."
