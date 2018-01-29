@@ -815,7 +815,7 @@ try:
             ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
             logger.debug("Active Directory password collected")
 
-            print "\r\nPlease provide the FQDN for an Active Directory domain controller."
+            print "\r\nPlease provide the FQDN for an Active Directory domain controller.\r\n"
 
             ad_controller_fqdn = user_input("   AD Controller FQDN: ")
 

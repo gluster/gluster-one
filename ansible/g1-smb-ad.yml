@@ -1,0 +1,27 @@
+---
+- name: Remove conflicting lines from smb.conf
+  lineinfile:
+    dest: /etc/samba/smb.conf
+    state: absent
+    regexp: '^\\s*{{ item }}'
+    with_items:
+      - netbios name
+      - workgroup
+      - realm
+      - security
+      - idmap config
+
+- name: Configure smb.conf for Active Directory
+  lineinfile:
+    dest: /etc/samba/smb.conf
+    line: {{ item }}
+    insertafter: '^\[global\]'
+    with_items:
+      - # Auto-configured by the gluster-colonizer
+      - security = ads
+      - netbios name = TODO
+      - workgroup = TODO
+      - realm = TODO
+      - idmap config * : range = TODO
+      - idmap config * : backend = TODO
+
