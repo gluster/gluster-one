@@ -1,0 +1,20 @@
+- hosts: gluster_nodes
+  become: yes
+
+  tasks:
+    - shell: /bin/bash -c 'echo "Start winbind and samba..." > {{ fifo}}'
+
+    - name: Re-enable services
+      shell: /bin/ctdb event script enable {{ item }}
+      register: result
+      failed_when: "result.rc != 0"
+      with_items:
+        - 49.winbind
+        - 50.samba
+
+    - name: Restart CTDB
+      systemd:
+        name: ctdb
+        state: restarted
+
+
