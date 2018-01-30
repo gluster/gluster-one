@@ -19,9 +19,9 @@
     with_items:
       - # Auto-configured by the gluster-colonizer
       - security = ads
-      - netbios name = TODO
-      - workgroup = TODO
-      - realm = TODO
-      - idmap config * : range = TODO
-      - idmap config * : backend = TODO
+      - netbios name = {{ ad_netbios_name }}
+      - realm = {{ ad_domain_name }}
+      - workgroup = {{ ad_workgroup }}
+      - idmap config {{ ad_netbios_name }} : backend = {{ idmap_module }}
+      - idmap config {{ ad_netbios_name }} : range = {{ idmap_range }}
 
