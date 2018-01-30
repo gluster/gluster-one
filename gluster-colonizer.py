@@ -1393,6 +1393,10 @@ try:
         if not check_ad_play:
             logger.error("Active Directory integration failed. See log messages for details.")
 
+        # Join CTDB cluster to the Active Directory domain
+        host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
+        host_command('/bin/net ads dns register %s %s' %(ad_netbios_name, " ".join(vips)))
+
     print "\r\n"
 
     logger.info("Your \033[31m%s %s\033[0m deployment is now complete!" %
