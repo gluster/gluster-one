@@ -309,6 +309,8 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             logger.debug(stdout)
             logger.debug(stderr)
             logger.warning("Continuing deployment; please see logs for failure details.")
+            return False
+    return True
 
 
 def killDnsmasq():
@@ -1387,7 +1389,9 @@ try:
         playbook_args += '}"'
         # Run the g1-smb-ad ansible playbook; continue on failure
         logger.debug("Running AD integration playbook")
-        run_ansible_playbook(playbook_args, continue_on_fail=True)
+        check_ad_play = run_ansible_playbook(playbook_args, continue_on_fail=True)
+        if not check_ad_play:
+            logger.error("Active Directory integration failed. See log messages for details.")
 
     print "\r\n"
 
