@@ -306,8 +306,8 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             logger.error(stderr)
             abortSetup("Ansible playbook error")
         else:
-            logger.info(stdout)
-            logger.info(stderr)
+            logger.debug(stdout)
+            logger.debug(stderr)
             logger.warning("Continuing deployment; please see logs for failure details.")
 
 
