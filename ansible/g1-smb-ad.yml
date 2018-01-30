@@ -4,6 +4,12 @@
   tasks:
     - shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
 
+    - shell: /bin/bash -c 'echo "Testing Active Directory controller lookup..." > {{ fifo}}'
+
+    - shell: /bin/bash -c '/bin/host {{ ad_controller_fqdn }}'
+      register: result
+      failed_when: "result.rc != 0"
+
     - shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
 
     - name: Remove conflicting lines from smb.conf
