@@ -24,6 +24,6 @@
     - 'netbios name = {{ ad_netbios_name }}'
     - 'realm = {{ ad_domain_name }}'
     - 'workgroup = {{ ad_workgroup }}'
-    - 'idmap config {{ ad_netbios_name }} : backend = {{ idmap_module }}'
-    - 'idmap config {{ ad_netbios_name }} : range = {{ idmap_range }}'
+    - 'idmap config {{ ad_workgroup }} : backend = {{ idmap_module }}'
+    - 'idmap config {{ ad_workgroup }} : range = {{ idmap_range }}'
 
