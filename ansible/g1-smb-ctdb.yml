@@ -100,7 +100,7 @@
 - name: Enable clustering in Samba
   lineinfile:
     dest: /etc/samba/smb.conf
-    line: "clustering=yes"
+    line: "clustering = yes"
     insertafter: '^\[global\]'
 
 - name: Start CTDB lock volume
