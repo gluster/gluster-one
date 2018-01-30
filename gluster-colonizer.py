@@ -1324,7 +1324,7 @@ try:
         disperse
     ) + ',disperse_count: ' + str(disperse_count) + ',redundancy_count: ' + str(
         redundancy_count
-        ) + ',use_nfs: ' + str(use_nfs) + ',use_smb: ' + str(use_smb) + ',config_ad: ' + str(config_ad) ',vip_list: ' + str(
+        ) + ',use_nfs: ' + str(use_nfs) + ',use_smb: ' + str(use_smb) + ',config_ad: ' + str(config_ad) + ',vip_list: ' + str(
         vip_list
     ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
