@@ -258,14 +258,14 @@ def host_command(command, shell=False):
     return proc_output
 
 
-def run_ansible_playbook(playbook):
+def run_ansible_playbook(playbook, continue_on_fail=False):
     # Function to run ansible playbooks
     FIFO = "/var/tmp/g1.pipe-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
     try:
         os.mkfifo(FIFO)
     except OSError as oe:
         if oe.errno != errno.EEXIST:
-            abortSetup("Error crating FIFO")
+            abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
     playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
     if int(args.loglevel) == 10:
@@ -282,10 +282,13 @@ def run_ansible_playbook(playbook):
     os.unlink(FIFO)
     if returnVal.returncode != 0:
         logger.error("\n\nFailed to execute ansible playbook correctly!!")
-        logger.error("Find the stdout and stderr below...\n\n")
-        logger.error(stdout)
-        logger.error(stderr)
-        abortSetup("Ansible playbook error")
+        if not continue_on_fail:
+            logger.error("Find the stdout and stderr below...\n\n")
+            logger.error(stdout)
+            logger.error(stderr)
+            abortSetup("Ansible playbook error")
+        else:
+            logger.warning("Continuing deployment; please see logs for failure details.")
 
 
 def killDnsmasq():
@@ -1211,6 +1214,19 @@ try:
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
+
+    if config_ad:
+        # Build the ansible-playbook args for the AD playbook
+        #TODO: Add try/except to catch missing parameters
+        playbook_args = g1_path + 'ansible/g1-smb-ad.yml --extra-vars="{'
+        playbook_args += 'ad_netbios_name: ' + str(ad_netbios_name)
+        playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
+        playbook_args += ',ad_workgroup: ' + str(ad_workgroup)
+        playbook_args += ',idmap_module: ' + str(idmap_module)
+        playbook_args += ',idmap_range: ' + str(idmap_range)
+        playbook_args += '}"'
+        # Run the g1-smb-ad ansible playbook; continue on failure
+        run_ansible_playbook(playbook_args, continue_on_fail=True)
 
     print "\r\n"
 
