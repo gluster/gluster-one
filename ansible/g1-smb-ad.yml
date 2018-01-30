@@ -1,27 +1,29 @@
 ---
+- shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
+
 - name: Remove conflicting lines from smb.conf
   lineinfile:
     dest: /etc/samba/smb.conf
     state: absent
     regexp: '^\\s*{{ item }}'
-    with_items:
-      - netbios name
-      - workgroup
-      - realm
-      - security
-      - idmap config
+  with_items:
+    - netbios name
+    - workgroup
+    - realm
+    - security
+    - idmap config
 
 - name: Configure smb.conf for Active Directory
   lineinfile:
     dest: /etc/samba/smb.conf
     line: "{{ item }}"
     insertafter: '^\[global\]'
-    with_items:
-      - # Auto-configured by the gluster-colonizer
-      - security = ads
-      - netbios name = {{ ad_netbios_name }}
-      - realm = {{ ad_domain_name }}
-      - workgroup = {{ ad_workgroup }}
-      - idmap config {{ ad_netbios_name }} : backend = {{ idmap_module }}
-      - idmap config {{ ad_netbios_name }} : range = {{ idmap_range }}
+  with_items:
+    - # Auto-configured by the gluster-colonizer
+    - security = ads
+    - netbios name = {{ ad_netbios_name }}
+    - realm = {{ ad_domain_name }}
+    - workgroup = {{ ad_workgroup }}
+    - idmap config {{ ad_netbios_name }} : backend = {{ idmap_module }}
+    - idmap config {{ ad_netbios_name }} : range = {{ idmap_range }}
 
