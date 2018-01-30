@@ -1397,6 +1397,10 @@ try:
         host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
         host_command('/bin/net ads dns register %s %s' %(ad_netbios_name, " ".join(vips)))
 
+        # Re-start winbind and samba services
+        logger.debug("Build ansible-playbook command for CTDB service restart playbook")
+        run_ansible_playbook(g1_path + "ansible/g1-smb-ad-restart-services.yml", continue_on_fail=True)
+
     print "\r\n"
 
     logger.info("Your \033[31m%s %s\033[0m deployment is now complete!" %
