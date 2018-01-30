@@ -291,6 +291,8 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             logger.debug(stdout)
             logger.debug(stderr)
             logger.warning("Continuing deployment; please see logs for failure details.")
+            return False
+    return True
 
 
 def killDnsmasq():
@@ -1216,19 +1218,6 @@ try:
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
-
-    if config_ad:
-        # Build the ansible-playbook args for the AD playbook
-        #TODO: Add try/except to catch missing parameters
-        playbook_args = g1_path + 'ansible/g1-smb-ad.yml --extra-vars="{'
-        playbook_args += 'ad_netbios_name: ' + str(ad_netbios_name)
-        playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
-        playbook_args += ',ad_workgroup: ' + str(ad_workgroup)
-        playbook_args += ',idmap_module: ' + str(idmap_module)
-        playbook_args += ',idmap_range: ' + str(idmap_range)
-        playbook_args += '}"'
-        # Run the g1-smb-ad ansible playbook; continue on failure
-        run_ansible_playbook(playbook_args, continue_on_fail=True)
 
     print "\r\n"
 
