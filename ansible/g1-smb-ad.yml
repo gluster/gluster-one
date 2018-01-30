@@ -37,3 +37,15 @@
         - 'netbios name = {{ ad_netbios_name }}'
         - 'security = ads'
         - '# Auto-configured by the gluster-colonizer'
+
+    - shell: /bin/bash -c 'echo "Configuring nsswitch.conf file..." > {{ fifo }}'
+
+    - name: Configure nsswitch.conf for winbind
+      lineinfile:
+        dest: /etc/nsswitch.conf
+        backrefs: yes
+        regexp: '^({{ item }}.*)'
+        line: '\1 winbind'
+      with_items:
+        - passwd
+        - group
