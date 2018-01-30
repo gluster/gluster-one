@@ -548,11 +548,11 @@
     - include: g1-smb-ctdb.yml
       when: use_smb == True
 
-    - shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
-      when: config_ad == True
+      #- shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
+      #when: config_ad == True
 
-    - include: g1-smb-ad.yml
-      when: config_ad == True
+      #- include: g1-smb-ad.yml
+      #when: config_ad == True
 
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 

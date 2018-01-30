@@ -2,6 +2,8 @@
   become: yes
 
   tasks:
+    - shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
+
     - shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
 
     - name: Remove conflicting lines from smb.conf
