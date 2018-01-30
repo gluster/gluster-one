@@ -49,3 +49,18 @@
       with_items:
         - passwd
         - group
+
+    - shell: /bin/bash -c 'echo "Stop winbind and samba..." > {{ fifo }}'
+
+    - name: Temporarily disable services
+      shell: /bin/ctdb event script disable {{ item }}
+      register: result
+      failed_when: "result.rc != 0"
+      with_items:
+        - 49.winbind
+        - 50.samba
+
+    - name: Restart CTDB
+      systemd:
+        name: ctdb
+        state: restarted
