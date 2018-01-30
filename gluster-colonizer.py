@@ -1374,6 +1374,7 @@ try:
     if config_ad:
         # Build the ansible-playbook args for the AD playbook
         #TODO: Add try/except to catch missing parameters
+        logger.debug("Building ansible-playbook command for AD playbook")
         playbook_args = g1_path + 'ansible/g1-smb-ad.yml --extra-vars="{'
         playbook_args += 'ad_netbios_name: ' + str(ad_netbios_name)
         playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
@@ -1382,6 +1383,7 @@ try:
         playbook_args += ',idmap_range: ' + str(idmap_range)
         playbook_args += '}"'
         # Run the g1-smb-ad ansible playbook; continue on failure
+        logger.debug("Running AD integration playbook")
         run_ansible_playbook(playbook_args, continue_on_fail=True)
 
     print "\r\n"
