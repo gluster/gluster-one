@@ -5,7 +5,7 @@
   lineinfile:
     dest: /etc/samba/smb.conf
     state: absent
-    regexp: '^\\s*{{ item }}'
+    regexp: '^\s*{{ item }}'
   with_items:
     - netbios name
     - workgroup
@@ -19,11 +19,11 @@
     line: "{{ item }}"
     insertafter: '^\[global\]'
   with_items:
-    - # Auto-configured by the gluster-colonizer
-    - security = ads
-    - netbios name = {{ ad_netbios_name }}
-    - realm = {{ ad_domain_name }}
-    - workgroup = {{ ad_workgroup }}
-    - idmap config {{ ad_netbios_name }} : backend = {{ idmap_module }}
-    - idmap config {{ ad_netbios_name }} : range = {{ idmap_range }}
+    - '# Auto-configured by the gluster-colonizer'
+    - 'security = ads'
+    - 'netbios name = {{ ad_netbios_name }}'
+    - 'realm = {{ ad_domain_name }}'
+    - 'workgroup = {{ ad_workgroup }}'
+    - 'idmap config {{ ad_netbios_name }} : backend = {{ idmap_module }}'
+    - 'idmap config {{ ad_netbios_name }} : range = {{ idmap_range }}'
 
