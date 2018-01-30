@@ -1,29 +1,31 @@
----
-- shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
+- hosts: gluster_nodes
+  become: yes
 
-- name: Remove conflicting lines from smb.conf
-  lineinfile:
-    dest: /etc/samba/smb.conf
-    state: absent
-    regexp: '^\s*{{ item }}'
-  with_items:
-    - netbios name
-    - workgroup
-    - realm
-    - security
-    - idmap config
+  tasks:
+    - shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
 
-- name: Configure smb.conf for Active Directory
-  lineinfile:
-    dest: /etc/samba/smb.conf
-    line: "{{ item }}"
-    insertafter: '^\[global\]'
-  with_items:
-    - 'idmap config {{ ad_workgroup }} : range = {{ idmap_range }}'
-    - 'idmap config {{ ad_workgroup }} : backend = {{ idmap_module }}'
-    - 'workgroup = {{ ad_workgroup }}'
-    - 'realm = {{ ad_domain_name }}'
-    - 'netbios name = {{ ad_netbios_name }}'
-    - 'security = ads'
-    - '# Auto-configured by the gluster-colonizer'
+    - name: Remove conflicting lines from smb.conf
+      lineinfile:
+        dest: /etc/samba/smb.conf
+        state: absent
+        regexp: '^\s*{{ item }}'
+      with_items:
+        - netbios name
+        - workgroup
+        - realm
+        - security
+        - idmap config
 
+    - name: Configure smb.conf for Active Directory
+      lineinfile:
+        dest: /etc/samba/smb.conf
+        line: "{{ item }}"
+        insertafter: '^\[global\]'
+      with_items:
+        - 'idmap config {{ ad_workgroup }} : range = {{ idmap_range }}'
+        - 'idmap config {{ ad_workgroup }} : backend = {{ idmap_module }}'
+        - 'workgroup = {{ ad_workgroup }}'
+        - 'realm = {{ ad_domain_name }}'
+        - 'netbios name = {{ ad_netbios_name }}'
+        - 'security = ads'
+        - '# Auto-configured by the gluster-colonizer'
