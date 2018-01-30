@@ -14,7 +14,7 @@
 - name: Configure smb.conf for Active Directory
   lineinfile:
     dest: /etc/samba/smb.conf
-    line: {{ item }}
+    line: "{{ item }}"
     insertafter: '^\[global\]'
     with_items:
       - # Auto-configured by the gluster-colonizer
