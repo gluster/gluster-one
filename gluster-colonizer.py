@@ -1356,6 +1356,13 @@ try:
         playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
         playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
 
+    if config_ad:
+        playbook_args += ',ad_netbios_name: ' + str(ad_netbios_name)
+        playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
+        playbook_args += ',ad_workgroup: ' + str(ad_workgroup)
+        playbook_args += ',idmap_module: ' + str(idmap_module)
+        playbook_args += ',idmap_range: ' + str(idmap_range)
+
     global arbiter
     if str(oem_id['flavor']['arbiter_size']) != "None":
         arbiter = True
