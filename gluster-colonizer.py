@@ -495,8 +495,9 @@ def collectDeploymentInformation():
                 null_valid=True,
                 check_dupes=False,
                 check_subnet=False)
-            if dns is not '':
-                dnsServerAddress.append(str(dns))
+            dnsServerAddress.append(str(dns))
+            if dns is '':
+                break
 
     #TODO: Implement subscription registration
     #print "\r\nNext we need to collect your RHN credentials."
@@ -938,7 +939,7 @@ try:
         print "DNS %i: " % i,
         print str(dnsServerAddress[int(
             i - 1)]) if dnsServerAddress and dnsServerAddress[int(
-                i - 2)] is not "" else "skipped"
+                i - 1)] is not "" else "skipped"
 
     print "\r"
 
