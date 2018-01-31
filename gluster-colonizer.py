@@ -1244,7 +1244,11 @@ try:
 
     if run_perf_tests:
         logger.info("Beginning performance tests. Please be patient...")
-        perf_tests_complete = run_ansible_playbook(g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(default_volname) + ',replica_peers: ' + str(peer_list_min) + ',arbiter: ' + str(arbiter) + ',perf_jobfile: ' + str(perf_jobfile) + ',perf_server_list: ' + str(perf_server_list) + ',perf_output : ' + str(perf_output) + '}"', continue_on_fail=True)
+        playbook_args = g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(default_volname) + ',hostnames: ' + str(hostnames) + ',arbiter: ' + str(arbiter) + ',perf_jobfile: ' + str(perf_jobfile) + ',perf_server_list: ' + str(perf_server_list) + ',perf_output : ' + str(perf_output)
+        if 'peer_set' in globals():
+            playbook_args += ',replica_peers: ' + str(peer_list_min)
+        playbook_args += '}"'
+        perf_tests_complete = run_ansible_playbook(playbook_args, continue_on_fail=True)
         if perf_tests_complete:
             logger.info("Performance tests complete. Results at: %s" % str(perf_output))
         else:

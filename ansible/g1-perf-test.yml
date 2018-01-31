@@ -58,6 +58,17 @@
 
     #TODO: server list for non-arbiter
 
+    - name: Populate server list file
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      lineinfile:
+        dest: "{{ perf_server_list }}"
+        state: present
+        regexp: "^{{ item }}"
+        line: "{{ item }}"
+      with_items: "{{ hostnames }}"
+      when: arbiter != True
+
     - shell: /bin/bash -c 'echo "Starting performance tests..." > {{ fifo }}'
     
     - name: Start fio client request
