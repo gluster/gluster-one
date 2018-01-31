@@ -111,6 +111,11 @@ rand_filename_len = 8
 peerInventory = "/var/tmp/peerInventory.ansible-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
 ansible_ssh_key = "/home/ansible/.ssh/id_rsa"
 
+# Performance test files
+perf_jobfile = "/var/tmp/g1-perf-jobfile.fio-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
+perf_server_list = "/var/tmp/g1-perf-server.list-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
+perf_output = "/root/g1-perf-results.out"
+
 # Set maximum number of nodes
 # TODO: Move this to OEMID file
 nodes_max = 24
@@ -1239,8 +1244,11 @@ try:
 
     if run_perf_tests:
         logger.info("Beginning performance tests. Please be patient...")
-        run_ansible_playbook(g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(default_volname) + ',replica_peers: ' + str(peer_list_min) + ',arbiter: ' + str(arbiter) +'}"')
-        logger.info("Performance tests complete.")
+        perf_tests_complete = run_ansible_playbook(g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(default_volname) + ',replica_peers: ' + str(peer_list_min) + ',arbiter: ' + str(arbiter) + ',perf_jobfile: ' + str(perf_jobfile) + ',perf_server_list: ' + str(perf_server_list) + ',perf_output : ' + str(perf_output) + '}"', continue_on_fail=True)
+        if perf_tests_complete:
+            logger.info("Performance tests complete.")
+        else:
+            logger.warning("Performance tests failed. Please see log for more information.")
     else:
         logger.warning("Performance tests skipped")
         #TODO: Add instructions for running the performance tests later
