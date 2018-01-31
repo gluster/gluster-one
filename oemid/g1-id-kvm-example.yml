@@ -12,3 +12,4 @@ flavor:
           - /dev/vdb
         disktype: JBOD
         dalign: 256
+    volname: gluster1

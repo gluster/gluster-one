@@ -16,8 +16,8 @@
 #                         https://github.com/dustinblack                       *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
-#
-# Maintainer:           Dustin Black <dustin@redhat.com>
+#                                                                              *
+# Maintainer:           Dustin Black <dustin@redhat.com>                       *
 #                                                                              *
 #*******************************************************************************
 
@@ -108,8 +108,16 @@ rand_filename_sample = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRS
 rand_filename_len = 8
 
 # Ansible configuration
-peerInventory = "/var/tmp/peerInventory.ansible-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
+peerInventory = "/var/tmp/peerInventory.ansible-" + "".join(
+    random.sample(rand_filename_sample, rand_filename_len))
 ansible_ssh_key = "/home/ansible/.ssh/id_rsa"
+
+# Performance test files
+perf_jobfile = "/var/tmp/g1-perf-jobfile.fio-" + "".join(
+    random.sample(rand_filename_sample, rand_filename_len))
+perf_server_list = "/var/tmp/g1-perf-server.list-" + "".join(
+    random.sample(rand_filename_sample, rand_filename_len))
+perf_output = "/root/g1-perf-results.out"
 
 # Set maximum number of nodes
 # TODO: Move this to OEMID file
@@ -123,7 +131,7 @@ rhnPassword = ""
 storage_subnet = ""
 gatewayAddress = ""
 dnsServerAddress = []
-default_volname = "gluster1"
+default_volname = oem_id['flavor']['volname']
 consumed_ips = []
 readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
@@ -258,14 +266,15 @@ def host_command(command, shell=False):
     return proc_output
 
 
-def run_ansible_playbook(playbook):
+def run_ansible_playbook(playbook, continue_on_fail=False):
     # Function to run ansible playbooks
-    FIFO = "/var/tmp/g1.pipe-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
+    FIFO = "/var/tmp/g1.pipe-" + "".join(
+        random.sample(rand_filename_sample, rand_filename_len))
     try:
         os.mkfifo(FIFO)
     except OSError as oe:
         if oe.errno != errno.EEXIST:
-            abortSetup("Error crating FIFO")
+            abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
     playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
     if int(args.loglevel) == 10:
@@ -282,10 +291,18 @@ def run_ansible_playbook(playbook):
     os.unlink(FIFO)
     if returnVal.returncode != 0:
         logger.error("\n\nFailed to execute ansible playbook correctly!!")
-        logger.error("Find the stdout and stderr below...\n\n")
-        logger.error(stdout)
-        logger.error(stderr)
-        abortSetup("Ansible playbook error")
+        if not continue_on_fail:
+            logger.error("Find the stdout and stderr below...\n\n")
+            logger.error(stdout)
+            logger.error(stderr)
+            abortSetup("Ansible playbook error")
+        else:
+            logger.debug(stdout)
+            logger.debug(stderr)
+            logger.warning(
+                "Continuing deployment; please see logs for failure details.")
+            return False
+    return True
 
 
 def killDnsmasq():
@@ -488,18 +505,9 @@ def collectDeploymentInformation():
                 null_valid=True,
                 check_dupes=False,
                 check_subnet=False)
-            if dns is not '':
-                dnsServerAddress.append(str(dns))
-
-    #TODO: Implement subscription registration
-    #print "\r\nNext we need to collect your RHN credentials."
-    #print "If you don't want to connect to Red Hat Network directly, just leave the user field blank."
-    #global rhnUser
-    #rhnUser = user_input("\r\n   RHN Username: ")
-    #if rhnUser != "":
-    #import getpass
-    #global rhnPassword
-    #rhnPassword = getpass.getpass("   RHN Password (will not show) :")
+            dnsServerAddress.append(str(dns))
+            if dns is '':
+                break
 
 
 def collectNodeInformation():
@@ -518,9 +526,7 @@ def collectNodeInformation():
         while True:
             input_string = user_input("   Hostname (short): ")
             hostname = input_string.lower()
-            hostname_check = re.compile(
-                "^[a-zA-Z0-9-]{1,64}$"
-            )
+            hostname_check = re.compile("^[a-zA-Z0-9-]{1,64}$")
             ishostname = hostname_check.match(hostname)
             if ishostname is None:
                 logger.warning("The hostname entered is invalid")
@@ -759,7 +765,8 @@ try:
     #TODO: Check for if we found too many nodes
     node_search_timeout = 20  #attempts
     counter = 0
-    discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
+    discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
+        random.sample(rand_filename_sample, rand_filename_len))
     while (currentNumOfHosts) < desiredNumOfNodes:
         g1Hosts = []
         pOut = open(discovery_file, 'w')
@@ -931,7 +938,7 @@ try:
         print "DNS %i: " % i,
         print str(dnsServerAddress[int(
             i - 1)]) if dnsServerAddress and dnsServerAddress[int(
-                i - 2)] is not "" else "skipped"
+                i - 1)] is not "" else "skipped"
 
     print "\r"
 
@@ -981,28 +988,32 @@ try:
     print "\r\n"
 
     if new_ssh_keys:
-        run_ansible_playbook(g1_path + "/ansible/g1-key-dist.yml")
-        logger.info("SSH keys exchanged")
+        logger.info("New ansible user SSH keys will be exchanged")
     else:
-        logger.warning("Existing ansible user SSH keys are being kept")
+        logger.warning("Existing ansible user SSH keys will be kept")
 
     # Reset root password
     print "\r\nThe default root password on your %s nodes must be reset." % brand_short
     print "\033[31mBe careful to select a secure password, and note that"
     print "the passwords will be updated for the root user on all nodes.\033[0m\r\n"
-    
+
     while True:
         # random password salt
-        pwsalt = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(8))
+        pwsalt = ''.join(
+            random.SystemRandom().choice(string.ascii_letters + string.digits)
+            for _ in range(8))
         try:
-            root_password_hashed = crypt.crypt(getpass.getpass("Please enter the new root password: "), "$6$" + pwsalt)
+            root_password_hashed = crypt.crypt(
+                getpass.getpass("Please enter the new root password: "),
+                "$6$" + pwsalt)
         except Exception as err:
             print('ERROR:', err)
         # check for blank password
         if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
             continue
         # confirm password
-        if root_password_hashed == crypt.crypt(getpass.getpass("Confirm password: "), "$6$" + pwsalt):
+        if root_password_hashed == crypt.crypt(
+                getpass.getpass("Confirm password: "), "$6$" + pwsalt):
             logger.info("New root password collected")
             break
         else:
@@ -1039,21 +1050,6 @@ try:
     yes_no('Are you sure you want to continue? [Y/n] ')
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
-
-    ## Configure the static management and storage network assignments
-    #logger.info("Configuring storage network...")
-    #run_ansible_playbook(
-    #g1_path +
-    #'ansible/g1-prod-net.yml --timeout=1 --extra-vars="{network_config: '
-    #+ str(host_interface_information) + '}"')
-    #stopDhcpService()
-
-    ## Create the /etc/hosts files
-    #logger.info("Building /etc/hosts files...")
-    #run_ansible_playbook(
-    #g1_path +
-    #'ansible/g1-etc-hosts.yml --timeout=1 --extra-vars="{nodeInfo: ' +
-    #str(nodeInfo) + ',domain_name: ' + str(domain_name) + '}"')
 
     logger.info("Initiating Gluster deployment...")
 
@@ -1095,12 +1091,12 @@ try:
         replica_peers = []
         for i in range(bricks_per_node):
             for node in hostnames:
-                #replica_peers += [{'node': node, 'brick': str(oem_id['flavor']['node']['backend_devices'][i])}]
                 replica_peers += [{
                     'node':
                     node,
                     'brick':
-                    '/gluster/bricks/%s' % str(backend_configuration[i]['thinLV'])
+                    '/gluster/bricks/%s' %
+                    str(backend_configuration[i]['thinLV'])
                 }]
 
         peer_set_num = 0
@@ -1151,6 +1147,7 @@ try:
             else:
                 peer_list_remain += group
 
+    #FIXME: Clean up this ugly mess
     # Build the ansible playbook arguments
     playbook_args = g1_path + 'ansible/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
         cache_devices
@@ -1177,25 +1174,30 @@ try:
     ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
     ) + '\'' + ',hacluster_password: \'' + str(
-        hacluster_password
-    ) + '\'' + ',default_volname: ' + str(
-        default_volname) + ',network_config: ' + str(
-            host_interface_information
-        ) + ',nodeInfo: ' + str(
-            nodeInfo
-        ) + ',storage_interface: ' + str(
-            storage_interface
-        ) + ',brand_distributor: ' + str(
-            brand_distributor
-        ) + ',brand_parent: ' + str(
-            brand_parent
-        ) + ',brand_project: ' + str(brand_project) + ',brand_short: ' + str(
-            brand_short
-        ) + ',readme_file: \'' + str(readme_file) + '\',mount_protocol: ' + str(
-            mount_protocol
-        ) + ',mount_host: ' + str(mount_host) + ',mount_opts: \'' + str(
-            mount_opts) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
-                    nodes_min) + ',nodes_deployed: ' + str(desiredNumOfNodes) + ',tuned_profile: ' + str(oem_id['flavor']['node']['tuned']) + ',gluster_vol_set: ' + str(oem_id['flavor']['node']['gluster_vol_set']) + ',root_password_hashed: ' + re.sub('\$', '\\\$', root_password_hashed)
+        hacluster_password) + '\'' + ',default_volname: ' + str(
+            default_volname) + ',network_config: ' + str(
+                host_interface_information
+            ) + ',nodeInfo: ' + str(nodeInfo) + ',storage_interface: ' + str(
+                storage_interface
+            ) + ',brand_distributor: ' + str(
+                brand_distributor
+            ) + ',brand_parent: ' + str(
+                brand_parent
+            ) + ',brand_project: ' + str(
+                brand_project
+            ) + ',brand_short: ' + str(brand_short) + ',readme_file: \'' + str(
+                readme_file) + '\',mount_protocol: ' + str(
+                    mount_protocol) + ',mount_host: ' + str(
+                        mount_host) + ',mount_opts: \'' + str(
+                            mount_opts
+                        ) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
+                            nodes_min) + ',nodes_deployed: ' + str(
+                                desiredNumOfNodes) + ',tuned_profile: ' + str(
+                                    oem_id['flavor']['node']['tuned']
+                                ) + ',gluster_vol_set: ' + str(
+                                    oem_id['flavor']['node']['gluster_vol_set']
+                                ) + ',root_password_hashed: ' + re.sub(
+                                    '\$', '\\\$', root_password_hashed)
 
     if 'peer_set' in globals():
         playbook_args += ',replica_peers: ' + str(peer_list_min)
@@ -1208,6 +1210,10 @@ try:
     playbook_args += ',arbiter: ' + str(arbiter)
 
     playbook_args += '}"'
+
+    # Run playbook to replace ansible user ssh keys
+    if new_ssh_keys:
+        run_ansible_playbook(g1_path + "/ansible/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
@@ -1226,14 +1232,31 @@ try:
 
     print "\r"
 
-    run_perf_tests = yes_no('Would you like to start the performance tests now? [Y/n] ', True)
+    run_perf_tests = yes_no(
+        'Would you like to start the performance tests now? [Y/n] ', True)
 
     print "\r\n"
 
     if run_perf_tests:
         logger.info("Beginning performance tests. Please be patient...")
-        run_ansible_playbook(g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(default_volname) + ',replica_peers: ' + str(peer_list_min) + ',arbiter: ' + str(arbiter) +'}"')
-        logger.info("Performance tests complete.")
+        playbook_args = g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(
+            default_volname
+        ) + ',hostnames: ' + str(hostnames) + ',arbiter: ' + str(
+            arbiter) + ',perf_jobfile: ' + str(
+                perf_jobfile) + ',perf_server_list: ' + str(
+                    perf_server_list) + ',perf_output : ' + str(perf_output)
+        if 'peer_set' in globals():
+            playbook_args += ',replica_peers: ' + str(peer_list_min)
+        playbook_args += '}"'
+        perf_tests_complete = run_ansible_playbook(
+            playbook_args, continue_on_fail=True)
+        if perf_tests_complete:
+            logger.info("Performance tests complete. Results at: %s" %
+                        str(perf_output))
+        else:
+            logger.warning(
+                "Performance tests failed. Please see log for more information."
+            )
     else:
         logger.warning("Performance tests skipped")
         #TODO: Add instructions for running the performance tests later
