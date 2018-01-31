@@ -23,6 +23,7 @@ flavor:
             features.cache-invalidation: on
             performance.cache-invalidation: on
             performance.stat-prefetch: on
+    volname: gluster1
     voltype: replica           #replica|disperse
     #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
     arbiter_size: 1            #<integer in GB>|None
