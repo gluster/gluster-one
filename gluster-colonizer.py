@@ -258,14 +258,14 @@ def host_command(command, shell=False):
     return proc_output
 
 
-def run_ansible_playbook(playbook):
+def run_ansible_playbook(playbook, continue_on_fail=False):
     # Function to run ansible playbooks
     FIFO = "/var/tmp/g1.pipe-" + "".join(random.sample(rand_filename_sample, rand_filename_len))
     try:
         os.mkfifo(FIFO)
     except OSError as oe:
         if oe.errno != errno.EEXIST:
-            abortSetup("Error crating FIFO")
+            abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
     playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
     if int(args.loglevel) == 10:
@@ -282,10 +282,17 @@ def run_ansible_playbook(playbook):
     os.unlink(FIFO)
     if returnVal.returncode != 0:
         logger.error("\n\nFailed to execute ansible playbook correctly!!")
-        logger.error("Find the stdout and stderr below...\n\n")
-        logger.error(stdout)
-        logger.error(stderr)
-        abortSetup("Ansible playbook error")
+        if not continue_on_fail:
+            logger.error("Find the stdout and stderr below...\n\n")
+            logger.error(stdout)
+            logger.error(stderr)
+            abortSetup("Ansible playbook error")
+        else:
+            logger.debug(stdout)
+            logger.debug(stderr)
+            logger.warning("Continuing deployment; please see logs for failure details.")
+            return False
+    return True
 
 
 def killDnsmasq():
