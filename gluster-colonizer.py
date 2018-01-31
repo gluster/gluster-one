@@ -989,10 +989,9 @@ try:
     print "\r\n"
 
     if new_ssh_keys:
-        run_ansible_playbook(g1_path + "/ansible/g1-key-dist.yml")
-        logger.info("SSH keys exchanged")
+        logger.info("New ansible user SSH keys will exchanged")
     else:
-        logger.warning("Existing ansible user SSH keys are being kept")
+        logger.warning("Existing ansible user SSH keys will be kept")
 
     # Reset root password
     print "\r\nThe default root password on your %s nodes must be reset." % brand_short
@@ -1216,6 +1215,10 @@ try:
     playbook_args += ',arbiter: ' + str(arbiter)
 
     playbook_args += '}"'
+
+    # Run playbook to replace ansible user ssh keys
+    if new_ssh_keys:
+        run_ansible_playbook(g1_path + "/ansible/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
