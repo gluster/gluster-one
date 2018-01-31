@@ -16,8 +16,8 @@
 #                         https://github.com/dustinblack                       *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
-#
-# Maintainer:           Dustin Black <dustin@redhat.com>
+#                                                                              *
+# Maintainer:           Dustin Black <dustin@redhat.com>                       *
 #                                                                              *
 #*******************************************************************************
 
@@ -503,16 +503,6 @@ def collectDeploymentInformation():
             dnsServerAddress.append(str(dns))
             if dns is '':
                 break
-
-    #TODO: Implement subscription registration
-    #print "\r\nNext we need to collect your RHN credentials."
-    #print "If you don't want to connect to Red Hat Network directly, just leave the user field blank."
-    #global rhnUser
-    #rhnUser = user_input("\r\n   RHN Username: ")
-    #if rhnUser != "":
-    #import getpass
-    #global rhnPassword
-    #rhnPassword = getpass.getpass("   RHN Password (will not show) :")
 
 
 def collectNodeInformation():
@@ -1052,21 +1042,6 @@ try:
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
 
-    ## Configure the static management and storage network assignments
-    #logger.info("Configuring storage network...")
-    #run_ansible_playbook(
-    #g1_path +
-    #'ansible/g1-prod-net.yml --timeout=1 --extra-vars="{network_config: '
-    #+ str(host_interface_information) + '}"')
-    #stopDhcpService()
-
-    ## Create the /etc/hosts files
-    #logger.info("Building /etc/hosts files...")
-    #run_ansible_playbook(
-    #g1_path +
-    #'ansible/g1-etc-hosts.yml --timeout=1 --extra-vars="{nodeInfo: ' +
-    #str(nodeInfo) + ',domain_name: ' + str(domain_name) + '}"')
-
     logger.info("Initiating Gluster deployment...")
 
     # Build the backend configuration dictionary from the OEMID file
@@ -1107,7 +1082,6 @@ try:
         replica_peers = []
         for i in range(bricks_per_node):
             for node in hostnames:
-                #replica_peers += [{'node': node, 'brick': str(oem_id['flavor']['node']['backend_devices'][i])}]
                 replica_peers += [{
                     'node':
                     node,
@@ -1163,6 +1137,7 @@ try:
             else:
                 peer_list_remain += group
 
+    #FIXME: Clean up this ugly mess
     # Build the ansible playbook arguments
     playbook_args = g1_path + 'ansible/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
         cache_devices
