@@ -989,7 +989,7 @@ try:
     print "\r\n"
 
     if new_ssh_keys:
-        logger.info("New ansible user SSH keys will exchanged")
+        logger.info("New ansible user SSH keys will be exchanged")
     else:
         logger.warning("Existing ansible user SSH keys will be kept")
 
