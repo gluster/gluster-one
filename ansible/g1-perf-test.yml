@@ -63,7 +63,7 @@
     - name: Start fio client request
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      shell: /bin/bash -c '/bin/fio --output={{ perf_output }} --client={{ perf_server_list }}{{ perf_jobfile }}'
+      shell: /bin/bash -c '/bin/fio --output={{ perf_output }} --client={{ perf_server_list }} {{ perf_jobfile }}'
 
       #- name: Analyze performance results
       #TODO
