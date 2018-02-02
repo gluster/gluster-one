@@ -135,6 +135,7 @@ default_volname = oem_id['flavor']['volname']
 consumed_ips = []
 readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
+playbook_path = g1_path + "ansible/"
 
 # Define management network info
 # We are confining to a maximum deployment set of 24 nodes.
@@ -329,8 +330,8 @@ def startDhcpService():
 
     print "\r\nThe default DHCP subnet is: %s" % str(mgmt_subnet)
     print "If you would prefer to choose another subnet for your"
-    print "management network, you may enter it below. Simply leave"
-    print "the field blank to accept the default.\r\n"
+    print "management network, you may enter it below. Simply press"
+    print "Enter to accept the default.\r\n"
 
     while True:
         input_string = user_input("   DHCP subnet [%s]: " % str(mgmt_subnet))
@@ -439,9 +440,9 @@ def collectDeploymentInformation():
 
     logger.debug("Deploying %i nodes" % int(desiredNumOfNodes))
 
-    print "\r\nWe will now configure the Gluster nodes for your storage network"
-    print "infrastructure. Please ensure that all cabling and switch"
-    print "configuration is complete before proceeding."
+    print "\r\nWe will now configure the Gluster nodes for your storage network."
+    print "Please ensure that all cabling and switch configuration is"
+    print "complete before proceeding."
 
     print "\r\nBe prepared to provide network information for all nodes in"
     print "your Gluster deployment, including:\r\n"
@@ -687,10 +688,10 @@ try:
     print "\r\nWelcome to the \033[31m%s %s\033[0m deployment tool!\r\n" % (
         brand_parent, brand_project)
 
-    print "This node will be configured as the deployment node for your"
+    print "This node will be configured as the deployment master for your"
     print "Gluster storage pool. Before proceeding, please ensure that"
-    print "all %s nodes are connected to the out-of-band" % brand_short
-    print "management network infrastructure and are booted.\r\n"
+    print "all %s nodes are connected to the management" % brand_short
+    print "network infrastructure and are booted.\r\n"
 
     yes_no('Do you wish to continue? [Y/n] ')
 
@@ -726,11 +727,11 @@ try:
     print "\r\n"
 
     # Set this node up as the deployment master
-    print "The deployment tool requires DHCP service on the management"
+    print "The Gluster colonizer requires DHCP service on the management"
     print "network. If the service is not already available on the"
-    print "management network, we can start a DHCP server on this node"
-    print "now. This local DHCP service will only operate for the duration"
-    print "of the deployment process.\r\n"
+    print "management network, we can start a temporary DHCP server on this"
+    print "node now. This local DHCP service will only operate for the"
+    print "duration of the deployment process.\r\n"
 
     start_dhcp = yes_no('Do you wish to start the DHCP service here? [Y/n] ',
                         True)
@@ -878,7 +879,8 @@ try:
     print "\033[31mNOTE: These hostnames and IP adresses are expected to remain"
     print "      static, so please choose your values carefully. If you"
     print "      choose automatic assignment, the deployment tool assumes"
-    print "      that there are no other devices on the storage network.\033[0m"
+    print "      that there are no other devices on the storage network"
+    print "      and that all IPs are available to use.\033[0m"
     print "\r\n"
 
     # User selects manual or automatic storage network detail assignment
@@ -927,9 +929,9 @@ try:
 
     print "\r\n"
 
-    print "Domain name: %s" % str(domain_name)
+    print "Domain name:  %s" % str(domain_name)
 
-    print "Storage network: %s" % str(storage_subnet)
+    print "Storage network:  %s" % str(storage_subnet)
 
     print "Default gateway: ",
     print str(gatewayAddress) if gatewayAddress is not "" else "skipped"
@@ -994,8 +996,8 @@ try:
 
     # Reset root password
     print "\r\nThe default root password on your %s nodes must be reset." % brand_short
-    print "\033[31mBe careful to select a secure password, and note that"
-    print "the passwords will be updated for the root user on all nodes.\033[0m\r\n"
+    print "\033[31mBe careful to select a secure password, and note that the"
+    print "password will be updated for the root user on all nodes.\033[0m\r\n"
 
     while True:
         # random password salt

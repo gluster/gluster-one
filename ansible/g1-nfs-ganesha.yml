@@ -1,5 +1,5 @@
 ---
-- shell: /bin/bash -c 'echo "Configuring services..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Configuring services..." > {{ fifo}}'
 
 - name: Stop kernel NFS
   service: name=nfs state=stopped
@@ -45,7 +45,7 @@
     state: restarted
   ignore_errors: yes
 
-- shell: /bin/bash -c 'echo "Enabling shared storage volume..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Enabling shared storage volume..." > {{ fifo}}'
 
 - name: Enable Gluster shared storage volume
   delegate_to: "{{ play_hosts[0] }}"
@@ -57,7 +57,7 @@
     value: enable
   ignore_errors: true
 
-- shell: /bin/bash -c 'echo "Authenticating HA cluster..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Authenticating HA cluster..." > {{ fifo}}'
 
 - name: Generate hacluster password
   run_once: true
@@ -87,7 +87,7 @@
 - name: Pause for a few seconds after pcs auth
   pause: seconds=3
 
-- shell: /bin/bash -c 'echo "Generating and distributing root SSH keys..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Generating and distributing root SSH keys..." > {{ fifo}}'
 
 - name: Generate ssh key in one of the nodes in HA cluster
   delegate_to: "{{ play_hosts[0] }}"
@@ -114,7 +114,7 @@
 - name: Deploy the pubkey ~/root/.ssh/authorized_keys on all nodes
   shell: 'cat /var/lib/glusterd/nfs/secret.pem.pub >> ~/.ssh/authorized_keys'
 
-- shell: /bin/bash -c 'echo "Creating NFS-Ganesha configuration..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Populating NFS-Ganesha configuration..." > {{ fifo}}'
 
 - name: Create configuration directory for nfs-ganesha
   delegate_to: "{{ play_hosts[0] }}"
@@ -144,7 +144,7 @@
     src: g1-ganesha-ha.j2
     dest: "{{ ha_base_dir }}/ganesha-ha.conf"
 
-- shell: /bin/bash -c 'echo "Enabling NFS-Ganesha..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Enabling NFS-Ganesha services..." > {{ fifo}}'
 
 - name: Enable nfs-ganesha
   delegate_to: "{{ play_hosts[0] }}"
