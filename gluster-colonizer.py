@@ -1281,6 +1281,8 @@ try:
 
     print("\r\n")
 
+    print "The above information is available in %s\r\n" % readme_file
+
 except (KeyboardInterrupt, EOFError):
     # Will catch Ctrl+C
     print "\r\n"
