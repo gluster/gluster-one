@@ -1175,7 +1175,7 @@ try:
 
     #FIXME: Clean up this ugly mess
     # Build the ansible playbook arguments
-    playbook_args = g1_path + 'ansible/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
+    playbook_args = playbook_path + '/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
         cache_devices
     ) + ',part_size: ' + str(cache_part_size) + ',hostnames: ' + str(
         hostnames
@@ -1239,7 +1239,7 @@ try:
 
     # Run playbook to replace ansible user ssh keys
     if new_ssh_keys:
-        run_ansible_playbook(g1_path + "/ansible/g1-key-dist.yml")
+        run_ansible_playbook(playbook_path + "/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
@@ -1265,7 +1265,7 @@ try:
 
     if run_perf_tests:
         logger.info("Beginning performance tests. Please be patient...")
-        playbook_args = g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(
+        playbook_args = playbook_path + '/g1-perf-test.yml --extra-vars="{default_volname: ' + str(
             default_volname
         ) + ',hostnames: ' + str(hostnames) + ',arbiter: ' + str(
             arbiter) + ',perf_jobfile: ' + str(
