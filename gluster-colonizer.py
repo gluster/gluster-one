@@ -507,6 +507,8 @@ def collectDeploymentInformation():
                 check_subnet=False)
             dnsServerAddress.append(str(dns))
             if dns is '':
+                if dnsnum is 1:
+                    dnsServerAddress.append('')
                 break
 
 
