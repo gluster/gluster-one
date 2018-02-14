@@ -461,7 +461,7 @@
 
     - include: g1-etc-hosts.yml
 
-    - shell: /bin/bash -c 'echo "Creating trusted storage pool..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     - name: Create a Trusted Storage Pool
       delegate_to: "{{ play_hosts[0] }}"
@@ -479,7 +479,7 @@
       pause:
         seconds: 5
 
-    - shell: /bin/bash -c 'echo "Creating Gluster volumes..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Creating default Gluster volume..." > {{ fifo }}'
 
     - name: Build brick path for non-arbitrated volumes
       delegate_to: "{{ play_hosts[0] }}"
@@ -580,7 +580,7 @@
     - set_fact:
         vol_info: "{{ result['stdout'] }}"
 
-    - shell: /bin/bash -c 'echo "Generating post-install instructions..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Generating post-install README..." > {{ fifo }}'
 
     - name: Create post-install instructions file
       template:
