@@ -746,6 +746,27 @@ try:
         logger.debug("Management subnet is %s" % mgmt_subnet)
     else:
         logger.info("Proceeding with external DHCP service")
+        print "\r\n"
+        logger.info("Detecting management subnet...")
+        #HERE
+        #TODO: This needs improvement to get rid of the shell approach
+        while True:
+            try:
+                p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
+                p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
+                p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
+                p1.stdout.close()
+                p2.stdout.close()
+                ip = IPNetwork(p3.communicate()[0])
+                mgmt_subnet = IPNetwork("%s/%s" % (ip.network, ip.prefixlen))
+                break
+            except:
+                logger.warning("Unable to detect management network")
+                logger.warning("Please ensure the DHCP service is available")
+                yes_no('Do you wish to attempt detection again? [Y/n] ')
+                print "\r\n"
+                continue
+        logger.info("Management subnet is %s" % mgmt_subnet)
 
     print "\r\n"
 
