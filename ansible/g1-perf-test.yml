@@ -1,5 +1,6 @@
 - hosts: all
   become: yes
+  any_errors_fatal: True
   gather_facts: False
   tasks:
     - shell: /bin/bash -c 'echo "Setting up performance tests..." > {{ fifo }}'

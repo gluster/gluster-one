@@ -1,5 +1,6 @@
 - hosts: gluster_nodes
   become: yes
+  any_errors_fatal: True
   vars:
     ha_base_dir: "/var/run/gluster/shared_storage/nfs-ganesha"
     ha_name: "gluster-ganesha-ha"
