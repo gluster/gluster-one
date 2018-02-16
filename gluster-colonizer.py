@@ -598,6 +598,7 @@ def collectNodeInformation():
             vip_list.append("VIP_%s.%s=\"%s\"" %
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name), str(vip)))
+        vip_list = natural_sort(vip_list)
 
     return host_interface_information
 
@@ -933,6 +934,7 @@ try:
     hostnames = []
     for node in sorted(nodeInfo):
         hostnames.append(str(nodeInfo[node]['hostname']))
+    hostnames = natural_sort(hostnames)
 
     logger.debug("Hostnames are %s" % str(hostnames))
 
