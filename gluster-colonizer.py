@@ -211,6 +211,11 @@ def yes_no(answer, do_return=False):
         else:
             print "Please enter either 'yes' or 'no'\r\n"
 
+def natural_sort(string):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(string, key = alphanum_key)
+
 
 def ipValidator(user_message,
                 null_valid=False,
@@ -1116,7 +1121,7 @@ try:
         bricks_per_node = len(oem_id['flavor']['node']['backend_devices'])
         replica_peers = []
         for i in range(bricks_per_node):
-            for node in hostnames:
+            for node in natural_sort(hostnames):
                 replica_peers += [{
                     'node':
                     node,
@@ -1147,7 +1152,7 @@ try:
                 # for number of nodes / number of replicas (2)
                 for host_group in range(len(hostnames) / 2):
                     pair = peer_set[peer_set_num]
-                    arbiter_node = hostnames[arbiter_counter]
+                    arbiter_node = natural_sort(hostnames)[arbiter_counter]
                     pair.append({
                         'node':
                         arbiter_node,
