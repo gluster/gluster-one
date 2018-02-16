@@ -794,7 +794,7 @@ try:
     #Possibly borrow from dnsmasq-lease-interpreter.py script
     #TODO: Check for if we found too many nodes
     node_search_timeout = 20  #attempts
-    counter = 0
+    counter = 1
     discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
         random.sample(rand_filename_sample, rand_filename_len))
     while (currentNumOfHosts) < desiredNumOfNodes:
@@ -837,7 +837,7 @@ try:
             sys.stdout.flush()
         time.sleep(1)
         counter += 1
-        if counter >= node_search_timeout:
+        if counter > node_search_timeout:
             abortSetup(
                 "Timeout searching for nodes. Ensure all nodes are online and connected."
             )
