@@ -464,7 +464,7 @@
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     - name: Create a Trusted Storage Pool
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: 127.0.0.1
       run_once: true
       peer:
         action: probe
@@ -482,7 +482,7 @@
     - shell: /bin/bash -c 'echo "Creating default Gluster volume..." > {{ fifo }}'
 
     - name: Build brick path for non-arbitrated volumes
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: 127.0.0.1
       run_once: true
       set_fact:
         brickstring_fuse: "{{ brickstring_fuse | default('') }},{{ item.1 }}:{{ item.0['path'] }}/{{ default_volname }}"
@@ -492,7 +492,7 @@
       when: arbiter != True
 
     - name: Build brick path for arbitrated volumes
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: 127.0.0.1
       run_once: true
       set_fact:
         brickstring_fuse: "{{ brickstring_fuse | default('') }},{{ item['node'] }}:{{ item['brick'] }}/{{ default_volname }}"
@@ -504,7 +504,7 @@
     - debug: var=brickstring_smb verbosity=2
       
     - name: Create Gluster volume for FUSE
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: 127.0.0.1
       run_once: true
       volume:  
         action:         create
@@ -528,7 +528,7 @@
       shell: tuned-adm profile {{ tuned_profile }}
 
     - name: Set gluster volume parameters
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: 127.0.0.1
       run_once: true
       volume_set:
         action: set
@@ -546,7 +546,7 @@
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 
     - name: Starts a volume
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: 127.0.0.1
       run_once: true
       volume: 
         action: start
