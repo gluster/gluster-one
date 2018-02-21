@@ -27,6 +27,12 @@
 - name: Enable pcsd service
   service: name=pcsd enabled=yes
 
+- name: Enable glusterfssharedstorage service
+  service: name=glusterfssharedstorage enabled=yes
+
+- name: Enable nfs-ganesha service
+  service: name=nfs-ganesha enabled=yes
+
 - name: Define service port
   lineinfile:
     dest: /etc/sysconfig/nfs
@@ -127,12 +133,6 @@
   delegate_to: 127.0.0.1
   run_once: true
   shell: 'cp -rf /etc/ganesha/* "{{ ha_base_dir }}"'
-
-- name: Enable glusterfssharedstorage service
-  service: name=glusterfssharedstorage enabled=yes
-
-- name: Enable nfs-ganesha service
-  service: name=nfs-ganesha enabled=yes
 
 - name: Create VIP entries variable for ganesha-ha.conf
   delegate_to: 127.0.0.1
