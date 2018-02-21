@@ -27,6 +27,9 @@
 - name: Enable pcsd service
   service: name=pcsd enabled=yes
 
+- name: Enable pacemaker service
+  service: name=pacemaker enabled=yes
+
 - name: Enable glusterfssharedstorage service
   service: name=glusterfssharedstorage enabled=yes
 
@@ -181,9 +184,6 @@
 - name: Report NFS Ganesha status (If any errors)
   debug: msg={{ result.stderr }} verbosity=0
   when: result.stderr != ""
-
-- name: Enable pacemaker service
-  service: name=pacemaker enabled=yes
 
 - name: Export default volume with NFS-Ganesha
   delegate_to: 127.0.0.1
