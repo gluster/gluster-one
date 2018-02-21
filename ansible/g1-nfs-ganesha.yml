@@ -2,10 +2,10 @@
 - shell: /bin/bash -c 'echo "  Configuring services..." > {{ fifo}}'
 
 - name: Stop kernel NFS
-  service: name=nfs state=stopped
+  service: name=nfs-server state=stopped
 
 - name: Disable kernel NFS
-  service: name=nfs enabled=no
+  service: name=nfs-server enabled=no
 
 - name: Stop network manager service
   service: name=NetworkManager state=stopped
