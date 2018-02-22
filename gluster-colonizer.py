@@ -195,10 +195,14 @@ def user_input(msg):
     return keyin
 
 
-def yes_no(answer, do_return=False):
+def yes_no(answer, do_return=False, default='yes'):
     # Simple yes/no prompt function
-    yes = set(['yes', 'y', 'ye', ''])
+    yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
+    if default is 'no':
+        no.add('')
+    else:
+        yes.add('')
     while True:
         choice = user_input(answer).lower()
         if choice in yes:
@@ -465,7 +469,7 @@ def collectDeploymentInformation():
 
     # Get global network information from user
     while True:
-        input_string = user_input("   Domain name: ")
+        input_string = user_input("   Storage network domain name: ")
         global domain_name
         domain_name = input_string.lower()
         # regular expression to validate domain name based on RFCs
@@ -741,8 +745,8 @@ try:
     print "node now. This local DHCP service will only operate for the"
     print "duration of the deployment process.\r\n"
 
-    start_dhcp = yes_no('Do you wish to start the DHCP service here? [Y/n] ',
-                        True)
+    start_dhcp = yes_no('Do you wish to start the DHCP service here? [y/N] ',
+                        do_return=True, default='no')
 
     print "\r\n"
 

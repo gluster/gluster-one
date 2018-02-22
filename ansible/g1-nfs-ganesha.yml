@@ -2,10 +2,10 @@
 - shell: /bin/bash -c 'echo "  Configuring services..." > {{ fifo}}'
 
 - name: Stop kernel NFS
-  service: name=nfs state=stopped
+  service: name=nfs-server state=stopped
 
 - name: Disable kernel NFS
-  service: name=nfs enabled=no
+  service: name=nfs-server enabled=no
 
 - name: Stop network manager service
   service: name=NetworkManager state=stopped
@@ -26,6 +26,15 @@
 
 - name: Enable pcsd service
   service: name=pcsd enabled=yes
+
+- name: Enable pacemaker service
+  service: name=pacemaker enabled=yes
+
+- name: Enable glusterfssharedstorage service
+  service: name=glusterfssharedstorage enabled=yes
+
+- name: Enable nfs-ganesha service
+  service: name=nfs-ganesha enabled=yes
 
 - name: Define service port
   lineinfile:
@@ -176,8 +185,8 @@
   debug: msg={{ result.stderr }} verbosity=0
   when: result.stderr != ""
 
-- name: Enable pacemaker service
-  service: name=pacemaker enabled=yes
+- name: Start nfs-ganesha service
+  service: name=nfs-ganesha state=started
 
 - name: Export default volume with NFS-Ganesha
   delegate_to: 127.0.0.1
