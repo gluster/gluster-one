@@ -185,6 +185,9 @@
   debug: msg={{ result.stderr }} verbosity=0
   when: result.stderr != ""
 
+- name: Start nfs-ganesha service
+  service: name=nfs-ganesha state=started
+
 - name: Export default volume with NFS-Ganesha
   delegate_to: 127.0.0.1
   run_once: true
