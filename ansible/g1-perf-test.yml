@@ -7,7 +7,7 @@
 
     - name: Mount default Gluster volume
       mount:
-        path: /mnt
+        path: /mnt/g1-fuse-temp
         src: "{{ play_hosts[0] }}:{{ default_volname }}"
         fstype: glusterfs
         opts: _netdev
@@ -17,7 +17,7 @@
       delegate_to: 127.0.0.1
       run_once: true
       file:
-        dest: /mnt/fio
+        dest: /mnt/g1-fuse-temp/fio
         mode: 0777
         state: directory
 
@@ -84,13 +84,18 @@
       delegate_to: 127.0.0.1
       run_once: true
       file:
-        dest: /mnt/fio
+        dest: /mnt/g1-fuse-temp/fio
         state: absent
  
     - name: Unmount Gluster default volume
       mount:
-        path: /mnt
+        path: /mnt/g1-fuse-temp
         state: unmounted
+ 
+    - name: Remove default volume fstab entry
+      mount:
+        path: /mnt/g1-fuse-temp
+        state: absent
 
     - name: Close fio server firewall ports
       firewalld:
