@@ -461,6 +461,8 @@
 
     - include: g1-etc-hosts.yml
 
+    - include: g1-ntp.yml
+
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     - name: Create a Trusted Storage Pool

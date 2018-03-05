@@ -521,6 +521,35 @@ def collectDeploymentInformation():
                     dnsServerAddress.append('')
                 break
 
+    print "\r\nNTP will be configured for time synchronization. You may enter"
+    print "up to four NTP servers below. If you would prefer to use the RHEL"
+    print "public NTP servers, simply press Enter at the first prompt and the"
+    print "default servers will be applied.\r\n"
+
+    print "NOTE: Using the default public NTP servers requires that all of the"
+    print "      %s nodes have access to the Internet\r\n" % brand_short
+
+    global ntpServers
+    ntpServers = []
+
+    #TODO: Add data validation
+    for i in range(4):
+        if i is 0:
+            ntpInput = user_input("NTP Server %i (press Enter to accept defaults): " % int(i+1))
+        else:
+            ntpInput = user_input("NTP Server %i: " % int(i+1))
+        if ntpInput is '':
+            break
+        else:
+            ntpServers.append(ntpInput)
+            logger.debug("NTP server %i is %s" % (int(i+1), str(ntpInput)))
+
+    if not ntpServers:
+        logger.debug("NTP servers not defined; using defaults")
+        update_ntp = False
+    else:
+        update_ntp = True
+
 
 def collectNodeInformation():
     logger.debug("Manually assigning node info...")
@@ -1245,6 +1274,10 @@ try:
     else:
         arbiter = False
     playbook_args += ',arbiter: ' + str(arbiter)
+
+    playbook_args += ',update_ntp: ' + str(update_ntp)
+    if update_ntp:
+        playbook_args += ',ntpServers: ' + str(ntpServers)
 
     playbook_args += '}"'
 
