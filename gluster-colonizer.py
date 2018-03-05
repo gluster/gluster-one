@@ -530,6 +530,7 @@ def collectDeploymentInformation():
     print "      %s nodes have access to the Internet\r\n" % brand_short
 
     global ntpServers
+    global update_ntp
     ntpServers = []
 
     #TODO: Add data validation
@@ -787,7 +788,6 @@ try:
         logger.info("Proceeding with external DHCP service")
         print "\r\n"
         logger.info("Detecting management subnet...")
-        #HERE
         #TODO: This needs improvement to get rid of the shell approach
         while True:
             try:
@@ -1005,6 +1005,14 @@ try:
         print str(dnsServerAddress[int(
             i - 1)]) if dnsServerAddress and dnsServerAddress[int(
                 i - 1)] is not "" else "skipped"
+
+    print "\r"
+
+    if not ntpServers:
+        print "NTP: Using default public servers"
+    else:
+        for i, ntp in enumerate(ntpServers):
+            print "NTP %i: %s" %(int(i+1), str(ntp))
 
     print "\r"
 
