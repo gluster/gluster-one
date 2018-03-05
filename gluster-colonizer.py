@@ -521,6 +521,49 @@ def collectDeploymentInformation():
                     dnsServerAddress.append('')
                 break
 
+    print "\r\nNTP will be configured for time synchronization. You may enter"
+    print "up to four NTP servers below. If you would prefer to use the RHEL"
+    print "public NTP servers, simply press Enter at the first prompt and the"
+    print "default servers will be applied.\r\n"
+
+    print "NOTE: Using the default public NTP servers requires that all of the"
+    print "      %s nodes have access to the Internet\r\n" % brand_short
+
+    global ntpServers
+    global update_ntp
+    ntpServers = []
+
+    #TODO: Add data validation
+    for i in range(4):
+        inputMessage = "   NTP Server %i" % int(i+1)
+        if i is 0:
+            inputMessage += " (press Enter to accept defaults)"
+        inputMessage += ": "
+        while True:
+            ntpInput = user_input(inputMessage)
+            fqdn_or_ip_check = re.compile(
+                    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+            )
+            isvalid = fqdn_or_ip_check.match(ntpInput)
+            if isvalid is not None or ntpInput is '':
+                break
+            else:
+                logger.warning("NTP server must be a hostname or IP address")
+                continue
+
+        if ntpInput is '':
+            break
+        else:
+            ntpServers.append(ntpInput)
+            logger.debug("NTP server %i is %s" % (int(i+1), str(ntpInput)))
+
+
+    if not ntpServers:
+        logger.debug("NTP servers not defined; using defaults")
+        update_ntp = False
+    else:
+        update_ntp = True
+
 
 def collectNodeInformation():
     logger.debug("Manually assigning node info...")
@@ -758,7 +801,6 @@ try:
         logger.info("Proceeding with external DHCP service")
         print "\r\n"
         logger.info("Detecting management subnet...")
-        #HERE
         #TODO: This needs improvement to get rid of the shell approach
         while True:
             try:
@@ -976,6 +1018,14 @@ try:
         print str(dnsServerAddress[int(
             i - 1)]) if dnsServerAddress and dnsServerAddress[int(
                 i - 1)] is not "" else "skipped"
+
+    print "\r"
+
+    if not ntpServers:
+        print "NTP: Using default public servers"
+    else:
+        for i, ntp in enumerate(ntpServers):
+            print "NTP %i: %s" %(int(i+1), str(ntp))
 
     print "\r"
 
@@ -1245,6 +1295,10 @@ try:
     else:
         arbiter = False
     playbook_args += ',arbiter: ' + str(arbiter)
+
+    playbook_args += ',update_ntp: ' + str(update_ntp)
+    if update_ntp:
+        playbook_args += ',ntpServers: ' + str(ntpServers)
 
     playbook_args += '}"'
 
