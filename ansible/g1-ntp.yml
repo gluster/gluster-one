@@ -6,12 +6,10 @@
     state: stopped
 
 - name: Disable public NTP servers
-  lineinfile:
+  replace:
     dest: /etc/ntp.conf
     regexp: '^(server.*)'
-    line: '#\1'
-    backrefs: yes
-    state: present
+    replace: '#\1'
   when: update_ntp == True
 
 - name: Add custom NTP servers
