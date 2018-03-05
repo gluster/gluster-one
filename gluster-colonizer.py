@@ -535,15 +535,28 @@ def collectDeploymentInformation():
 
     #TODO: Add data validation
     for i in range(4):
+        inputMessage = "NTP Server %i" % int(i+1)
         if i is 0:
-            ntpInput = user_input("NTP Server %i (press Enter to accept defaults): " % int(i+1))
-        else:
-            ntpInput = user_input("NTP Server %i: " % int(i+1))
+            inputMessage += " (press Enter to accept defaults)"
+        inputMessage += ": "
+        while True:
+            ntpInput = user_input(inputMessage)
+            fqdn_or_ip_check = re.compile(
+                    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+            )
+            isvalid = fqdn_or_ip_check(ntpInput)
+            if isvalid is not None or ntpInput is '':
+                break
+            else:
+                logger.warning("NTP server must be a hostname or IP address")
+                continue
+
         if ntpInput is '':
             break
         else:
             ntpServers.append(ntpInput)
             logger.debug("NTP server %i is %s" % (int(i+1), str(ntpInput)))
+
 
     if not ntpServers:
         logger.debug("NTP servers not defined; using defaults")
