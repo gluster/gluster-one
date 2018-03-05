@@ -535,7 +535,7 @@ def collectDeploymentInformation():
 
     #TODO: Add data validation
     for i in range(4):
-        inputMessage = "NTP Server %i" % int(i+1)
+        inputMessage = "   NTP Server %i" % int(i+1)
         if i is 0:
             inputMessage += " (press Enter to accept defaults)"
         inputMessage += ": "
