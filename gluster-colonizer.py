@@ -544,7 +544,7 @@ def collectDeploymentInformation():
             fqdn_or_ip_check = re.compile(
                     "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
             )
-            isvalid = fqdn_or_ip_check(ntpInput)
+            isvalid = fqdn_or_ip_check.match(ntpInput)
             if isvalid is not None or ntpInput is '':
                 break
             else:
