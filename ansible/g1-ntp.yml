@@ -1,32 +1,32 @@
-- shell: /bin/bash -c 'echo "Configuring NTP..." > {{ fifo }}'
+- shell: /bin/bash -c 'echo "Configuring chrony NTP..." > {{ fifo }}'
 
-- name: Stop NTP Service
+- name: Stop chronyd Service
   service:
-    name: ntpd
+    name: chronyd
     state: stopped
 
 - name: Disable public NTP servers
   replace:
-    dest: /etc/ntp.conf
+    dest: /etc/chrony.conf
     regexp: '^(server.*)'
     replace: '#\1'
   when: update_ntp == True
 
 - name: Add custom NTP servers
   lineinfile:
-    dest: /etc/ntp.conf
+    dest: /etc/chrony.conf
     insertafter: '^#server'
     line: 'server {{ item }} iburst'
     state: present
   with_items: '{{ ntpServers }}'
   when: update_ntp == True
 
-- name: Start NTP Service
+- name: Start chronyd Service
   service:
-    name: ntpd
+    name: chronyd
     state: started
 
-- name: Enable NTP Service
+- name: Enable chronyd Service
   service:
-    name: ntpd
+    name: chronyd
     enabled: yes
