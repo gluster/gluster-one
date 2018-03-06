@@ -1,0 +1,28 @@
+# Colonizer example flavor ID file for KVM (test lab) deployment
+
+flavor:
+    name: General-Purpose NAS
+    g1_path: /usr/share/gluster-colonizer/
+    node:
+        name: HPE Apollo Gen9
+        verify_file_name: verify-hpe-apollo-gen9.yml
+        mgmt_interface: eno1
+        storage_interface: bond0
+        backend_devices:
+          - /dev/sdc
+        cache_devices:
+          - /dev/nvme0n1
+        disktype: RAID
+        diskcount: 10
+        dalign: 256
+        tuned: rhgs-random-io
+        gluster_vol_set:
+            server.event-threads: 4
+            client.event-threads: 4
+            cluster.lookup-optimize: on
+            features.cache-invalidation: on
+            performance.cache-invalidation: on
+            performance.stat-prefetch: on
+    volname: gluster1
+    voltype: replica
+    arbiter_size: 1

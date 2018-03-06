@@ -1,0 +1,56 @@
+# Colonizer example verify ID file for KVM/QEMU (test lab) deployment
+#
+- hosts: all
+  become: yes
+  vars:
+    required_disks:
+      sdb:
+        host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
+        model: "LOGICAL VOLUME"
+        vendor: "HP"
+        size: "9.10 TB"
+      sdc:
+        host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
+        model: "LOGICAL VOLUME"
+        vendor: "HP"
+        size: "9.10 TB"
+      nvme0n1:
+        host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)" 
+        model: "MT0800KEXUU"
+        vendor: null
+        size: "745.21 GB"
+      nvme1n1:
+        host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
+        model: "MT0800KEXUU"
+        vendor: null
+        size: "745.21 GB"
+
+  tasks:
+    - assert:
+        that: 
+          - ansible_processor_vcpus == 40
+          - ansible_product_name == "ProLiant XL420 Gen9"
+          - ansible_memtotal_mb >= 64000
+          - ansible_architecture == 'x86_64'
+          - ansible_system_vendor == 'HP'
+          - ansible_distribution == 'RedHat'
+          - ansible_distribution_major_version == '7'
+
+    - name: check if disk sizes and naming is as expected
+      with_items: "{{ required_disks.keys()  }}"
+      assert:
+        that:
+          - ansible_devices[item]['host'] == required_disks[item]['host']
+          - ansible_devices[item]['model'] == required_disks[item]['model']
+          - ansible_devices[item]['vendor'] == required_disks[item]['vendor']
+          - ansible_devices[item]['size'] == required_disks[item]['size']
+
+    # Depends on presence of package python-dnf
+    - name: Install dependency for ansible selinux management
+      package:
+        name: libselinux-python.x86_64
+        state: present
+
+    - selinux:
+        policy: targeted
+        state: enforcing
