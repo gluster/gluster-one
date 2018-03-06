@@ -1,5 +1,6 @@
 - hosts: gluster_nodes
   become: yes
+  any_errors_fatal: True
   vars:
     ha_base_dir: "/var/run/gluster/shared_storage/nfs-ganesha"
     ha_name: "gluster-ganesha-ha"
@@ -81,11 +82,19 @@
         - ['absent', 'unmounted']
       when: arbiter == True
 
-    - name: Deactivate VGs
-      shell: /bin/bash -c 'vgchange -a n --activationmode partial {{ item.vg }}'
+    - name: Cleanup data devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
       with_items: "{{ backend_configuration }}"
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+
+    - name: Cleanup cache devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
+      with_items: "{{ cache_devices }}"
+
+      #- name: Deactivate VGs
+      #shell: /bin/bash -c 'vgchange -a n --activationmode partial {{ item.vg }}'
+      #with_items: "{{ backend_configuration }}"
+      #register: result
+      #failed_when: "result.rc != 0 and 'not found' not in result.stderr"
 
     - name: Clear LVM
       lvg:
@@ -118,14 +127,6 @@
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
-
-    - name: Final cleanup of data devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
-      with_items: "{{ backend_configuration }}"
-
-    - name: Final cleanup of cache devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items: "{{ cache_devices }}"
 
     - shell: /bin/bash -c 'echo "Creating LVM structures..." > {{ fifo }}'
 
@@ -460,7 +461,9 @@
 
     - include: g1-etc-hosts.yml
 
-    - shell: /bin/bash -c 'echo "Creating trusted storage pool..." > {{ fifo }}'
+    - include: g1-ntp.yml
+
+    - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     - name: Create a Trusted Storage Pool
       delegate_to: "{{ play_hosts[0] }}"
@@ -478,7 +481,7 @@
       pause:
         seconds: 5
 
-    - shell: /bin/bash -c 'echo "Creating Gluster volumes..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Creating default Gluster volume..." > {{ fifo }}'
 
     - name: Build brick path for non-arbitrated volumes
       delegate_to: "{{ play_hosts[0] }}"
@@ -579,7 +582,7 @@
     - set_fact:
         vol_info: "{{ result['stdout'] }}"
 
-    - shell: /bin/bash -c 'echo "Generating post-install instructions..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Generating post-install README..." > {{ fifo }}'
 
     - name: Create post-install instructions file
       template:

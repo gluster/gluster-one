@@ -1,0 +1,32 @@
+- shell: /bin/bash -c 'echo "Configuring NTP..." > {{ fifo }}'
+
+- name: Stop NTP Service
+  service:
+    name: ntpd
+    state: stopped
+
+- name: Disable public NTP servers
+  replace:
+    dest: /etc/ntp.conf
+    regexp: '^(server.*)'
+    replace: '#\1'
+  when: update_ntp == True
+
+- name: Add custom NTP servers
+  lineinfile:
+    dest: /etc/ntp.conf
+    insertafter: '^#server'
+    line: 'server {{ item }} iburst'
+    state: present
+  with_items: '{{ ntpServers }}'
+  when: update_ntp == True
+
+- name: Start NTP Service
+  service:
+    name: ntpd
+    state: started
+
+- name: Enable NTP Service
+  service:
+    name: ntpd
+    enabled: yes

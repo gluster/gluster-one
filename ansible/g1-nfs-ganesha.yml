@@ -1,11 +1,11 @@
 ---
-- shell: /bin/bash -c 'echo "Configuring services..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Configuring services..." > {{ fifo}}'
 
 - name: Stop kernel NFS
-  service: name=nfs state=stopped
+  service: name=nfs-server state=stopped
 
 - name: Disable kernel NFS
-  service: name=nfs enabled=no
+  service: name=nfs-server enabled=no
 
 - name: Stop network manager service
   service: name=NetworkManager state=stopped
@@ -27,6 +27,15 @@
 - name: Enable pcsd service
   service: name=pcsd enabled=yes
 
+- name: Enable pacemaker service
+  service: name=pacemaker enabled=yes
+
+- name: Enable glusterfssharedstorage service
+  service: name=glusterfssharedstorage enabled=yes
+
+- name: Enable nfs-ganesha service
+  service: name=nfs-ganesha enabled=yes
+
 - name: Define service port
   lineinfile:
     dest: /etc/sysconfig/nfs
@@ -45,10 +54,10 @@
     state: restarted
   ignore_errors: yes
 
-- shell: /bin/bash -c 'echo "Enabling shared storage volume..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Enabling shared storage volume..." > {{ fifo}}'
 
 - name: Enable Gluster shared storage volume
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   volume_set:
     action: set
@@ -57,7 +66,7 @@
     value: enable
   ignore_errors: true
 
-- shell: /bin/bash -c 'echo "Authenticating HA cluster..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Authenticating HA cluster..." > {{ fifo}}'
 
 - name: Generate hacluster password
   run_once: true
@@ -72,13 +81,13 @@
     password: "{{ hacluster_password | password_hash('sha512') }}"
 
 - name: Build host list for pcs cluster auth
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   set_fact:
     pcs_hosts: "{{ ha_cluster_nodes.split(',') | join(' ') }}"
 
 - name: Pcs cluster authenticate the hacluster users in all the nodes
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   no_log: true
   shell: "echo '{{ hacluster_password }}' | pcs cluster auth -u hacluster {{ pcs_hosts }}"
@@ -87,10 +96,10 @@
 - name: Pause for a few seconds after pcs auth
   pause: seconds=3
 
-- shell: /bin/bash -c 'echo "Generating and distributing root SSH keys..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Generating and distributing root SSH keys..." > {{ fifo}}'
 
 - name: Generate ssh key in one of the nodes in HA cluster
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   shell: echo -e  'y\n'|ssh-keygen -q -t rsa -N "" -f /var/lib/glusterd/nfs/secret.pem
 
@@ -114,22 +123,22 @@
 - name: Deploy the pubkey ~/root/.ssh/authorized_keys on all nodes
   shell: 'cat /var/lib/glusterd/nfs/secret.pem.pub >> ~/.ssh/authorized_keys'
 
-- shell: /bin/bash -c 'echo "Creating NFS-Ganesha configuration..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Populating NFS-Ganesha configuration..." > {{ fifo}}'
 
 - name: Create configuration directory for nfs-ganesha
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   file:
     path: "{{ ha_base_dir }}"
     state: directory
 
 - name: Copy ganesha.conf to config directory on shared volume
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   shell: 'cp -rf /etc/ganesha/* "{{ ha_base_dir }}"'
 
 - name: Create VIP entries variable for ganesha-ha.conf
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   set_fact:
     vip_entries: |
@@ -138,16 +147,16 @@
   with_items: "{{ vip_list }}"
 
 - name: Creating ganesha-ha.conf file
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   template:
     src: g1-ganesha-ha.j2
     dest: "{{ ha_base_dir }}/ganesha-ha.conf"
 
-- shell: /bin/bash -c 'echo "Enabling NFS-Ganesha..." > {{ fifo}}'
+- shell: /bin/bash -c 'echo "  Enabling NFS-Ganesha services..." > {{ fifo}}'
 
 - name: Enable nfs-ganesha
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   shell: gluster nfs-ganesha enable --mode=script
   register: result
@@ -161,7 +170,7 @@
   pause: seconds=30
 
 - name: Check NFS Ganesha status
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   shell: /usr/libexec/ganesha/ganesha-ha.sh --status "{{ ha_base_dir}}" | \
          grep 'Cluster HA Status'
@@ -176,11 +185,11 @@
   debug: msg={{ result.stderr }} verbosity=0
   when: result.stderr != ""
 
-- name: Enable pacemaker service
-  service: name=pacemaker enabled=yes
+- name: Start nfs-ganesha service
+  service: name=nfs-ganesha state=started
 
 - name: Export default volume with NFS-Ganesha
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   volume_set:
     action: set
