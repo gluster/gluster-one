@@ -128,10 +128,24 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+    - name: gather all device mapper entries
+      shell: dmsetup ls
+      register: dmsetup_ls_cmd
+
+    - name: search for all remaining device mapper entries that belong to us
+      set_fact:
+        dm_entries: |
+            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
+
+    - name: Remove any residual device mapper entries
+      shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
+      when: item != ''
+      with_items: "{{ dm_entries }}"
+
     - shell: /bin/bash -c 'echo "Creating LVM structures..." > {{ fifo }}'
 
     - name: Create data volume groups
-      vg: 
+      vg:
         action: create
         disks: "{{ item.device }}"
         vgname: "{{ item.vg }}"
@@ -146,7 +160,7 @@
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
     - name: Create data thin pools
-      lvol: 
+      lvol:
         vg: "{{ item.vg }}"
         lv: "{{ item.tp }}"
         size: "100%FREE"
@@ -210,7 +224,7 @@
     - name: Calculate cache partition sizes
       set_fact:
         cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices }}"
-    
+
     - name: Define partition incrementer
       set_fact:
         part_incr: 1
@@ -234,7 +248,7 @@
         - "{{ backend_configuration }}"
 
     - name: Create fast volume groups, initially only with arbiter PVs
-      vg: 
+      vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
         disks: "{{ item[0] }}p1"
@@ -382,7 +396,7 @@
 
     - name: Create the arbiter brick mount points, skips if present
       file: path={{ item.0.path }} state=directory
-      with_nested: 
+      with_nested:
         - "{{ arbiter_mntpaths }}"
         - "{{ backend_configuration }}"
       when: arbiter == True
@@ -406,7 +420,7 @@
 
     - name: Set the arbiter mount SELinux context
       file: path={{ item.0.path }} setype=glusterd_brick_t
-      with_nested: 
+      with_nested:
         - "{{ arbiter_mntpaths }}"
         - "{{ backend_configuration }}"
       when: arbiter == True
@@ -437,7 +451,7 @@
         - mountd
         - nlm
         - rquota
-          
+
     - name: Open firewalld ports for glusterfs
       firewalld:
         port: "{{ item }}"
@@ -504,11 +518,11 @@
     - debug: var=brickstring_fuse verbosity=2
     - debug: var=brickstring_nfs verbosity=2
     - debug: var=brickstring_smb verbosity=2
-      
+
     - name: Create Gluster volume for FUSE
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      volume:  
+      volume:
         action:         create
         volume:         "{{ default_volname }}"
         bricks:         "{{ brickstring_fuse }}"
@@ -550,7 +564,7 @@
     - name: Starts a volume
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      volume: 
+      volume:
         action: start
         volume: "{{ item }}"
         force: "{{ force | default(False) }}"
