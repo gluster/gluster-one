@@ -538,6 +538,8 @@ def collectDeploymentInformation():
         inputMessage = "   NTP Server %i" % int(i+1)
         if i is 0:
             inputMessage += " (press Enter to accept defaults)"
+        else:
+            inputMessage += " (optional)"
         inputMessage += ": "
         while True:
             ntpInput = user_input(inputMessage)
