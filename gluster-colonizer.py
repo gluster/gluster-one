@@ -977,6 +977,22 @@ try:
 
         run_ansible_playbook_interactively(g1_path + 'oemid/' + bootstrapFileName)
 
+    # === PHASE 2 ===
+    # NOTE: Validate all nodes against the OEMID file
+
+    print "\r\n"
+    logger.info("Begin %s validation phase" % brand_short)
+    print "\r\n"
+
+    # Check each node against expectations in OEMID file
+    logger.info("Comparing nodes to expected configurations...")
+    run_ansible_playbook(g1_path + 'oemid/' +
+                         oem_id['flavor']['node']['verify_file_name'])
+    logger.info("All node validations passed")
+
+    # === PHASE 3 ===
+    # NOTE: Capture essential configuration information
+
     print "\r\nPlease choose the client access method you will use for the"
     print "default storage volume. This applies only to the volume that is"
     print "automatically created during deployment, and the method can be"
@@ -1180,20 +1196,7 @@ try:
             print "Passwords do not match!\r\n"
             continue
 
-    # === PHASE 2 ===
-    # NOTE: Validate all nodes against the OEMID file
-
-    print "\r\n"
-    logger.info("Begin %s validation phase" % brand_short)
-    print "\r\n"
-
-    # Check each node against expectations in OEMID file
-    logger.info("Comparing nodes to expected configurations...")
-    run_ansible_playbook(g1_path + 'oemid/' +
-                         oem_id['flavor']['node']['verify_file_name'])
-    logger.info("All node validations passed")
-
-    # === PHASE 3 ===
+    # === PHASE 5 ===
     # NOTE: Initiate deployment
 
     print "\r\n"
