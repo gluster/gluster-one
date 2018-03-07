@@ -992,7 +992,7 @@ try:
             if i != 0:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
-                hostnames[i]) + '.' + str(domain_name)
+                hostnames[i])
         # Generate random hacluster password
         s = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
         passlen = 20
