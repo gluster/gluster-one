@@ -979,7 +979,7 @@ try:
     # Add all hostnames to a list for peer probing and building the brick string
     hostnames = []
     for node in sorted(nodeInfo):
-        hostnames.append(str(nodeInfo[node]['hostname']))
+        hostnames.append(str(nodeInfo[node]['hostname']) + '.' + str(domain_name))
     hostnames = natural_sort(hostnames)
 
     logger.debug("Hostnames are %s" % str(hostnames))
