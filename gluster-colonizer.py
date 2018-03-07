@@ -964,19 +964,6 @@ try:
     logger.info("Inventory complete.")
     logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
 
-    # the nodes need bootstrapping before they can be used
-    if needsBootstrapping:
-        bootstrapFileName = oem_id['flavor']['node']['bootstrap_file_name']
-
-        if not os.path.isfile(bootstrapFileName):
-            abortSetup(("Bootstrap file %s not found." % oem_id['flavor']['node']['bootstrap_file_name']))
-
-        print "Bootstrapping nodes..."
-
-        logger.info("Running bootstrap playbook %s" % bootstrapFileName)
-
-        run_ansible_playbook_interactively(g1_path + 'oemid/' + bootstrapFileName)
-
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
 
@@ -991,6 +978,22 @@ try:
     logger.info("All node validations passed")
 
     # === PHASE 3 ===
+    # NOTE: Bootstrap the nodes if required.
+
+    if needsBootstrapping:
+        bootstrapFileName = oem_id['flavor']['node']['bootstrap_file_name']
+
+        if not os.path.isfile(bootstrapFileName):
+            abortSetup(("Bootstrap file %s not found." % bootstrapFileName))
+
+        print "Bootstrapping nodes..."
+
+        logger.info("Running bootstrap playbook %s" % bootstrapFileName)
+
+        run_ansible_playbook_interactively(g1_path + 'oemid/' + bootstrapFileName)
+
+
+    # === PHASE 4 ===
     # NOTE: Capture essential configuration information
 
     print "\r\nPlease choose the client access method you will use for the"
