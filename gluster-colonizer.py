@@ -314,6 +314,20 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             return False
     return True
 
+def run_ansible_playbook_interactively(playbook, continue_on_fail=False):
+    playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " " + playbook
+
+    returncode = os.spawnvpe(os.P_WAIT, playbookCmd, None, os.environ)
+
+    if returncode != 0:
+        logger.error("\n\nFailed to execute ansible playbook correctly!")
+        if not continue_on_fail:
+            abortSetup("Ansible playbook error")
+        else:
+            logger.warning(
+                "Continuing deployment; please see above output for failure details.")
+            return False
+    return True
 
 def killDnsmasq():
     # Function to stop any existing dnsmasq processes
@@ -752,149 +766,195 @@ try:
 
     logger.debug("** Begin %s %s**" % (brand_parent, brand_project))
 
-    # === PHASE 1 ===
-    # NOTE: The purpose of this initial phase of deployment is to dynamically
-    # build the node inventory
-
-    print "\r\n"
-    logger.info("Begin %s inventory phase" % brand_short)
-    print "\r\n"
-
-    # Tell the user what we expect to deploy based on OEMID files
-    logger.info("Your deployment node type is \t\033[31m" +
-                oem_id['flavor']['node']['name'] + "\033[0m")
-    logger.info("Your deployment flavor is \t\033[31m" +
-                oem_id['flavor']['name'] + "\033[0m")
-
-    # Collect the global deployment details from the user
-    collectDeploymentInformation()
-
-    logger.debug("Ansible inventory file: " + peerInventory)
-    f = open(peerInventory, 'w')
-    f.write("[gluster_nodes]\r\n")
-    f.close()
-
-    print "\r\n"
-
-    logger.info(
-        "\033[31mConfiguring this node as the deployment master...\033[0m")
-
-    print "\r\n"
-
-    # Set this node up as the deployment master
-    print "The Gluster colonizer requires DHCP service on the management"
-    print "network. If the service is not already available on the"
-    print "management network, we can start a temporary DHCP server on this"
-    print "node now. This local DHCP service will only operate for the"
-    print "duration of the deployment process.\r\n"
-
-    start_dhcp = yes_no('Do you wish to start the DHCP service here? [y/N] ',
-                        do_return=True, default='no')
-
-    print "\r\n"
-
-    if start_dhcp:
-        logger.info("Configuring local DHCP service...")
-        startDhcpService()
-        logger.debug("Management subnet is %s" % mgmt_subnet)
-    else:
-        logger.info("Proceeding with external DHCP service")
-        print "\r\n"
-        logger.info("Detecting management subnet...")
-        #TODO: This needs improvement to get rid of the shell approach
-        while True:
-            try:
-                host_command('/bin/systemctl start NetworkManager')
-                p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
-                p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
-                p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
-                p1.stdout.close()
-                p2.stdout.close()
-                ip = IPNetwork(p3.communicate()[0])
-                mgmt_subnet = IPNetwork("%s/%s" % (ip.network, ip.prefixlen))
-                break
-            except:
-                logger.warning("Unable to detect management network")
-                logger.warning("Please ensure the DHCP service is available")
-                yes_no('Do you wish to attempt detection again? [Y/n] ')
-                print "\r\n"
-                continue
-        logger.info("Management subnet is %s" % mgmt_subnet)
-
-    print "\r\n"
-
-    yes_no("We will now begin node discovery. Do you wish to continue? [Y/n] ")
-
-    print "\r\n"
-
-    logger.info("Searching for %i %s nodes." % (desiredNumOfNodes,
-                                                brand_short))
-    print "This may take several minutes while all nodes come online...\r\n"
-
-    currentNumOfHosts = 0
     g1Hosts = []
+    needsBootstrapping = 'bootstrap_file_name' in oem_id['flavor']['node']
 
-    logger.debug("Building Ansible host inventory...")
+    # === PHASE 1 ===
+    # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
 
-    # Get nodes from gluster-discovery (gluster-zeroconf project)
-    #TODO: Add logic for validation of hosts and check for duplicates.
-    #Possibly borrow from dnsmasq-lease-interpreter.py script
-    #TODO: Check for if we found too many nodes
-    node_search_timeout = 20  #attempts
-    counter = 1
-    discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
-        random.sample(rand_filename_sample, rand_filename_len))
-    while (currentNumOfHosts) < desiredNumOfNodes:
-        g1Hosts = []
-        pOut = open(discovery_file, 'w')
-        p1 = Popen("/bin/gluster-discovery", stdout=PIPE, shell=True)
-        p2 = Popen(shlex.split("sort -u"), stdin=p1.stdout, stdout=pOut)
-        p1.stdout.close()
-        output = p2.communicate()[0]
-        pOut.close()
-        #FIXME: The gluster-discovery tool returns host IPs non-deterministically.
-        #       Need a check to ensure IPs are on the right subnet.
-        # Checking all subnet IPs except network and broadcast
-        with open(discovery_file, 'r') as source:
-            # Will read only the desired number of nodes (lines)
-            discoveries = source.readlines()
-            ips = []
-            for discovery in discoveries:
-                discovered_ip = discovery.split()[2]
-                try:
-                    if discovered_ip not in mgmt_subnet:
-                        continue
-                # Any connected peers may separately report hostnames instead of IPs
-                except AddrFormatError:
-                    continue
-                try:
-                    ips.append(discovered_ip)
-                except IndexError:
-                    continue
-            g1Hosts = ips[:desiredNumOfNodes]
-        currentNumOfHosts = len(g1Hosts)
-        if currentNumOfHosts == 1:
-            print 'Found %i node so far...  %i attempts remaining   \r' % (
-                currentNumOfHosts, int(node_search_timeout) - int(counter)),
-            sys.stdout.flush()
-        #TODO: Add check for too many hosts
-        else:
-            print 'Found %i nodes so far...  %i attempts remaining   \r' % (
-                currentNumOfHosts, int(node_search_timeout) - int(counter)),
-            sys.stdout.flush()
-        time.sleep(1)
-        counter += 1
-        if counter > node_search_timeout:
-            abortSetup(
-                "Timeout searching for nodes. Ensure all nodes are online and connected."
+    if needsBootstrapping:
+
+        # === PHASE 1a ===
+        # NOTE: The OEMID file indicates the nodes need bootstrapping. Hence we need to ask the user where they are since they do not run the the discovery service and have not been boostrapped.
+
+        logger.debug("Node config indicates bootstrapping is needed.")
+
+        print "This node type will require manual discovery and bootstrapping."
+
+        print "Please enter the IPs / FQDNs of the servers on the management"
+        print "network. These servers will be boostrapped using the user"
+        print "\033[31m %s \033[0m - this account needs" % os.environ['USER']
+        print "to be present on all systems and needs to have \033[31m sudo  \033[0m privileges."
+
+        while True:
+            input_string = user_input("Servers (comma-separated): ")
+
+            g1Hosts = [item.strip() for item in input_string.lower().split(",")]
+
+            # regular expression to validate domain name based on RFCs
+            fqdn_check = re.compile(
+                "^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(?:\.(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$"
             )
 
-    # Remove \n from end of each line and merge lines with commas
-    g1Hosts = [s.rstrip() for s in g1Hosts]
-    g1_inventory = ','.join(map(str, g1Hosts))
+            # regular expression to validate IPv4 based on RFCs
+            ip_check = re.compile("^(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
 
-    print "\r\n"
-    logger.info("All nodes located.")
+            for entry in g1Hosts:
+                isfqdn = fqdn_check.match(entry)
+                isip = ip_check.match(entry)
+
+                if isfqdn is None and isip is None:
+                    logger.warning("At least one of the entries is neither a valid FQDN or IPv4 address.")
+                    break
+            else:
+                break # executed if foor loop ended normally (no break)
+            continue # executed if there was a break statement in the for loop
+
+        print "\r\n"
+        logger.info("All items validated.")
+
+    else:
+        # === PHASE 1b ===
+        # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
+
+        print "\r\n"
+        logger.info("Begin %s inventory phase" % brand_short)
+        print "\r\n"
+
+        # Tell the user what we expect to deploy based on OEMID files
+        logger.info("Your deployment node type is \t\033[31m" +
+                    oem_id['flavor']['node']['name'] + "\033[0m")
+        logger.info("Your deployment flavor is \t\033[31m" +
+                    oem_id['flavor']['name'] + "\033[0m")
+
+        # Collect the global deployment details from the user
+        collectDeploymentInformation()
+
+        logger.debug("Ansible inventory file: " + peerInventory)
+        f = open(peerInventory, 'w')
+        f.write("[gluster_nodes]\r\n")
+        f.close()
+
+        print "\r\n"
+
+        logger.info(
+            "\033[31mConfiguring this node as the deployment master...\033[0m")
+
+        print "\r\n"
+
+        # Set this node up as the deployment master
+        print "The Gluster colonizer requires DHCP service on the management"
+        print "network. If the service is not already available on the"
+        print "management network, we can start a temporary DHCP server on this"
+        print "node now. This local DHCP service will only operate for the"
+        print "duration of the deployment process.\r\n"
+
+        start_dhcp = yes_no('Do you wish to start the DHCP service here? [y/N] ',
+                            do_return=True, default='no')
+
+        print "\r\n"
+
+        if start_dhcp:
+            logger.info("Configuring local DHCP service...")
+            startDhcpService()
+            logger.debug("Management subnet is %s" % mgmt_subnet)
+        else:
+            logger.info("Proceeding with external DHCP service")
+            print "\r\n"
+            logger.info("Detecting management subnet...")
+            #TODO: This needs improvement to get rid of the shell approach
+            while True:
+                try:
+                    host_command('/bin/systemctl start NetworkManager')
+                    p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
+                    p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
+                    p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
+                    p1.stdout.close()
+                    p2.stdout.close()
+                    ip = IPNetwork(p3.communicate()[0])
+                    mgmt_subnet = IPNetwork("%s/%s" % (ip.network, ip.prefixlen))
+                    break
+                except:
+                    logger.warning("Unable to detect management network")
+                    logger.warning("Please ensure the DHCP service is available")
+                    yes_no('Do you wish to attempt detection again? [Y/n] ')
+                    print "\r\n"
+                    continue
+            logger.info("Management subnet is %s" % mgmt_subnet)
+
+        print "\r\n"
+
+        yes_no("We will now begin node discovery. Do you wish to continue? [Y/n] ")
+
+        print "\r\n"
+
+        logger.info("Searching for %i %s nodes." % (desiredNumOfNodes,
+                                                    brand_short))
+        print "This may take several minutes while all nodes come online...\r\n"
+
+        currentNumOfHosts = 0
+        g1Hosts = []
+
+        logger.debug("Building Ansible host inventory...")
+
+        # Get nodes from gluster-discovery (gluster-zeroconf project)
+        #TODO: Add logic for validation of hosts and check for duplicates.
+        #Possibly borrow from dnsmasq-lease-interpreter.py script
+        #TODO: Check for if we found too many nodes
+        node_search_timeout = 20  #attempts
+        counter = 1
+        discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
+            random.sample(rand_filename_sample, rand_filename_len))
+        while (currentNumOfHosts) < desiredNumOfNodes:
+            g1Hosts = []
+            pOut = open(discovery_file, 'w')
+            p1 = Popen("/bin/gluster-discovery", stdout=PIPE, shell=True)
+            p2 = Popen(shlex.split("sort -u"), stdin=p1.stdout, stdout=pOut)
+            p1.stdout.close()
+            output = p2.communicate()[0]
+            pOut.close()
+            #FIXME: The gluster-discovery tool returns host IPs non-deterministically.
+            #       Need a check to ensure IPs are on the right subnet.
+            # Checking all subnet IPs except network and broadcast
+            with open(discovery_file, 'r') as source:
+                # Will read only the desired number of nodes (lines)
+                discoveries = source.readlines()
+                ips = []
+                for discovery in discoveries:
+                    discovered_ip = discovery.split()[2]
+                    try:
+                        if discovered_ip not in mgmt_subnet:
+                            continue
+                    # Any connected peers may separately report hostnames instead of IPs
+                    except AddrFormatError:
+                        continue
+                    try:
+                        ips.append(discovered_ip)
+                    except IndexError:
+                        continue
+                g1Hosts = ips[:desiredNumOfNodes]
+            currentNumOfHosts = len(g1Hosts)
+            if currentNumOfHosts == 1:
+                print 'Found %i node so far...  %i attempts remaining   \r' % (
+                    currentNumOfHosts, int(node_search_timeout) - int(counter)),
+                sys.stdout.flush()
+            #TODO: Add check for too many hosts
+            else:
+                print 'Found %i nodes so far...  %i attempts remaining   \r' % (
+                    currentNumOfHosts, int(node_search_timeout) - int(counter)),
+                sys.stdout.flush()
+            time.sleep(1)
+            counter += 1
+            if counter > node_search_timeout:
+                abortSetup(
+                    "Timeout searching for nodes. Ensure all nodes are online and connected."
+                )
+
+        # Remove \n from end of each line and merge lines with commas
+        g1Hosts = [s.rstrip() for s in g1Hosts]
+
+        print "\r\n"
+        logger.info("All nodes located.")
 
     # Write the ansible inventory file
     with open(peerInventory, 'a') as inventory:
@@ -902,7 +962,20 @@ try:
             inventory.write(host + "\r\n")
 
     logger.info("Inventory complete.")
-    logger.debug("Ansible inventory: " + g1_inventory)
+    logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
+
+    # the nodes need bootstrapping before they can be used
+    if needsBootstrapping:
+        bootstrapFileName = oem_id['flavor']['node']['bootstrap_file_name']
+
+        if not os.path.isfile(bootstrapFileName):
+            abortSetup(("Bootstrap file %s not found." % oem_id['flavor']['node']['bootstrap_file_name']))
+
+        print "Bootstrapping nodes..."
+
+        logger.info("Running bootstrap playbook %s" % bootstrapFileName)
+
+        run_ansible_playbook_interactively(g1_path + 'oemid/' + bootstrapFileName)
 
     print "\r\nPlease choose the client access method you will use for the"
     print "default storage volume. This applies only to the volume that is"

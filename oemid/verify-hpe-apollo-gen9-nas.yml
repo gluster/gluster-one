@@ -1,33 +1,35 @@
-# Colonizer example verify ID file for KVM/QEMU (test lab) deployment
+# Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment
 #
 - hosts: all
   become: yes
   vars:
-    required_disks:
-      sdb:
-        host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
-        model: "LOGICAL VOLUME"
-        vendor: "HP"
-        size: "9.10 TB"
-      sdc:
-        host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
-        model: "LOGICAL VOLUME"
-        vendor: "HP"
-        size: "9.10 TB"
-      nvme0n1:
-        host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)" 
-        model: "MT0800KEXUU"
-        vendor: null
-        size: "745.21 GB"
-      nvme1n1:
-        host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
-        model: "MT0800KEXUU"
-        vendor: null
-        size: "745.21 GB"
+    enable_hpe_spp: yes
+
+    # required_disks:
+    #   sdb:
+    #     host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
+    #     model: "LOGICAL VOLUME"
+    #     vendor: "HP"
+    #     size: "9.10 TB"
+    #   sdc:
+    #     host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
+    #     model: "LOGICAL VOLUME"
+    #     vendor: "HP"
+    #     size: "9.10 TB"
+    #   nvme0n1:
+    #     host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
+    #     model: "MT0800KEXUU"
+    #     vendor: null
+    #     size: "745.21 GB"
+    #   nvme1n1:
+    #     host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
+    #     model: "MT0800KEXUU"
+    #     vendor: null
+    #     size: "745.21 GB"
 
   tasks:
     - assert:
-        that: 
+        that:
           - ansible_processor_vcpus == 40
           - ansible_product_name == "ProLiant XL420 Gen9"
           - ansible_memtotal_mb >= 64000
@@ -35,15 +37,217 @@
           - ansible_system_vendor == 'HP'
           - ansible_distribution == 'RedHat'
           - ansible_distribution_major_version == '7'
+        msg: "System {{ ansible_host }} does not conform to the required hardware / operatign system requirements!"
 
-    - name: check if disk sizes and naming is as expected
-      with_items: "{{ required_disks.keys()  }}"
-      assert:
+    # - name: check if disk sizes and naming is as expected
+    #   with_items: "{{ required_disks.keys()  }}"
+    #   assert:
+    #     that:
+    #       - ansible_devices[item]['host'] == required_disks[item]['host']
+    #       - ansible_devices[item]['model'] == required_disks[item]['model']
+    #       - ansible_devices[item]['vendor'] == required_disks[item]['vendor']
+    #       - ansible_devices[item]['size'] == required_disks[item]['size']
+    #     msg: "The system does not have the required disk layout."
+
+    - name: get subscription status
+      shell: subscription-manager status
+      register: sm_status_cmd
+      changed_when: false
+
+    - assert:
         that:
-          - ansible_devices[item]['host'] == required_disks[item]['host']
-          - ansible_devices[item]['model'] == required_disks[item]['model']
-          - ansible_devices[item]['vendor'] == required_disks[item]['vendor']
-          - ansible_devices[item]['size'] == required_disks[item]['size']
+          - sm_status_cmd | success
+          - "'Overall Status: Current' in sm_status_cmd.stdout"
+        msg: "System {{ ansible_host }} is not subscribed!"
+
+    - name: get enabled repositories
+      shell: yum repolist enabled
+      args:
+        warn: no
+      register: yum_repolist_cmd
+      changed_when: false
+
+    - assert:
+        that:
+          - yum_repolist_cmd | success
+          - "yum_repolist_cmd.stdout | search('(?<!-)rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rh-gluster-3-for-rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rh-gluster-3-nfs-for-rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rh-gluster-3-samba-for-rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rhsone_Red_Hat_Storage_One_Gluster_Colonizer')"
+          - "yum_repolist_cmd.stdout | search('rhsone_Red_Hat_Storage_One_Gluster_ZeroConf')"
+        msg: "System {{ ansible_host }} does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-server-rpms, rh-gluster-3-nfs-for-rhel-7-server-rpms, rh-gluster-3-samba-for-rhel-7-server-rpms, rhsone_Red_Hat_Storage_One_Gluster_Colonizer and rhsone_Red_Hat_Storage_One_Gluster_ZeroConf!"
+
+
+    - name: search for gluster and gluster-colonizer packages
+      shell: yum list all redhat-storage-server gluster-colonizer gluster-zeroconf-avahi
+      args:
+        warn: no
+      register: yum_list_gluster_pkgs_cmd
+      changed_when: false
+
+    - assert:
+        that:
+          - yum_list_gluster_pkgs_cmd | success
+          - "yum_list_gluster_pkgs_cmd.stdout | search('redhat-storage-server.noarch')"
+          - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-colonizer.noarch')"
+          - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-zeroconf-avahi.noarch')"
+        msg: "System {{ ansible_host }} does not have the redhat-storage-server, gluster-colonizer and/or gluster-zeroconf-avahi packages available!"
+
+    - name: add HPE ServicePack for ProLiant, disable by default
+      yum_repository:
+        name: hpe-spp
+        baseurl: https://downloads.linux.hpe.com/SDR/repo/spp/redhat/7Server/x86_64/current/
+        description: HPE ServicePack for Proliant
+        gpgcheck: no
+        enabled: no
+        state: present
+      when: enable_hpe_spp == 'yes'
+
+    - name: search for hpssacli package
+      shell: yum {{ (enable_hpe_spp == 'yes') | ternary('--enablerepo=hpe-spp', '') }} list all hpssacli
+      args:
+        warn: no
+      register: yum_list_available_hpssacli_cmd
+      failed_when: false
+      changed_when: false
+
+    - assert:
+        that:
+          - yum_list_available_hpssacli_cmd.rc == 0 or yum_list_available_hpssacli_cmd.rc == 1
+          - "'hpssacli.x86_64' in yum_list_available_hpssacli_cmd.stdout"
+        msg: "System {{ ansible_host }} cannot find hpssacli package!"
+
+    - name: install hpssacli from hpe-spp repo
+      yum:
+        name: hpssacli
+        state: present
+        enablerepo: hpe-spp
+      when: enable_hpe_spp == 'yes'
+
+    - name: install hpssacli from system configured repositories
+      yum:
+        name: hpssacli
+        state: present
+      when: enable_hpe_spp != 'yes'
+
+    - name: enumerate raid controller using hpssacli
+      shell: hpssacli controller all show
+      register: hpssacli_controller_show_cmd
+      changed_when: false
+
+    - assert:
+        that:
+          - "hpssacli_controller_show_cmd.stdout | search('Smart Array (.*) in Slot ([0-9])')"
+        msg: "System {{ ansible_host}} does not have a SmartArray RAID controller in the system."
+
+    - assert:
+        that:
+          - hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | length <= 1
+        msg: "System {{ ansible_host}} does have more than one SmartArray RAID controller in the system. This is not supported."
+
+    - set_fact:
+        array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
+
+    - name: enumerate physical drives using hpssacli
+      shell: hpssacli controller slot={{ array_controller_slot }} pd {{ item }} show
+      changed_when: false
+      failed_when: false
+      register: hpssacli_pd_show_cmd
+      with_items:
+        - 1I:1:13
+        - 1I:1:14
+        - 1I:1:15
+        - 1I:1:16
+        - 1I:1:17
+        - 1I:1:18
+        - 1I:1:19
+        - 1I:1:20
+        - 1I:1:21
+        - 1I:1:22
+        - 1I:1:49
+        - 1I:1:50
+        - 2I:1:1
+        - 2I:1:2
+        - 2I:1:3
+        - 2I:1:4
+        - 2I:1:5
+        - 2I:1:6
+        - 2I:1:7
+        - 2I:1:8
+        - 2I:1:9
+        - 2I:1:10
+        - 2I:1:11
+        - 2I:1:12
+
+    - assert:
+        that:
+          - "{{ item | success }}"
+        msg: "System {{ ansible_host }} does not have all 24 drives available"
+      with_items:
+        - "{{ hpssacli_pd_show_cmd.results }}"
+
+    - name: enumerate physical OS drives using hpssacli
+      shell: hpssacli controller slot={{ array_controller_slot }} pd {{ item }} show
+      changed_when: false
+      failed_when: false
+      register: hpssacli_os_pd_show_cmd
+      with_items:
+        - 1I:1:51
+        - 1I:1:52
+
+    - assert:
+        that:
+          - "{{ item | success }}"
+          - "{{ item.stdout | search('array A(.*)\n\n(.*)physicaldrive') }}"
+        msg: "System {{ ansible_host }} does not have the OS disks configured as RAID0. Ensure that disk 1I:1:51 and 1I:1:52 are configured as the first logical volume in the system"
+      with_items:
+        - "{{ hpssacli_os_pd_show_cmd.results }}"
+
+    - name: enumerate physical NVMe devices
+      shell: lsblk --output NAME /dev/nvme*
+      changed_when: false
+      register: lsblk_nvme_cmd
+
+    - assert:
+        that:
+          - "{{ lsblk_nvme_cmd.stdout.find('nvme0n1') }}"
+          - "{{ lsblk_nvme_cmd.stdout.find('nvme1n1') }}"
+        msg: "System {{ ansible_host }} does not have the required NVMe devices present. Please make sure they show up as /dev/nvme0n1 and /dev/nvme1n1 in the system."
+
+    - name: search for iptables-services package
+      shell: yum list installed iptables-services
+      args:
+        warn: no
+      register: yum_list_installed_iptables_cmd
+      changed_when: false
+      failed_when: false
+
+    - assert:
+        that:
+          - "'iptables-services.x86_64' not in yum_list_installed_iptables_cmd.stdout"
+        msg: "System {{ ansible_host }} has the iptables-services package installed. Please remove it in favor of firewalld!"
+
+    - assert:
+        that:
+          - ansible_eno1 is defined
+          - ansible_ens1f0 is defined
+          - ansible_ens2f0 is defined
+        msg: "System {{ ansible_host }} does not have the expected NICs available, is using a different driver or has the NICs in the wrong PCIe slots. Please ensure that minimally eno1, ens1f0 and ens2f0 are available."
+
+    - assert:
+        that:
+          - ansible_eno1.active == true
+          - ansible_eno1.device == ansible_default_ipv4.alias
+        msg: "System {{ ansible_host }} does not use eno1 as it's management network."
+
+    - assert:
+        that:
+          - ansible_ens1f0.active == true
+          - ansible_ens1f0.speed == 10000
+          - ansible_ens2f0.active == true
+          - ansible_ens2f0.speed == 10000
+        msg: "System {{ ansible_host }}'s network adapters ens1f0 and/or ens2f0 have either not negotiated the correct connection speed or are disconnected"
 
     # Depends on presence of package python-dnf
     - name: Install dependency for ansible selinux management
