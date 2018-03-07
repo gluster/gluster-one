@@ -82,14 +82,6 @@
         - ['absent', 'unmounted']
       when: arbiter == True
 
-    - name: Cleanup data devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
-      with_items: "{{ backend_configuration }}"
-
-    - name: Cleanup cache devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items: "{{ cache_devices }}"
-
       #- name: Deactivate VGs
       #shell: /bin/bash -c 'vgchange -a n --activationmode partial {{ item.vg }}'
       #with_items: "{{ backend_configuration }}"
@@ -141,6 +133,14 @@
       shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
       when: item != ''
       with_items: "{{ dm_entries }}"
+
+    - name: Cleanup data devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
+      with_items: "{{ backend_configuration }}"
+
+    - name: Cleanup cache devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
+      with_items: "{{ cache_devices }}"
 
     - shell: /bin/bash -c 'echo "Creating LVM structures..." > {{ fifo }}'
 
