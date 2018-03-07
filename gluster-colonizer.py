@@ -779,12 +779,12 @@ try:
 
         logger.debug("Node config indicates bootstrapping is needed.")
 
-        print "This node type will require manual discovery and bootstrapping."
+        print "\r\This node type will require manual discovery and bootstrapping."
 
         print "Please enter the IPs / FQDNs of the servers on the management"
         print "network. These servers will be boostrapped using the user"
-        print "\033[31m %s \033[0m - this account needs" % os.environ['USER']
-        print "to be present on all systems and needs to have \033[31m sudo  \033[0m privileges."
+        print "\033[31m%s\033[0m - this account needs" % os.environ['USER']
+        print "to be present on all systems and needs to have \033[31msudo\033[0m privileges."
 
         while True:
             input_string = user_input("Servers (comma-separated): ")
@@ -981,7 +981,7 @@ try:
     # NOTE: Bootstrap the nodes if required.
 
     if needsBootstrapping:
-        bootstrapFileName = oem_id['flavor']['node']['bootstrap_file_name']
+        bootstrapFileName = g1_path + 'oemid/' + oem_id['flavor']['node']['bootstrap_file_name']
 
         if not os.path.isfile(bootstrapFileName):
             abortSetup(("Bootstrap file %s not found." % bootstrapFileName))
@@ -990,7 +990,7 @@ try:
 
         logger.info("Running bootstrap playbook %s" % bootstrapFileName)
 
-        run_ansible_playbook_interactively(g1_path + 'oemid/' + bootstrapFileName)
+        run_ansible_playbook_interactively(bootstrapFileName)
 
 
     # === PHASE 4 ===
