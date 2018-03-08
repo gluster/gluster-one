@@ -316,7 +316,7 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
     return True
 
 def run_ansible_playbook_interactively(playbook, continue_on_fail=False):
-    playbookCmdArgs = ["-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no\'", "--user", "ansible", "--sudo", "--private-key", ansible_ssh_key, playbook]
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no\'", "--user", "ansible", "--sudo", "--private-key", ansible_ssh_key, playbook]
 
     returncode = os.spawnvpe(os.P_WAIT, "ansible-playbook", playbookCmdArgs, os.environ)
 
