@@ -43,7 +43,6 @@ import signal
 from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
-import pdb
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -780,6 +779,9 @@ try:
 
         logger.debug("Node config indicates bootstrapping is needed.")
 
+        # Collect the global deployment details from the user
+        collectDeploymentInformation()
+
         print "\r\This node type will require manual discovery and bootstrapping."
 
         print "Please enter the IPs / FQDNs of the servers on the management"
@@ -988,7 +990,6 @@ try:
 
         logger.info("Running bootstrap playbook %s" % bootstrapFileName)
 
-        pdb.set_trace()
         run_ansible_playbook_interactively(bootstrapFileName)
 
 
