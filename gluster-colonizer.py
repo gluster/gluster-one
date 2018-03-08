@@ -831,11 +831,6 @@ try:
         # Collect the global deployment details from the user
         collectDeploymentInformation()
 
-        logger.debug("Ansible inventory file: " + peerInventory)
-        f = open(peerInventory, 'w')
-        f.write("[gluster_nodes]\r\n")
-        f.close()
-
         print "\r\n"
 
         logger.info(
@@ -958,7 +953,9 @@ try:
         logger.info("All nodes located.")
 
     # Write the ansible inventory file
+    logger.debug("Ansible inventory file: " + peerInventory)
     with open(peerInventory, 'a') as inventory:
+        inventory.write("[gluster_nodes]\r\n")
         for host in g1Hosts:
             inventory.write(host + "\r\n")
 
