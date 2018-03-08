@@ -5,7 +5,7 @@ name = 'gluster-colonizer'
 
 setup(
     name=name,
-    version='1.0.2',
+    version='1.0.4',
     description='Gluster colonizer is node executor for quick deployments',
     license='GPLv3',
     author='Dustin Black',
