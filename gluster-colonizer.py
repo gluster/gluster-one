@@ -43,6 +43,7 @@ import signal
 from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
+import pdb
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -317,7 +318,7 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
 def run_ansible_playbook_interactively(playbook, continue_on_fail=False):
     playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " " + playbook
 
-    returncode = os.spawnvpe(os.P_WAIT, playbookCmd, None, os.environ)
+    returncode = os.spawnvpe(os.P_WAIT, playbookCmd, "", os.environ)
 
     if returncode != 0:
         logger.error("\n\nFailed to execute ansible playbook correctly!")
@@ -990,7 +991,8 @@ try:
 
         logger.info("Running bootstrap playbook %s" % bootstrapFileName)
 
-        run_ansible_playbook_interactively(bootstrapFileName)
+        pdb.set_trace()
+        # run_ansible_playbook_interactively(bootstrapFileName)
 
 
     # === PHASE 4 ===
