@@ -992,7 +992,7 @@ try:
         logger.info("Running bootstrap playbook %s" % bootstrapFileName)
 
         pdb.set_trace()
-        # run_ansible_playbook_interactively(bootstrapFileName)
+        run_ansible_playbook_interactively(bootstrapFileName)
 
 
     # === PHASE 4 ===
