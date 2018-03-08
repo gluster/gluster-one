@@ -33,6 +33,7 @@
       private: no
 
   vars:
+    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
     disks:
       sdb:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
