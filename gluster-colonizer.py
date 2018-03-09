@@ -324,7 +324,7 @@ def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=
     if askConnPass:
         playbookCmdArgs.append("-k")
 
-    if askSudoPass
+    if askSudoPass:
         playbookCmdArgs.append("-K")
 
     playbookCmdArgs.append(playbook)
