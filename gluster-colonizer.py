@@ -319,8 +319,9 @@ def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=
     becomeSwitch = "-b" if become else ""
     askSudoPassSwitch = "-k -K" if askSudoPass else ""
 
-
     playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no\'", "--user", "ansible", becomeSwitch, askSudoPassSwitch, "--private-key", ansible_ssh_key, playbook]
+
+    logger.debug("Running ansible playbook %s interactively with the following command %s", playbook, playbookCmdArgs.join(' '))
 
     returncode = os.spawnvpe(os.P_WAIT, "ansible-playbook", playbookCmdArgs, os.environ)
 
