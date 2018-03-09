@@ -3,7 +3,7 @@
 - name: build /etc/hosts file
   lineinfile:
           dest: /etc/hosts
-          regexp: ".*{{ item.value.hostname }}.*"
+          regexp: ".*\ {{ item.value.hostname }}.{{ domain_name }}.*"
           line: "{{ item.value.ip }} {{ item.value.hostname }} {{ item.value.hostname }}.{{ domain_name }}"
           state: present
   with_dict: '{{ nodeInfo }}'

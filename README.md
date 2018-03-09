@@ -29,7 +29,7 @@ Once the above is all taken care of and the nodes are booted and have active eth
 
 ### Dependencies
 * Ansible modules from gdeploy [https://github.com/gluster/gdeploy]
-* Gluster-zeroconf [https://github.com/nixpanic/gluster-zeroconf]
+* Gluster-zeroconf [https://github.com/gluster/gluster-zeroconf]
 * Avahi
 
 ## TODOs

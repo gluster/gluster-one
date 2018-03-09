@@ -20,5 +20,6 @@ flavor:
         gluster_vol_set:
             server.event-threads: 4
             client.event-threads: 4
+    volname: gluster1
     voltype: disperse          #replica|disperse
     arbiter_size: None         #<integer in GB>|None
