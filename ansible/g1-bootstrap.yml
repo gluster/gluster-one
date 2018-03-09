@@ -17,6 +17,9 @@
   become: yes
   any_errors_fatal: True
 
+  vars:
+    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+
   tasks:
 
     - name: add local ssh key to hosts
