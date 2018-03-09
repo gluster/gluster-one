@@ -964,7 +964,7 @@ try:
 
     if needsBootstrapping:
         logger.info("Node type requires bootstrapping. Commencing.\r\n")
-        run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
+        run_ansible_playbook_interactively('-k -K ' + playbook_path + '/g1-bootstrap.yml')
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
