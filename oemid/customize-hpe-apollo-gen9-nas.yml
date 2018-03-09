@@ -16,7 +16,7 @@
         ssh_key_type: rsa
         state: present
 
-- hosts: all
+- hosts: gluster_nodes
   name: "Bootstrap HPE Apollo 4200 nodes for RHS One - General-purpose NAS flavor"
 
   become: true
@@ -155,6 +155,8 @@
           changed_when: false
           with_items: "{{ additional_logical_drives }}"
 
+        - pause: seconds=30
+
         - name: create RAID configuration template
           blockinfile:
             block: |
@@ -217,5 +219,5 @@
           - ansible_devices[item]['vendor'] == disks[item]['vendor']
           - ansible_devices[item]['size'] == disks[item]['size']
         msg: "The system does not have the required disk layout."
-        
+
 ...
