@@ -28,7 +28,7 @@
       private: no
 
     - name: apply_disk_config
-      prompt: "\n\nThis playbook will configure two RAID6 sets, each of 12 hard disks. It will also initialize the NVMe devices. This will DESTROY any data on all those devices. The OS disks are not touched. Select 'yes' if you agree or 'no' if you prepared the RAID sets and NVMe devices yourself as /dev/sdb, /dev/sdc and /dev/nvme0n1, /dev/nvme1n1 respectively."
+      prompt: "\n\nThis playbook will configure two RAID6 sets, each of 12 hard disks. This will DESTROY any data on all those devices. The OS disks are not touched. Select 'yes' if you agree or 'no' if you prepared the RAID sets yourself as /dev/sdb and /dev/sdc."
       default: 'no'
       private: no
 
