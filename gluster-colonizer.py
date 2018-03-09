@@ -767,7 +767,7 @@ try:
     logger.debug("** Begin %s %s**" % (brand_parent, brand_project))
 
     g1Hosts = []
-    needsBootstrapping = 'bootstrap_file_name' in oem_id['flavor']['node']
+    needsBootstrapping = 'needs_bootstrap' in oem_id['flavor']['node'] and oem_id['flavor']['node']['needs_bootstrap'] is true
 
     # === PHASE 1 ===
     # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
@@ -782,12 +782,12 @@ try:
         # Collect the global deployment details from the user
         collectDeploymentInformation()
 
-        print "\r\This node type will require manual discovery and bootstrapping."
+        print "\r\nThis node type will require manual discovery and bootstrapping.\r\n"
 
         print "Please enter the IPs / FQDNs of the servers on the management"
         print "network. These servers will be boostrapped using the user"
         print "\033[31m%s\033[0m - this account needs" % os.environ['USER']
-        print "to be present on all systems and needs to have \033[31msudo\033[0m privileges."
+        print "to be present on all systems and needs to have \033[31msudo\033[0m privileges.\r\n"
 
         while True:
             input_string = user_input("Servers (comma-separated): ")
@@ -814,7 +814,7 @@ try:
             continue # executed if there was a break statement in the for loop
 
         print "\r\n"
-        logger.info("All items validated.")
+        logger.info("All items validated.\r\n")
 
     else:
         # === PHASE 1b ===
@@ -961,13 +961,12 @@ try:
         for host in g1Hosts:
             inventory.write(host + "\r\n")
 
-    logger.info("Inventory complete.")
+    logger.info("Inventory complete.\r\n")
     logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
 
-    print "\r\n"
     logger.info("Begin %s validation phase" % brand_short)
     print "\r\n"
 
@@ -978,22 +977,6 @@ try:
     logger.info("All node validations passed")
 
     # === PHASE 3 ===
-    # NOTE: Bootstrap the nodes if required.
-
-    if needsBootstrapping:
-        bootstrapFileName = g1_path + 'oemid/' + oem_id['flavor']['node']['bootstrap_file_name']
-
-        if not os.path.isfile(bootstrapFileName):
-            abortSetup(("Bootstrap file %s not found." % bootstrapFileName))
-
-        print "Bootstrapping nodes..."
-
-        logger.info("Running bootstrap playbook %s" % bootstrapFileName)
-
-        run_ansible_playbook_interactively(bootstrapFileName)
-
-
-    # === PHASE 4 ===
     # NOTE: Capture essential configuration information
 
     print "\r\nPlease choose the client access method you will use for the"
@@ -1199,25 +1182,12 @@ try:
             print "Passwords do not match!\r\n"
             continue
 
-    # === PHASE 5 ===
+    # === PHASE 4 ===
     # NOTE: Initiate deployment
 
     print "\r\n"
     logger.info("Begin %s deployment phase" % brand_short)
     print "\r\n"
-
-    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
-    print "\r\n"
-    print "\033[31mWARNING: This step will delete any existing Gluster configurations"
-    print "         and will wipe the LVM block devices and filesystems for drives"
-    print "         other than the system drive."
-    print "\r"
-    print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
-    yes_no('Are you sure you want to continue? [Y/n] ')
-
-    print("\r\nPlease be patient; these steps may take a while...\r\n")
-
-    logger.info("Initiating Gluster deployment...")
 
     # Build the backend configuration dictionary from the OEMID file
     brickcount = 1
@@ -1312,6 +1282,53 @@ try:
                 peer_list_min += group
             else:
                 peer_list_remain += group
+
+    # === PHASE 4.a ===
+    # NOTE: Reset the nodes.
+
+    print "\r\n"
+    logger.info("Ensuring clean state...")
+    print "\r\n"
+
+    playbook_args = playbook_path + '/g1-reset.yml --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration )
+
+    # Run the g1-reset ansible playbook
+    run_ansible_playbook(playbook_args)
+
+    # === PHASE 4.b ===
+    # NOTE: Customize the nodes if required.
+
+    needsCustomization = 'customization_file_name' in oem_id['flavor']['node']
+
+    if needsCustomization:
+        customizationFileName = g1_path + 'oemid/' + oem_id['flavor']['node']['customization_file_name']
+
+        if not os.path.isfile(customizationFileName):
+            abortSetup(("Customization file %s specified but not found." % customizationFileName))
+
+        print "\r\n"
+        logger.info("Nodes are getting prepared...")
+        print "\r\n"
+
+        logger.debug("Running customization playbook %s" % customizationFileName)
+
+        run_ansible_playbook_interactively(customizationFileName)
+
+    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
+    print "\r\n"
+    print "\033[31mWARNING: This step will delete any existing Gluster configurations"
+    print "         and will wipe the LVM block devices and filesystems for drives"
+    print "         other than the system drive."
+    print "\r"
+    print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
+    yes_no('Are you sure you want to continue? [Y/n] ')
+
+    print("\r\nPlease be patient; these steps may take a while...\r\n")
+
+    # === PHASE 4.c ===
+    # NOTE: Initiate actual deployment of Gluster.
+
+    logger.info("Initiating Gluster deployment...")
 
     #FIXME: Clean up this ugly mess
     # Build the ansible playbook arguments

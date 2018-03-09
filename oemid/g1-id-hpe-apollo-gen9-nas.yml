@@ -5,7 +5,8 @@ flavor:
     g1_path: /usr/share/gluster-colonizer/
     node:
         name: HPE Apollo Gen9
-        bootstrap_file_name: bootstrap-hpe-apollo-gen9-nas.yml
+        needs_bootstrap: true
+        customization_file_name: customize-hpe-apollo-gen9-nas.yml
         verify_file_name: verify-hpe-apollo-gen9-nas.yml
         mgmt_interface: eno1
         storage_interface: bond0
