@@ -48,39 +48,6 @@
         - vols
       ignore_errors: yes
 
-    - shell: /bin/bash -c 'echo "Cleaning up any existing Gluster configurations..." > {{ fifo }}'
-
-    - name: Stop glusterd service
-      systemd:
-        name: glusterd
-        state: stopped
-
-    - name: Kill all Gluster processes
-      shell: /bin/bash -c 'pkill -9 {{ item }}'
-      with_items:
-        - glusterfs
-        - glusterfsd
-      ignore_errors: yes
-
-    - name: Clear existing Gluster configuration
-      file:
-        path: "/var/lib/glusterd/{{ item }}"
-        state: absent
-      with_items:
-        - glusterd.info
-        - glustershd
-        - bitd
-        - glusterfind
-        - glustershd
-        - nfs
-        - peers
-        - quotad
-        - scrub
-        - snaps
-        - ss_brick
-        - vols
-      ignore_errors: yes
-
     - name: Unmount data bricks
       mount:
         name: "{{ item.0.path }}"
@@ -136,15 +103,6 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
-    - name: gather all device mapper entries
-      shell: dmsetup ls
-      register: dmsetup_ls_cmd
-
-    - name: search for all remaining device mapper entries that belong to us
-      set_fact:
-        dm_entries: |
-            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
-
     - name: Remove any residual device mapper entries
       shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
       when: item != ''
@@ -157,3 +115,12 @@
     - name: Cleanup cache devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
       with_items: "{{ cache_devices }}"
+
+    - name: gather all device mapper entries
+      shell: dmsetup ls
+      register: dmsetup_ls_cmd
+
+    - name: search for all remaining device mapper entries that belong to us
+      set_fact:
+        dm_entries: |
+            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
