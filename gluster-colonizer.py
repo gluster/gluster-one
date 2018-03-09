@@ -314,8 +314,13 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             return False
     return True
 
-def run_ansible_playbook_interactively(playbook, continue_on_fail=False):
-    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no\'", "--user", "ansible", "--sudo", "--private-key", ansible_ssh_key, playbook]
+def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=false, askSudoPass=false):
+
+    becomeSwitch = "-b" if become else ""
+    askSudoPassSwitch = "-k -K" if askSudoPass else ""
+
+
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no\'", "--user", "ansible", becomeSwitch, askSudoPassSwitch, "--private-key", ansible_ssh_key, playbook]
 
     returncode = os.spawnvpe(os.P_WAIT, "ansible-playbook", playbookCmdArgs, os.environ)
 
@@ -964,7 +969,7 @@ try:
 
     if needsBootstrapping:
         logger.info("Node type requires bootstrapping. Commencing.\r\n")
-        run_ansible_playbook_interactively('-k -K ' + playbook_path + '/g1-bootstrap.yml')
+        run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True)
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
