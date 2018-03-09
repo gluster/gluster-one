@@ -782,7 +782,7 @@ try:
         # Collect the global deployment details from the user
         collectDeploymentInformation()
 
-        print "\r\nThis node type will require manual discovery and bootstrapping.\r\n"
+        print "\r\nThis node type will require manual discovery.\r\n"
 
         print "Please enter the IPs / FQDNs of the servers on the management"
         print "network. These servers will be boostrapped using the user"
@@ -814,7 +814,6 @@ try:
             continue # executed if there was a break statement in the for loop
 
         logger.info("All items validated.\r\n")
-
     else:
         # === PHASE 1b ===
         # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
@@ -962,6 +961,10 @@ try:
 
     logger.info("Inventory complete.\r\n")
     logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
+
+    if needsBootstrapping:
+        logger.info("Node type requires bootstrapping. Commencing.\r\n")
+        run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
