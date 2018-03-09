@@ -316,11 +316,18 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
 
 def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
 
-    becomeSwitch = "-b" if become else ""
-    askSudoPassSwitch = "-K" if askSudoPass else ""
-    askConnPassSwitch = "-k" if askConnPass else ""
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key]
 
-    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", becomeSwitch, askConnPassSwitch, askSudoPassSwitch, "--private-key", ansible_ssh_key, playbook]
+    if become:
+        playbookCmdArgs.append("-b")
+
+    if askConnPass:
+        playbookCmdArgs.append("-k")
+
+    if askSudoPass
+        playbookCmdArgs.append("-K")
+
+    playbookCmdArgs.append(playbook)
 
     logger.debug("Running ansible playbook %s interactively with the following command %s", playbook, (' ').join(playbookCmdArgs))
 
@@ -989,7 +996,7 @@ try:
     else:
         run_ansible_playbook(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
-                         
+
     logger.info("All node validations passed")
 
     # === PHASE 3 ===
