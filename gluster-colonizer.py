@@ -1290,7 +1290,7 @@ try:
     logger.info("Ensuring clean state...")
     print "\r\n"
 
-    playbook_args = playbook_path + '/g1-reset.yml --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration )
+    playbook_args = playbook_path + '/g1-reset.yml --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration ) + '}"'
 
     # Run the g1-reset ansible playbook
     run_ansible_playbook(playbook_args)
