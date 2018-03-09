@@ -2,7 +2,8 @@
   become: yes
   any_errors_fatal: True
 
-  vars:
+  tasks:
+
     - name: Build mntpath variable
       set_fact:
         mntpaths: "{{ mntpaths | default([]) }} + [{\"path\": \"/gluster/bricks/{{ item.thinLV }}\", \"lv_path\": \"/dev/mapper/{{ item.vg }}-{{ item.thinLV }}\"}]"
@@ -13,8 +14,6 @@
         arbiter_mntpaths: "{{ arbiter_mntpaths | default([]) }} + [{\"path\": \"/gluster/bricks/arbiter-{{ item.thinLV }}\", \"lv_path\": \"/dev/mapper/{{ item.vg }}-arbiter--{{ item.thinLV }}\"}]"
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
-
-  tasks:
 
     - shell: /bin/bash -c 'echo "Cleaning up any existing Gluster configurations..." > {{ fifo }}'
 
