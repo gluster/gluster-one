@@ -159,8 +159,7 @@
           copy:
             src: customize-hpe-apollo-gen9-nas-raid.ini
             dest: /tmp/ssainput.ini
-            create: yes
-
+            
         - name: apply RAID configuration from template
           shell: hpssascripting -i /tmp/ssainput.ini
           changed_when: false
