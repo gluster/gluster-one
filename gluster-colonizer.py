@@ -314,7 +314,7 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             return False
     return True
 
-def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=false, askSudoPass=false):
+def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=False, askSudoPass=False):
 
     becomeSwitch = "-b" if become else ""
     askSudoPassSwitch = "-k -K" if askSudoPass else ""
