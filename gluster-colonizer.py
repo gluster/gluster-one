@@ -980,8 +980,16 @@ try:
 
     # Check each node against expectations in OEMID file
     logger.info("Comparing nodes to expected configurations...")
-    run_ansible_playbook(g1_path + 'oemid/' +
+
+    needsCustomization = 'customization_file_name' in oem_id['flavor']['node']
+
+    if needsCustomization:
+        run_ansible_playbook_interactively(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
+    else:
+        run_ansible_playbook(g1_path + 'oemid/' +
+                         oem_id['flavor']['node']['verify_file_name'])
+                         
     logger.info("All node validations passed")
 
     # === PHASE 3 ===
@@ -1305,8 +1313,6 @@ try:
 
     # === PHASE 4.b ===
     # NOTE: Customize the nodes if required.
-
-    needsCustomization = 'customization_file_name' in oem_id['flavor']['node']
 
     if needsCustomization:
         customizationFileName = g1_path + 'oemid/' + oem_id['flavor']['node']['customization_file_name']

@@ -2,8 +2,14 @@
 #
 - hosts: all
   become: yes
-  vars:
-    enable_hpe_spp: yes
+  vars_prompt:
+
+    - name: enable_hpe_spp
+      prompt: "In this step the hpssacli utility is required. Do you want to add the HPE ServicePack for Proliant Repository to the systems? (yes/no)"
+      default: 'yes'
+      private: no
+      
+  # vars:
 
     # required_disks:
     #   sdb:
