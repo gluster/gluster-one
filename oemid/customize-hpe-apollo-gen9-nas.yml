@@ -162,6 +162,7 @@
 
         - name: wait for udev to settle
           shell: udevadm settle --timeout=60
+          changed_when: false
 
         - name: apply RAID configuration from template
           shell: hpssascripting -i /tmp/ssainput.ini
@@ -169,6 +170,7 @@
 
         - name: wait for udev to settle
           shell: udevadm settle --timeout=60
+          changed_when: false
 
         - name: gather facts
           setup:
