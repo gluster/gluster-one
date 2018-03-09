@@ -167,6 +167,12 @@
           shell: hpssascripting -i /tmp/ssainput.ini
           changed_when: false
 
+        - name: wait for udev to settle
+          shell: udevadm settle --timeout=60
+
+        - name: gather facts
+          setup:
+
       when: apply_disk_config == 'yes'
 
     - name: check if disk sizes and naming is as expected
