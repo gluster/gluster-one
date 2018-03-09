@@ -314,12 +314,13 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
             return False
     return True
 
-def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=False, askSudoPass=False):
+def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
 
     becomeSwitch = "-b" if become else ""
-    askSudoPassSwitch = "-k -K" if askSudoPass else ""
+    askSudoPassSwitch = "-K" if askSudoPass else ""
+    askConnPassSwitch = "-k" if askConnPass else ""
 
-    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no\'", "--user", "ansible", becomeSwitch, askSudoPassSwitch, "--private-key", ansible_ssh_key, playbook]
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", becomeSwitch, askConnPassSwitch, askSudoPassSwitch, "--private-key", ansible_ssh_key, playbook]
 
     logger.debug("Running ansible playbook %s interactively with the following command %s", playbook, (' ').join(playbookCmdArgs))
 
@@ -970,7 +971,7 @@ try:
 
     if needsBootstrapping:
         logger.info("Node type requires bootstrapping. Commencing.\r\n")
-        run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True)
+        run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
