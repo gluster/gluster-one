@@ -103,11 +103,6 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
-    - name: Remove any residual device mapper entries
-      shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
-      when: item != ''
-      with_items: "{{ dm_entries }}"
-
     - name: Cleanup data devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
       with_items: "{{ backend_configuration }}"
@@ -124,3 +119,8 @@
       set_fact:
         dm_entries: |
             {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
+
+    - name: Remove any residual device mapper entries
+      shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
+      when: item != ''
+      with_items: "{{ dm_entries }}"
