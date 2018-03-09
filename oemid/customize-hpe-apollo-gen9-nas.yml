@@ -156,7 +156,7 @@
           with_items: "{{ additional_logical_drives }}"
 
         - name: create RAID configuration template
-          copy:
+          template:
             src: customize-hpe-apollo-gen9-nas-raid.ini
             dest: /tmp/ssainput.ini
 
