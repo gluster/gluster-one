@@ -813,7 +813,6 @@ try:
                 break # executed if foor loop ended normally (no break)
             continue # executed if there was a break statement in the for loop
 
-        print "\r\n"
         logger.info("All items validated.\r\n")
 
     else:
@@ -968,7 +967,6 @@ try:
     # NOTE: Validate all nodes against the OEMID file
 
     logger.info("Begin %s validation phase" % brand_short)
-    print "\r\n"
 
     # Check each node against expectations in OEMID file
     logger.info("Comparing nodes to expected configurations...")
