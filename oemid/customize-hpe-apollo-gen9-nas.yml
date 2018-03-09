@@ -157,7 +157,7 @@
 
         - name: create RAID configuration template
           template:
-            src: customize-hpe-apollo-gen9-nas-raid.ini
+            src: customize-hpe-apollo-gen9-nas-raid.j2
             dest: /tmp/ssainput.ini
 
         - name: wait for udev to settle
