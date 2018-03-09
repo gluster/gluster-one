@@ -1135,7 +1135,7 @@ try:
 
     # Enumerate the HA node hostname list for NFS-Ganesha
     ha_cluster_nodes = ''
-    ha_cluster_password = ''
+    hacluster_password = ''
     if use_nfs:
         for i in range(int(ha_node_count)):
             if i != 0:
