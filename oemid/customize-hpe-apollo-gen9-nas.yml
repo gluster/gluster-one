@@ -159,7 +159,10 @@
           copy:
             src: customize-hpe-apollo-gen9-nas-raid.ini
             dest: /tmp/ssainput.ini
-            
+
+        - name: wait for udev to settle
+          shell: udevadm settle --timeout=60
+
         - name: apply RAID configuration from template
           shell: hpssascripting -i /tmp/ssainput.ini
           changed_when: false
