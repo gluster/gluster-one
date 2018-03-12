@@ -4,7 +4,8 @@
   name: "Generate SSH keypairs locally"
 
   vars:
-    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    # current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    current_user: "ansible"
 
   tasks:
 
@@ -33,7 +34,8 @@
       private: no
 
   vars:
-    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    # current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    current_user: "ansible"
     disks:
       sdb:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
@@ -67,8 +69,6 @@
         that:
           - apply_disk_config == 'yes' or apply_disk_config == 'no'
         msg: "Invalid response. Please specify either 'yes' or 'no'."
-
-
 
     - name: retrieve NetworkManager connection names for onboard nics
       shell: nmcli -f UUID,DEVICE -t connection show | grep {{ item }}

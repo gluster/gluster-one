@@ -1,7 +1,9 @@
 - hosts: localhost
+  become: yes
 
   vars:
-    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    # current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    current_user: "ansible"
 
   tasks:
 
@@ -18,7 +20,8 @@
   any_errors_fatal: True
 
   vars:
-    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    # current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+    current_user: "ansible"
 
   tasks:
 
