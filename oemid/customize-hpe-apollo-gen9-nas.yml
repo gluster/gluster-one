@@ -155,14 +155,14 @@
           changed_when: false
           with_items: "{{ additional_logical_drives }}"
 
+        - name: wait for udev to settle
+          shell: udevadm settle --timeout=60
+          changed_when: false
+
         - name: create RAID configuration template
           template:
             src: customize-hpe-apollo-gen9-nas-raid.j2
             dest: /tmp/ssainput.ini
-
-        - name: wait for udev to settle
-          shell: udevadm settle --timeout=60
-          changed_when: false
 
         - name: apply RAID configuration from template
           shell: hpssascripting -i /tmp/ssainput.ini

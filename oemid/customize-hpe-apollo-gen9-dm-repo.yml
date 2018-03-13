@@ -41,122 +41,122 @@
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdc:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdd:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sde:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdf:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdg:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdh:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdi:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdj:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdk:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdl:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdm:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdn:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdo:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdp:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdq:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdr:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sds:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdt:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdu:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdv:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdw:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdx:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       sdy:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
         model: "LOGICAL VOLUME"
         vendor: "HP"
-        size: "1.00 TB"
+        size: "931.48 GB"
       nvme0n1:
         host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
         model: "MT0800KEXUU"
@@ -265,14 +265,14 @@
           changed_when: false
           with_items: "{{ additional_logical_drives }}"
 
+        - name: wait for udev to settle
+          shell: udevadm settle --timeout=60
+          changed_when: false
+
         - name: create RAID configuration template
           template:
             src: customize-hpe-apollo-gen9-dm-repo-raid.j2
             dest: /tmp/ssainput.ini
-
-        - name: wait for udev to settle
-          shell: udevadm settle --timeout=60
-          changed_when: false
 
         - name: apply RAID configuration from template
           shell: hpssascripting -i /tmp/ssainput.ini
