@@ -1,7 +1,7 @@
 # Colonizer example flavor ID file for KVM (test lab) deployment
 
 flavor:
-    name: General-Purpose NAS
+    name: Digital Media Repository
     g1_path: /usr/share/gluster-colonizer/
     node:
         name: HPE Apollo Gen9
