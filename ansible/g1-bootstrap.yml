@@ -78,6 +78,7 @@
         - teamd
         - gstatus
         - ctdb
+        - gdeploy
       notify:
         - enable firewalld
         - enable networkmanager
