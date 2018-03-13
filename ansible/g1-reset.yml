@@ -106,6 +106,7 @@
     - name: Cleanup data devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
       with_items: "{{ backend_configuration }}"
+      failed_when: "result.rc != 0 and 'probing initialization failed: No such file or directory' not in result.stderr"
 
     - name: Cleanup cache devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
