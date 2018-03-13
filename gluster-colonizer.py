@@ -557,9 +557,9 @@ def collectDeploymentInformation():
     print "      %s nodes have access to the Internet.\r\n" % brand_short
 
     if config_ad:
-        print: "\033[31mTime synchronization is essential for Active Directory authentication"
-        print: "via Kerberos. Generally, AD servers will also act as NTP servers, so you can"
-        print: "likely use those hostnames or IPs here.\033[0m\r\n"
+        print "\033[31mTime synchronization is essential for Active Directory authentication"
+        print "via Kerberos. Generally, AD servers will also act as NTP servers, so you can"
+        print "likely use those hostnames or IPs here.\033[0m\r\n"
 
     global ntpServers
     global update_ntp
