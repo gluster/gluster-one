@@ -1,6 +1,6 @@
 # Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment
 #
-- hosts: all
+- hosts: gluster_nodes
   become: yes
   vars_prompt:
 

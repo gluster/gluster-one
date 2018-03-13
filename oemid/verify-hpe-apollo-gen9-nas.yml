@@ -1,6 +1,6 @@
 # Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment
 #
-- hosts: all
+- hosts: gluster_nodes
   become: yes
   vars_prompt:
 
@@ -8,7 +8,7 @@
       prompt: "In this step the hpssacli utility is required. Do you want to add the HPE ServicePack for Proliant Repository to the systems? (yes/no)"
       default: 'yes'
       private: no
-      
+
   # vars:
 
     # required_disks:
