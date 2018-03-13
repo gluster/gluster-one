@@ -282,7 +282,7 @@
           shell: udevadm settle --timeout=60
           changed_when: false
 
-        - name: gather facts
+        - name: re-gather facts
           setup:
 
       when: apply_disk_config == 'yes'
