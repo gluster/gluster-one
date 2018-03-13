@@ -29,7 +29,7 @@
       private: no
 
     - name: apply_disk_config
-      prompt: "\n\nThis playbook will configure two RAID6 sets, each of 12 hard disks. This will DESTROY any data on all those devices. The OS disks are not touched. Select 'yes' if you agree or 'no' if you prepared the RAID sets yourself as /dev/sdb and /dev/sdc."
+      prompt: "\n\nThis playbook will configure 24 RAID0 sets, each with a single disk. This will DESTROY any data on all those devices. The OS disks are not touched. Select 'yes' if you agree or 'no' if you prepared the RAID0 sets yourself as /dev/sd[b-y]."
       default: 'no'
       private: no
 
