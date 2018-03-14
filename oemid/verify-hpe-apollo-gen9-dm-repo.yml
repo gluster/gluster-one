@@ -1,6 +1,7 @@
-# Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment
+# Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment for Digital Media repository
 #
 - hosts: gluster_nodes
+  name: Verify nodes against HPE Apollo 4200 Gen9 profile for Digital Media Repository
   become: yes
   vars_prompt:
 

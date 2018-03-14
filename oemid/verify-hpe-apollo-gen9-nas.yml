@@ -1,6 +1,7 @@
 # Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment
 #
 - hosts: gluster_nodes
+  name: Verify nodes against HPE Apollo 4200 Gen9 profile for General-Purpose NAS
   become: yes
   vars_prompt:
 
@@ -8,30 +9,6 @@
       prompt: "In this step the hpssacli utility is required. Do you want to add the HPE ServicePack for Proliant Repository to the systems? (yes/no)"
       default: 'yes'
       private: no
-
-  # vars:
-
-    # required_disks:
-    #   sdb:
-    #     host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
-    #     model: "LOGICAL VOLUME"
-    #     vendor: "HP"
-    #     size: "9.10 TB"
-    #   sdc:
-    #     host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
-    #     model: "LOGICAL VOLUME"
-    #     vendor: "HP"
-    #     size: "9.10 TB"
-    #   nvme0n1:
-    #     host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
-    #     model: "MT0800KEXUU"
-    #     vendor: null
-    #     size: "745.21 GB"
-    #   nvme1n1:
-    #     host: "Non-Volatile memory controller: Intel Corporation PCIe Data Center SSD (rev 01)"
-    #     model: "MT0800KEXUU"
-    #     vendor: null
-    #     size: "745.21 GB"
 
   tasks:
     - assert:
@@ -44,16 +21,6 @@
           - ansible_distribution == 'RedHat'
           - ansible_distribution_major_version == '7'
         msg: "System {{ ansible_host }} does not conform to the required hardware / operatign system requirements!"
-
-    # - name: check if disk sizes and naming is as expected
-    #   with_items: "{{ required_disks.keys()  }}"
-    #   assert:
-    #     that:
-    #       - ansible_devices[item]['host'] == required_disks[item]['host']
-    #       - ansible_devices[item]['model'] == required_disks[item]['model']
-    #       - ansible_devices[item]['vendor'] == required_disks[item]['vendor']
-    #       - ansible_devices[item]['size'] == required_disks[item]['size']
-    #     msg: "The system does not have the required disk layout."
 
     - name: get subscription status
       shell: subscription-manager status
