@@ -977,7 +977,7 @@ try:
     logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
 
     if needsBootstrapping:
-        logger.info("Node type requires bootstrapping. Commencing.\r\n")
+        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
         run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
     # === PHASE 2 ===
