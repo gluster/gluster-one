@@ -1505,6 +1505,10 @@ try:
         logger.debug("Build ansible-playbook command for CTDB service restart playbook")
         run_ansible_playbook(g1_path + "ansible/g1-smb-ad-restart-services.yml", continue_on_fail=True)
 
+    # Run post-install ansible playbook
+    playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{default_volname: ' + str(default_volname) + ',readme_file: ' + str(readme_file) + '}'
+    run_ansible_playbook(playbook_args, continue_on_fail=True)
+
     print "\r\n"
 
     logger.info("Your \033[31m%s %s\033[0m deployment is now complete!" %

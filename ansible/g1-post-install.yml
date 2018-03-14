@@ -1,0 +1,30 @@
+- hosts: all
+  become: yes
+  any_errors_fatal: True
+  gather_facts: False
+  tasks:
+    - shell: /bin/bash -c 'echo "Collecting post-install information..." > {{ fifo }}'
+
+    - name: Get timestamp at finish
+      shell: /bin/date -u
+      register: result
+
+    - set_fact:
+        finish_time: "{{ result['stdout'] }}"
+
+    - name: Get volume information
+      shell: /sbin/gluster volume info {{ default_volname }}
+      register: result
+
+    - set_fact:
+        vol_info: "{{ result['stdout'] }}"
+
+    - shell: /bin/bash -c 'echo "Generating post-install README..." > {{ fifo }}'
+
+    - name: Create post-install instructions file
+      template:
+        src: g1-post-install.j2
+        dest: "{{ readme_file }}"
+        owner: root
+        group: root
+        mode: 0644
