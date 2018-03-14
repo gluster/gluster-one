@@ -1,4 +1,5 @@
 - hosts: localhost
+  name: "Generate SSH keypairs locally"
   become: yes
 
   vars:
@@ -15,6 +16,7 @@
         state: present
 
 - hosts: gluster_nodes
+  name: "Bootstrapping nodes."
   become: yes
   any_errors_fatal: True
 
