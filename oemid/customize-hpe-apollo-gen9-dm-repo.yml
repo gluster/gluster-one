@@ -1,22 +1,5 @@
 ---
 
-- hosts: localhost
-  name: "Generate SSH keypairs locally"
-
-  vars:
-    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-    #current_user: "ansible"
-
-  tasks:
-
-    - name: generate ssh key for current user {{ current_user }}
-      user:
-        name: "{{ current_user }}"
-        generate_ssh_key: yes
-        ssh_key_bits: 4096
-        ssh_key_type: rsa
-        state: present
-
 - hosts: gluster_nodes
   name: "Bootstrap HPE Apollo 4200 nodes for RHS One - Digital Media Repo flavor"
 
