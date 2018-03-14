@@ -110,7 +110,7 @@ rand_filename_len = 8
 # Ansible configuration
 peerInventory = "/var/tmp/peerInventory.ansible-" + "".join(
     random.sample(rand_filename_sample, rand_filename_len))
-ansible_ssh_key = "/home/ansible/.ssh/id_rsa"
+ansible_ssh_key = "~/.ssh/id_rsa"
 
 # Performance test files
 perf_jobfile = "/var/tmp/g1-perf-jobfile.fio-" + "".join(
