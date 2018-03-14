@@ -79,18 +79,33 @@
       #register: result
       #failed_when: "result.rc != 0 and 'not found' not in result.stderr"
 
-    - name: Clear LVM
-      lvg:
-        vg: "{{ item.vg }}"
-        state: absent
+    - name: Clear cache volume
+      lvol:
+        vg: "FAST{{ item.vg }}"
+        lv: "cpool{{ item.id|int + 1 }}"
+        state: "absent"
         force: yes
-      with_items: "{{ backend_configuration }}"
+      register: result
+      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+      with_items:
+        - "{{ backend_configuration }}"
 
-    - name: Clear cache LVM
+    - name: Clear cache volume group
       lvg:
         vg: "FAST{{ item.vg }}"
         state: absent
         force: yes
+      register: result
+      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+      with_items: "{{ backend_configuration }}"
+
+    - name: Clear data volume groups
+      lvg:
+        vg: "{{ item.vg }}"
+        state: absent
+        force: yes
+      register: result
+      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_items: "{{ backend_configuration }}"
 
     #TODO: Add a play or enhance the above to clear fast device LVM
