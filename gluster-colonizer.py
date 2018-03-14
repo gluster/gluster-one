@@ -43,6 +43,7 @@ import signal
 from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
+import pexpect
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -1519,14 +1520,17 @@ try:
             # Join CTDB cluster to the Active Directory domain
             #host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
             logger.info("Joining the AD domain...")
-            import pexpect
             ads_join_cmd = '/bin/net ads join -U %s' % ad_admin_user
             logger.debug(ads_join_cmd)
             ads = pexpect.spawn(ads_join_cmd)
             ads.expect('Enter.*password:')
             ads.sendline(ad_admin_pw)
             ads.expect(pexpect.EOF)
-            logger.info(ads.before)
+            ads.close()
+            if str(ads.exitstatus) is '0':
+                logger.debug(ads.before)
+            else:
+                logger.warning(ads.before)
             logger.info("Registering VIPs with AD DNS...")
             ads_dns_cmd = '/bin/net ads dns register %s.%s %s -U %s' % (ad_netbios_name, domain_name, " ".join(vips), ad_admin_user)
             logger.debug(ads_dns_cmd)
@@ -1534,7 +1538,11 @@ try:
             ads.expect('Enter.*password:')
             ads.sendline(ad_admin_pw)
             ads.expect(pexpect.EOF)
-            logger.info(ads.before)
+            ads.close()
+            if str(ads.exitstatus) is '0':
+                logger.debug(ads.before)
+            else:
+                logger.warning(ads.before)
   
         # Re-start winbind and samba services
         logger.debug("Build ansible-playbook command for CTDB service restart playbook")
