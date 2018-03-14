@@ -1510,7 +1510,7 @@ try:
             ads.expect(pexpect.EOF)
             logger.info(ads.before)
             logger.info("Registering VIPs with AD DNS...")
-            ads_dns_cmd = '/bin/net ads dns register %s %s -U %s' % (ad_netbios_name, " ".join(vips), ad_admin_user)
+            ads_dns_cmd = '/bin/net ads dns register %s.%s %s -U %s' % (ad_netbios_name, domain_name, " ".join(vips), ad_admin_user)
             logger.debug(ads_dns_cmd)
             ads = pexpect.spawn(ads_dns_cmd)
             ads.expect('Enter.*password:')
