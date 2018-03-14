@@ -1507,6 +1507,7 @@ try:
             ads = pexpect.spawn(ads_join_cmd)
             ads.expect('Enter.*password:')
             ads.sendline(ad_admin_pw)
+            ads.expect(pexpect.EOF)
             logger.info(ads.before)
             logger.info("Registering VIPs with AD DNS...")
             ads_dns_cmd = '/bin/net ads dns register %s %s -U %s' % (ad_netbios_name, " ".join(vips), ad_admin_user)
@@ -1514,6 +1515,7 @@ try:
             ads = pexpect.spawn(ads_dns_cmd)
             ads.expect('Enter.*password:')
             ads.sendline(ad_admin_pw)
+            ads.expect(pexpect.EOF)
             logger.info(ads.before)
   
         # Re-start winbind and samba services
