@@ -1494,6 +1494,9 @@ try:
         if not check_ad_play:
             logger.error("Active Directory integration failed. See log messages for details.")
 
+        #TODO: There is a problem putting this in a playbook because the plain text admin
+        #      password must be passed to the 'net ads' command. Should probably look into
+        #      using something like expect here for better security.
         # Join CTDB cluster to the Active Directory domain
         host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
         host_command('/bin/net ads dns register %s %s' %(ad_netbios_name, " ".join(vips)))

@@ -461,6 +461,14 @@
 
     - include: g1-ntp.yml
 
+    - name: Update resolv.conf
+      template:
+        src: g1-resolv-conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: 0644
+
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     #NOTE: The delegate_to host must match the master host or it is possible for a
