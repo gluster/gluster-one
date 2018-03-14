@@ -1546,7 +1546,6 @@ try:
     playbook_args += ',readme_file: ' + str(readme_file)
     playbook_args += ',brand_parent: ' + str(brand_parent)
     playbook_args += ',brand_project: ' + str(brand_project)
-    playbook_args += ',finish_time: ' + str(finish_time)
     playbook_args += ',vips: ' + str(vips)
     playbook_args += ',hostnames: ' + str(hostnames)
     playbook_args += ',domain_name: ' + str(domain_name)
