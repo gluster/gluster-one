@@ -85,8 +85,6 @@
         lv: "cpool{{ item.id|int + 1 }}"
         state: "absent"
         force: yes
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_items:
         - "{{ backend_configuration }}"
 
@@ -95,8 +93,6 @@
         vg: "FAST{{ item.vg }}"
         state: absent
         force: yes
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_items: "{{ backend_configuration }}"
 
     - name: Clear data volume groups
@@ -104,8 +100,6 @@
         vg: "{{ item.vg }}"
         state: absent
         force: yes
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_items: "{{ backend_configuration }}"
 
     #TODO: Add a play or enhance the above to clear fast device LVM
