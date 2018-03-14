@@ -494,7 +494,7 @@ def collectDeploymentInformation():
         domain_name_prompt += ": "
         input_string = user_input(domain_name_prompt)
         global domain_name
-        if input_string = '' and ad_domain_name:
+        if input_string is '' and ad_domain_name:
             domain_name = ad_domain_name.lower()
         else:
             domain_name = input_string.lower()
@@ -893,7 +893,7 @@ try:
             logger.debug("Active Directory user is %s" % ad_admin_user)
             while True:
                 ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
-                if ad_admin_password is '':
+                if ad_admin_pw is '':
                     continue
                 if ad_admin_pw == getpass.getpass("   Confirm admin password: "):
                     logger.debug("Active Directory password collected")
@@ -1500,8 +1500,7 @@ try:
         #TODO: Add try/except to catch missing parameters
         logger.debug("Building ansible-playbook command for AD playbook")
         playbook_args = playbook_path + '/g1-smb-ad.yml --extra-vars="{'
-        playbook_args += 'ad_controller_fqdn: ' + str(ad_controller_fqdn)
-        playbook_args += ',ad_netbios_name: ' + str(ad_netbios_name)
+        playbook_args += 'ad_netbios_name: ' + str(ad_netbios_name)
         playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
         playbook_args += ',ad_workgroup: ' + str(ad_workgroup)
         playbook_args += ',idmap_module: ' + str(idmap_module)
