@@ -88,6 +88,10 @@
       with_items:
         - "{{ backend_configuration }}"
 
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
+
     - name: Clear cache volume group
       lvg:
         vg: "FAST{{ item.vg }}"
@@ -95,12 +99,20 @@
         force: yes
       with_items: "{{ backend_configuration }}"
 
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
+
     - name: Clear data volume groups
       lvg:
         vg: "{{ item.vg }}"
         state: absent
         force: yes
       with_items: "{{ backend_configuration }}"
+
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
 
     - name: gather all device mapper entries
       shell: dmsetup ls
@@ -115,6 +127,10 @@
       shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
       when: item != ''
       with_items: "{{ dm_entries }}"
+
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
 
     - name: Remove PV
       shell: /bin/bash -c 'pvremove --force {{ item.device }}'
