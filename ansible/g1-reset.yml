@@ -102,7 +102,19 @@
         force: yes
       with_items: "{{ backend_configuration }}"
 
-    #TODO: Add a play or enhance the above to clear fast device LVM
+    - name: gather all device mapper entries
+      shell: dmsetup ls
+      register: dmsetup_ls_cmd
+
+    - name: search for all remaining device mapper entries that belong to us
+      set_fact:
+        dm_entries: |
+            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
+
+    - name: Remove any residual device mapper entries
+      shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
+      when: item != ''
+      with_items: "{{ dm_entries }}"
 
     - name: Remove PV
       shell: /bin/bash -c 'pvremove --force {{ item.device }}'
@@ -131,17 +143,3 @@
       with_items: "{{ cache_devices }}"
       register: result
       failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
-
-    - name: gather all device mapper entries
-      shell: dmsetup ls
-      register: dmsetup_ls_cmd
-
-    - name: search for all remaining device mapper entries that belong to us
-      set_fact:
-        dm_entries: |
-            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
-
-    - name: Remove any residual device mapper entries
-      shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
-      when: item != ''
-      with_items: "{{ dm_entries }}"
