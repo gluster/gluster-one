@@ -47,9 +47,7 @@
           - "yum_repolist_cmd.stdout | search('rh-gluster-3-for-rhel-7-server-rpms/x86_64')"
           - "yum_repolist_cmd.stdout | search('rh-gluster-3-nfs-for-rhel-7-server-rpms/x86_64')"
           - "yum_repolist_cmd.stdout | search('rh-gluster-3-samba-for-rhel-7-server-rpms/x86_64')"
-          - "yum_repolist_cmd.stdout | search('rhsone_Red_Hat_Storage_One_Gluster_Colonizer')"
-          - "yum_repolist_cmd.stdout | search('rhsone_Red_Hat_Storage_One_Gluster_ZeroConf')"
-        msg: "System {{ ansible_host }} does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-server-rpms, rh-gluster-3-nfs-for-rhel-7-server-rpms, rh-gluster-3-samba-for-rhel-7-server-rpms, rhsone_Red_Hat_Storage_One_Gluster_Colonizer and rhsone_Red_Hat_Storage_One_Gluster_ZeroConf!"
+        msg: "System {{ ansible_host }} does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-server-rpms, rh-gluster-3-nfs-for-rhel-7-server-rpms and rh-gluster-3-samba-for-rhel-7-server-rpms!"
 
 
     - name: search for gluster and gluster-colonizer packages
