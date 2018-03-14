@@ -983,7 +983,7 @@ try:
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
 
-    logger.info("Begin %s validation phase" % brand_short)
+    logger.info("\r\nBegin %s validation phase\r\n" % brand_short)
 
     # Check each node against expectations in OEMID file
     logger.info("Comparing nodes to expected configurations...")
@@ -997,7 +997,7 @@ try:
         run_ansible_playbook(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
 
-    logger.info("All node validations passed")
+    logger.info("\r\nAll node validations passed")
 
     # === PHASE 3 ===
     # NOTE: Capture essential configuration information
@@ -1210,7 +1210,6 @@ try:
 
     print "\r\n"
     logger.info("Begin %s deployment phase" % brand_short)
-    print "\r\n"
 
     # Build the backend configuration dictionary from the OEMID file
     brickcount = 1
@@ -1309,7 +1308,6 @@ try:
     # === PHASE 4.a ===
     # NOTE: Reset the nodes.
 
-    print "\r\n"
     logger.info("Ensuring clean state...")
     print "\r\n"
 
