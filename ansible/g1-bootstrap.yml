@@ -2,8 +2,7 @@
   become: yes
 
   vars:
-    # current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-    current_user: "ansible"
+    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
 
   tasks:
 
@@ -20,8 +19,7 @@
   any_errors_fatal: True
 
   vars:
-    # current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-    current_user: "ansible"
+    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
 
   tasks:
 
