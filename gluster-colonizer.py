@@ -1480,7 +1480,7 @@ try:
         # Build the ansible-playbook args for the AD playbook
         #TODO: Add try/except to catch missing parameters
         logger.debug("Building ansible-playbook command for AD playbook")
-        playbook_args = g1_path + 'ansible/g1-smb-ad.yml --extra-vars="{'
+        playbook_args = playbook_path + '/g1-smb-ad.yml --extra-vars="{'
         playbook_args += 'ad_controller_fqdn: ' + str(ad_controller_fqdn)
         playbook_args += ',ad_netbios_name: ' + str(ad_netbios_name)
         playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
@@ -1503,7 +1503,7 @@ try:
 
         # Re-start winbind and samba services
         logger.debug("Build ansible-playbook command for CTDB service restart playbook")
-        run_ansible_playbook(g1_path + "ansible/g1-smb-ad-restart-services.yml", continue_on_fail=True)
+        run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
 
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{default_volname: ' + str(default_volname) + ',readme_file: ' + str(readme_file) + '}'
