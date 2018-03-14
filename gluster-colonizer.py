@@ -1493,17 +1493,27 @@ try:
         check_ad_play = run_ansible_playbook(playbook_args, continue_on_fail=True)
         if not check_ad_play:
             logger.error("Active Directory integration failed. See log messages for details.")
-
-        #TODO: There is a problem putting this in a playbook because the plain text admin
-        #      password must be passed to the 'net ads' command. Should probably look into
-        #      using something like expect here for better security.
-        # Join CTDB cluster to the Active Directory domain
-        host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
-        host_command('/bin/net ads dns register %s %s' %(ad_netbios_name, " ".join(vips)))
-
-        # Re-start winbind and samba services
-        logger.debug("Build ansible-playbook command for CTDB service restart playbook")
-        run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
+            logger.debug("Skipping AD join due to playbook failure.")
+        else:
+            #TODO: There is a problem putting this in a playbook because the plain text admin
+            #      password must be passed to the 'net ads' command. Should probably look into
+            #      using something like expect here for better security.
+            # Join CTDB cluster to the Active Directory domain
+            #host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
+            logger.info("Joining the AD domain...")
+            import pexpect
+            ads_join_cmd = '/bin/net ads join -U %s' % ad_admin_user
+            logger.debug(ads_join_cmd)
+            ads = pexpect.spawn(ads_join_cmd)
+            ads.expect('Enter.*password:')
+            ads.sendline(ad_admin_pw)
+            logger.info(ads.before)
+            logger.info("Registering VIPs with AD DNS...")
+            host_command('/bin/net ads dns register %s %s' %(ad_netbios_name, " ".join(vips)))
+  
+      # Re-start winbind and samba services
+      logger.debug("Build ansible-playbook command for CTDB service restart playbook")
+      run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
 
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{default_volname: ' + str(default_volname) + ',readme_file: ' + str(readme_file) + '}'
