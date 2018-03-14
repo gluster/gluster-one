@@ -7,15 +7,6 @@
 
     - shell: /bin/bash -c 'echo "Testing Active Directory controller lookup..." > {{ fifo}}'
 
-   # TODO
-   # This play can be problematic if the management network is routable with an available
-   # DNS server assigned by DHCP. Need to consider a different check we can run here.
-   #- name: Check connection to AD controller
-   #  shell: /bin/bash -c '/bin/host {{ ad_controller_fqdn }}'
-   #   delegate_to: "{{ play_hosts[0] }}"
-   #   register: result
-   #   failed_when: "result.rc != 0"
-
     - shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
 
     - name: Remove conflicting lines from smb.conf

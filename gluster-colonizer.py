@@ -138,6 +138,7 @@ storage_subnet = ""
 gatewayAddress = ""
 dnsServerAddress = []
 default_volname = oem_id['flavor']['volname']
+ad_domain_name = ""
 consumed_ips = []
 readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
@@ -487,9 +488,16 @@ def collectDeploymentInformation():
 
     # Get global network information from user
     while True:
-        input_string = user_input("   Storage network domain name: ")
+        domain_name_prompt = "   Storage network domain name"
+        if ad_domain_name:
+            domain_name_prompt += " [%s]" % str(ad_domain_name.lower())
+        domain_name_prompt += ": "
+        input_string = user_input(domain_name_prompt)
         global domain_name
-        domain_name = input_string.lower()
+        if input_string = '' and ad_domain_name:
+            domain_name = ad_domain_name.lower()
+        else:
+            domain_name = input_string.lower()
         # regular expression to validate domain name based on RFCs
         domain_check = re.compile(
             "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
@@ -836,7 +844,7 @@ try:
 
     # Collect Active Directory configuration or skip
     if use_smb:
-        print "\r\nFor SMB, Active Directory integration can be configured."
+        print "\r\nFor SMB, Active Directory integration can optionally be configured."
         print "The provided method will use winbind to connect the Gluster nodes"
         print "to Active Directory and join the domain. This will require an"
         print "Active Directory username and password for an account with rights"
@@ -848,13 +856,14 @@ try:
         #TODO: Enforce input and do validation below
         if config_ad:
             logger.info("Proceeding with Active Directory configuration")
-            print "\r\nThe SMB HA cluster requires a single NetBIOS name for reference"
-            print "in the Active Directory tree.\r\n"
+            print "\r\nThe Samba HA cluster requires a single short name for entry"
+            print "in the Active Directory tree. This is the name by which the cluster"
+            print "will be referenced in DNS.\r\n"
 
             while True:
-                ad_netbios_name = user_input("   SMB Cluster NetBIOS Name: ")
+                ad_netbios_name = user_input("   Samba cluster short name: ")
                 if len(ad_netbios_name) < 1 or len(ad_netbios_name) > 15:
-                    logger.warning("A NetBIOS name must be 1 to 15 characters in length.")
+                    logger.warning("The short name must be 1 to 15 characters in length.")
                     continue
                 # Check against allowed NetBIOS character set
                 netbios_name_check = re.compile(r"(^[A-Za-z\d_!@#$%^()\-'{}\.~]{1,15}$)")
@@ -866,9 +875,10 @@ try:
 
             logger.debug("SMB NetBIOS name is %s" % ad_netbios_name)
 
-            print "\r\nPlease provide the Active Directory domain name and the"
-            print "credentials for a user with rights to add systems to the domain.\r\n"
+            print "\r\nPlease provide the fully-qualified Active Directory domain name and"
+            print "the credentials for a user with rights to add systems to the domain.\r\n"
 
+            #TODO: Input validation
             ad_domain_name = user_input("   Active Directory domain name: ")
 
             ad_workgroup = ad_domain_name.split(".")[0].upper()
@@ -876,26 +886,35 @@ try:
             logger.debug("Active Directory domain is %s" % ad_domain_name)
             logger.debug("Active Directory workgroup is %s" % ad_workgroup)
 
-            ad_admin_user = user_input("   Active Directory admin username: ")
+            #TODO: Input validation
+            ad_admin_user = user_input("   AD admin username [Administrator]: ")
+            if str(ad_admin_user) is '':
+                ad_admin_user = 'Administrator'
             logger.debug("Active Directory user is %s" % ad_admin_user)
-            ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
-            logger.debug("Active Directory password collected")
+            while True:
+                ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
+                if ad_admin_password is '':
+                    continue
+                if ad_admin_pw == getpass.getpass("   Confirm admin password: "):
+                    logger.debug("Active Directory password collected")
+                    break
+                else:
+                    logger.warning("Passwords do not match!")
+                    continue
 
-            print "\r\nPlease provide the FQDN for an Active Directory domain controller.\r\n"
-
-            ad_controller_fqdn = user_input("   AD Controller FQDN: ")
 
             print "\r\nSamba uses an identity mapping (idmap) module to map Active Directory"
             print "SIDs to POSIX UIDs. You will need to select an idmap module that is"
-            print "appropriate for your environment."
+            print "appropriate for your environment.\r\n"
 
-            print "\r\nNOTE: Changing the idmap module after data has been written to the"
-            print "storage can be very complicated and time consuming. If you are unsure"
-            print "which module to choose, or if you have special requirements, select"
-            print "option 3 to skip the module selection for now. You will need to configure"
-            print "the idmap module manually before you can access your volume over SMB."
+            print "NOTE: Changing the idmap module after data has been written to the"
+            print "      storage can be very complicated and time consuming. If you are"
+            print "      unsure which module to choose, or if you have special requirements,"
+            print "      select option 3 to skip the module selection for now. You will need to"
+            print "      configure the idmap module manually before you can access your volume"
+            print "      over SMB.\r\n"
 
-            print "\r\nWhich idmap module would you like to use?\r\n"
+            print "Which idmap module would you like to use?\r\n"
             print "   1. TDB (Samba default)"
             print "   2. AutoRID"
             print "   3. Skip selection and configure manually\r\n"
@@ -920,7 +939,6 @@ try:
                     logger.warning("Please select from the list.\r\n")
                     continue
 
-    #WORKING HERE
             if idmap_module:
                 print "\r\nThe default idmap range is 1000000-4000000. If you would like to change"
                 print "this, enter a new value here with the same notation (m-n)."
@@ -952,6 +970,7 @@ try:
             logger.info("Active Directory configuration skipped")
 
     # Collect the global deployment details from the user
+    print "\r\n"
     collectDeploymentInformation()
 
     logger.debug("Ansible inventory file: " + peerInventory)
