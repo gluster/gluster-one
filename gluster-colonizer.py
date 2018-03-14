@@ -1541,7 +1541,22 @@ try:
         run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
 
     # Run post-install ansible playbook
-    playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{default_volname: ' + str(default_volname) + ',readme_file: ' + str(readme_file) + '}'
+    playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{'
+    playbook_args += 'default_volname: ' + str(default_volname)
+    playbook_args += ',readme_file: ' + str(readme_file)
+    playbook_args += ',brand_parent: ' + str(brand_parent)
+    playbook_args += ',brand_project: ' + str(brand_project)
+    playbook_args += ',finish_time: ' + str(finish_time)
+    playbook_args += ',vips: ' + str(vips)
+    playbook_args += ',hostnames: ' + str(hostnames)
+    playbook_args += ',domain_name: ' + str(domain_name)
+    playbook_args += ',mount_protocol: ' + str(mount_protocol)
+    playbook_args += ',mount_host: ' + str(mount_host)
+    playbook_args += ',mount_opts: ' + str(mount_opts)
+    playbook_args += ',nodes_min: ' + str(nodes_min)
+    playbook_args += ',nodes_deployed: ' + str(desiredNumOfNodes)
+    playbook_args += ',use_nfs: ' + str(use_nfs)
+    playbook_args += '}"'
     run_ansible_playbook(playbook_args, continue_on_fail=True)
 
     print "\r\n"
