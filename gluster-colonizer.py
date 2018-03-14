@@ -1509,11 +1509,16 @@ try:
             ads.sendline(ad_admin_pw)
             logger.info(ads.before)
             logger.info("Registering VIPs with AD DNS...")
-            host_command('/bin/net ads dns register %s %s' %(ad_netbios_name, " ".join(vips)))
+            ads_dns_cmd = '/bin/net ads dns register %s %s -U %s' % (ad_netbios_name, " ".join(vips), ad_admin_user)
+            logger.debug(ads_dns_cmd)
+            ads = pexpect.spawn(ads_dns_cmd)
+            ads.expect('Enter.*password:')
+            ads.sendline(ad_admin_pw)
+            logger.info(ads.before)
   
-      # Re-start winbind and samba services
-      logger.debug("Build ansible-playbook command for CTDB service restart playbook")
-      run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
+        # Re-start winbind and samba services
+        logger.debug("Build ansible-playbook command for CTDB service restart playbook")
+        run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
 
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{default_volname: ' + str(default_volname) + ',readme_file: ' + str(readme_file) + '}'
