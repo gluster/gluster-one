@@ -54,7 +54,7 @@
       notify:
         - reload sshd
 
-    - name: install gluster
+    - name: install gluster and colonizer dependencies
       yum: name={{ item }} state=present
       with_items:
         - "@RH-Gluster-Core"
