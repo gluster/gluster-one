@@ -77,6 +77,7 @@
         - gstatus
         - ctdb
         - gdeploy
+        - fio
       notify:
         - enable firewalld
         - enable networkmanager
