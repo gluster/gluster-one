@@ -1321,7 +1321,6 @@ try:
     print("\r\nPlease be patient; these steps may take a while...\r\n")
 
     logger.info("Ensuring clean state...")
-    print "\r\n"
 
     playbook_args = playbook_path + '/g1-reset.yml --user ansible --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration ) + '}"'
 
