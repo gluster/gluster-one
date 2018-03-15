@@ -414,58 +414,6 @@ def collectDeploymentInformation():
     global disperse
     global disperse_count
     global redundancy_count
-    try:
-        if str(oem_id['flavor']['voltype']) == "replica":
-            # Set gdeploy values for replica volume type
-            nodes_min = 4
-            nodes_multiple = 2
-            replica = 'yes'
-            if str(oem_id['flavor']['arbiter_size']) == "None":
-                replica_count = str('\'2\'')
-                arbiter_count = str('\'0\'')
-            else:
-                replica_count = str('\'3\'')
-                arbiter_count = str('\'1\'')
-            disperse = str('\'no\'')
-            disperse_count = str('\'0\'')
-            redundancy_count = str('\'0\'')
-        elif str(oem_id['flavor']['voltype']) == "disperse":
-            # Set gdeploy values for disperse volume type
-            nodes_min = 6
-            nodes_multiple = 6
-            replica = 'no'
-            replica_count = str('\'0\'')
-            arbiter_count = str('\'0\'')
-            disperse = str('\'yes\'')
-            disperse_count = str('\'4\'')
-            redundancy_count = str('\'2\'')
-        else:
-            abortSetup("Error: Invalid voltype detected in OEMID file")
-    except:
-        abortSetup("Error: No voltype defined in OEMID file")
-
-    # Get number of Gluster nodes from user
-    print("\r\nHow many %s nodes are you deploying?" % brand_short)
-    while True:
-        try:
-            input_string = int(
-                user_input("\r\n   Number of nodes (valid range is %i-%i): " %
-                           (nodes_min, nodes_max)))
-        except ValueError:
-            logger.error("Please enter a valid integer\n")
-            continue
-        global desiredNumOfNodes
-        desiredNumOfNodes = int(input_string) if input_string else 0
-        if desiredNumOfNodes < nodes_min or desiredNumOfNodes > nodes_max:
-            logger.error(
-                "The number is outside of the supported range. Please try again.\n"
-            )
-        elif desiredNumOfNodes % nodes_multiple != 0:
-            logger.error(
-                "The number must be a multiple of %i. Please try again.\n" %
-                nodes_multiple)
-        else:
-            break
 
     logger.debug("Deploying %i nodes" % int(desiredNumOfNodes))
 
@@ -795,6 +743,58 @@ try:
                 oem_id['flavor']['node']['name'] + "\033[0m")
     logger.info("Your deployment flavor is \t\033[31m" +
                 oem_id['flavor']['name'] + "\033[0m")
+
+    try:
+        if str(oem_id['flavor']['voltype']) == "replica":
+            # Set gdeploy values for replica volume type
+            nodes_min = 4
+            nodes_multiple = 2
+            replica = 'yes'
+            if str(oem_id['flavor']['arbiter_size']) == "None":
+                replica_count = str('\'2\'')
+                arbiter_count = str('\'0\'')
+            else:
+                replica_count = str('\'3\'')
+                arbiter_count = str('\'1\'')
+            disperse = str('\'no\'')
+            disperse_count = str('\'0\'')
+            redundancy_count = str('\'0\'')
+        elif str(oem_id['flavor']['voltype']) == "disperse":
+            # Set gdeploy values for disperse volume type
+            nodes_min = 6
+            nodes_multiple = 6
+            replica = 'no'
+            replica_count = str('\'0\'')
+            arbiter_count = str('\'0\'')
+            disperse = str('\'yes\'')
+            disperse_count = str('\'4\'')
+            redundancy_count = str('\'2\'')
+        else:
+            abortSetup("Error: Invalid voltype detected in OEMID file")
+    except:
+        abortSetup("Error: No voltype defined in OEMID file")
+
+    # Get number of Gluster nodes from user
+    print("\r\nHow many %s nodes are you deploying?" % brand_short)
+    while True:
+        try:
+            input_string = int(
+                user_input("\r\n   Number of nodes (valid range is %i-%i): " %
+                           (nodes_min, nodes_max)))
+        except ValueError:
+            logger.error("Please enter a valid integer\n")
+            continue
+        desiredNumOfNodes = int(input_string) if input_string else 0
+        if desiredNumOfNodes < nodes_min or desiredNumOfNodes > nodes_max:
+            logger.error(
+                "The number is outside of the supported range. Please try again.\n"
+            )
+        elif desiredNumOfNodes % nodes_multiple != 0:
+            logger.error(
+                "The number must be a multiple of %i. Please try again.\n" %
+                nodes_multiple)
+        else:
+            break
 
     print "\r\nPlease choose the client access method you will use for the"
     print "default storage volume. This applies only to the volume that is"
