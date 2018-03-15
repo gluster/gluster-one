@@ -369,8 +369,10 @@
 
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
+    #NOTE: The delegate_to host must match the master host or it is possible for a
+    #      node to be excluded from the probing.
     - name: Create a Trusted Storage Pool
-      delegate_to: "{{ play_hosts[0] }}"
+      delegate_to: "{{ hostnames[0] }}"
       run_once: true
       peer:
         action: probe
