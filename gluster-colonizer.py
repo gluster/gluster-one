@@ -1227,15 +1227,14 @@ try:
         for i, ntp in enumerate(ntpServers):
             print "NTP %i: %s" %(int(i+1), str(ntp))
 
-    if idmap_module:
-        print "\r"
-        print "Samba idmap module: %s" % idmap_module
-        print "Samba idmap range: %s" % idmap_range
-    elif use_smb:
-        print "\r"
-        print "Samba idmap module skipped; manual post-install configuration required"
-
     if config_ad:
+        if idmap_module:
+            print "\r"
+            print "Samba idmap module: %s" % idmap_module
+            print "Samba idmap range: %s" % idmap_range
+        else:
+            print "\r"
+            print "Samba idmap module skipped; manual post-install configuration required"
         print "\r"
         print "Active Directory domain: %s" % ad_domain_name
         print "Active Directory admin user: %s" % ad_admin_user
