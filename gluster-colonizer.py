@@ -548,15 +548,16 @@ def collectDeploymentInformation():
                         null_valid=True,
                         check_dupes=False,
                         check_subnet=False)
-                    dnsServerAddress.append(str(dns))
                     if dns is '' and config_ad and int(dnsnum) is 1:
                         logger.warning("One DNS server address is required for Active Directory connection")
                         continue
-                    elif dns is '':
+                    dnsServerAddress.append(str(dns))
+                    if dns is '':
                         if dnsnum is 1:
                             dnsServerAddress.append('')
-                        break
-                break
+                    break
+                if len(dnsServerAddress) is 2:
+                    break
         break
 
     print "\r\nNTP will be configured for time synchronization. You may enter"
