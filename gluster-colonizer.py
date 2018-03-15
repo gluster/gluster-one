@@ -144,6 +144,10 @@ consumed_ips = []
 readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
 playbook_path = g1_path + "ansible/"
+# regular expression to validate domain name based on RFCs
+domain_check = re.compile(
+    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+)
 
 # Define management network info
 # We are confining to a maximum deployment set of 24 nodes.
@@ -432,10 +436,6 @@ def collectDeploymentInformation():
             domain_name = ad_domain_name.lower()
         else:
             domain_name = input_string.lower()
-        # regular expression to validate domain name based on RFCs
-        domain_check = re.compile(
-            "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
-        )
         isdomain = domain_check.match(domain_name)
         if isdomain is None:
             logger.warning("The domain name string is invalid")
@@ -897,8 +897,13 @@ try:
             print "\r\nPlease provide the fully-qualified Active Directory domain name and"
             print "the credentials for a user with rights to add systems to the domain.\r\n"
 
-            #TODO: Input validation
-            ad_domain_name = user_input("   Active Directory domain name: ")
+            while True:
+                ad_domain_name = user_input("   Active Directory domain name: ")
+                isdomain = domain_check.match(ad_domain_name)
+                if isdomain is None:
+                    logger.warning("The AD domain name string is invalid")
+                    continue
+                break
 
             ad_workgroup = ad_domain_name.split(".")[0].upper()
 
