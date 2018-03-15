@@ -56,6 +56,8 @@
         - "/var/run/gluster/*"
       ignore_errors: yes
 
+    - shell: /bin/bash -c 'echo "Cleaning up any existing LVM configurations..." > {{ fifo }}'
+
     - name: Unmount data bricks
       mount:
         name: "{{ item.0.path }}"
@@ -147,6 +149,8 @@
       shell: udevadm settle --timeout=60
       changed_when: false
 
+    - shell: /bin/bash -c 'echo "Cleaning up any conflicting device mapper entries..." > {{ fifo }}'
+
     - name: gather all device mapper entries
       shell: dmsetup ls
       register: dmsetup_ls_cmd
@@ -164,6 +168,8 @@
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60
       changed_when: false
+
+    - shell: /bin/bash -c 'echo "Wiping cache devices and backend disks..." > {{ fifo }}'
 
     - name: Remove PV
       shell: /bin/bash -c 'pvremove --force {{ item.device }}'
