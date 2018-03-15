@@ -92,6 +92,7 @@
       lvol:
         vg: "{{ item.vg }}"
         lv: "arbiter-{{ item.thinLV }}"
+        force: yes
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
@@ -127,6 +128,7 @@
       lvol:
         vg: "{{ item.vg }}"
         lv: "{{ item.tp }}"
+        force: yes
         state: absent
       with_items: "{{ backend_configuration }}"
 
