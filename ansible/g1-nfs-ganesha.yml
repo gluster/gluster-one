@@ -185,6 +185,21 @@
   debug: msg={{ result.stderr }} verbosity=0
   when: result.stderr != ""
 
+#-- Below two plays are a hack to temporarily address bz1546748
+
+- name: Remove default NFS Ganesha config file
+  file:
+    path: /etc/ganesha/ganesha.conf
+    state: absent
+
+- name: Link NFS Ganesha config file to shared storage
+  file:
+    src: '{{ ha_base_dir }}/ganesha.conf'
+    path: /etc/ganesha/ganesha.conf
+    state: link
+
+#--
+
 - name: Start nfs-ganesha service
   service: name=nfs-ganesha state=started
 
