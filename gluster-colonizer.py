@@ -1588,7 +1588,7 @@ try:
     playbook_args += ',domain_name: ' + str(domain_name)
     playbook_args += ',mount_protocol: ' + str(mount_protocol)
     playbook_args += ',mount_host: ' + str(mount_host)
-    playbook_args += ',mount_opts: ' + str(mount_opts)
+    playbook_args += ',mount_opts: \'' + str(mount_opts) + '\''
     playbook_args += ',nodes_min: ' + str(nodes_min)
     playbook_args += ',nodes_deployed: ' + str(desiredNumOfNodes)
     playbook_args += ',use_nfs: ' + str(use_nfs)
