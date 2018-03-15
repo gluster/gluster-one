@@ -145,6 +145,7 @@ readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
 playbook_path = g1_path + "ansible/"
 config_ad = ''
+idmap_module = ''
 # regular expression to validate domain name based on RFCs
 domain_check = re.compile(
     "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
