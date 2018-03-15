@@ -630,7 +630,9 @@ def autoNodeInformation():
     logger.debug("Auto-assigning node info...")
     # Function to automatically assign node specifics
     host_interface_information = {}
-    storageIPCounter = 0
+    #Starting counter at 1 so that the first IP selected below
+    #is .2 just to be safe we don't conflict w/ a gateway
+    storageIPCounter = 1
     global nodeInfo
     nodeInfo = {}
 
