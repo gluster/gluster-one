@@ -1308,6 +1308,7 @@ try:
     # === PHASE 4.a ===
     # NOTE: Reset the nodes.
 
+    print "\r\n"
     logger.info("Ensuring clean state...")
     print "\r\n"
 
