@@ -1228,7 +1228,7 @@ try:
     if idmap_module:
         print "\r"
         print "Samba idmap module: %s" % idmap_module
-        print "Sambe idmap range: %s" % idmap_range
+        print "Samba idmap range: %s" % idmap_range
     elif use_smb:
         print "\r"
         print "Samba idmap module skipped; manual post-install configuration required"
