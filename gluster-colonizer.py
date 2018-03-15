@@ -469,21 +469,6 @@ def collectDeploymentInformation():
 
     logger.debug("Deploying %i nodes" % int(desiredNumOfNodes))
 
-    print "\r\nWe will now configure the Gluster nodes for your storage network."
-    print "Please ensure that all cabling and switch configuration is"
-    print "complete before proceeding."
-
-    print "\r\nBe prepared to provide network information for all nodes in"
-    print "your Gluster deployment, including:\r\n"
-
-    print "   * hostnames"
-    print "   * IP addresses"
-    print "   * subnet mask"
-    print "   * default gateway"
-    print "   * DNS servers\r\n"
-
-    yes_no('Do you wish to continue? [Y/n] ')
-
     print "\r\nAll nodes are expected to be on the same storage subnet, so we"
     print "will first collect all shared network information.\r\n"
 
@@ -856,10 +841,40 @@ try:
 
         config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, True)
 
+        if config_ad:
+            logger.info("Proceeding with Active Directory configuration")
+        else:
+            logger.info("Active Directory configuration skipped")
+
+
+    print "\r\nWe will now configure the Gluster nodes for your storage network."
+    print "Please ensure that all cabling and switch configuration is complete"
+    print "before proceeding."
+
+    print "\r\nBe prepared to provide network information for all nodes in"
+    print "your Gluster deployment, including:\r\n"
+
+    print "   * hostnames"
+    print "   * IP addresses"
+    if use_nfs or use_smb:
+        print "   * VIP addresses for HA"
+    print "   * subnet mask"
+    print "   * default gateway"
+    print "   * DNS servers"
+    print "   * NTP servers"
+    if config_ad:
+        print "   * AD domain"
+        print "   * AD admin credentials"
+
+    print "\r\n"
+
+    yes_no('Do you wish to continue? [Y/n] ')
+
+
+    if use_smb:
         #FIXME
         #TODO: Enforce input and do validation below
         if config_ad:
-            logger.info("Proceeding with Active Directory configuration")
             print "\r\nThe Samba HA cluster requires a single short name for entry"
             print "in the Active Directory tree. This is the name by which the cluster"
             print "will be referenced in DNS.\r\n"
@@ -970,8 +985,6 @@ try:
                     break
                 logger.debug("idmap range is %s" % idmap_range)
             logger.info("Active Directory configuration complete")
-        else:
-            logger.info("Active Directory configuration skipped")
 
     # Collect the global deployment details from the user
     print "\r\n"
