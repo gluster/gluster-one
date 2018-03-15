@@ -80,9 +80,6 @@
         - ctdb
         - gdeploy
         - fio
-      notify:
-        - enable firewalld
-        - enable networkmanager
 
     # - name: install colonizer
     #   yum: name={{ item }} state=present
@@ -110,13 +107,13 @@
         create: yes
         state: present
 
+    - name: enable firewalld
+      service: name=firewalld state=started enabled=yes
+
+    - name: enable networkmanager
+      service: name=NetworkManager state=started enabled=yes
+
   handlers:
-
-      - name: enable firewalld
-        service: name=firewalld state=started enabled=yes
-
-      - name: enable networkmanager
-        service: name=NetworkManager state=started enabled=yes
 
       - name: reload sshd
         service: name=sshd state=reloaded
