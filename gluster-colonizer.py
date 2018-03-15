@@ -228,9 +228,6 @@ def yes_no(answer, do_return=False, default='yes'):
             print "Please enter either 'yes' or 'no'\r\n"
 
 def set_ha_node_count():
-    #TODO: Double-check that this calculation works correctly.
-    #      The quotient should be a float value, and the math.ceil
-    #      function should round this up.
     ha_node_count = int(
         math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
     if int(ha_node_count) < int(min_ha_nodes):
@@ -510,7 +507,6 @@ def collectDeploymentInformation():
     global update_ntp
     ntpServers = []
 
-    #TODO: Add data validation
     for i in range(4):
         inputMessage = "   NTP Server %i" % int(i+1)
         if i is 0:
@@ -1229,6 +1225,18 @@ try:
         for i, ntp in enumerate(ntpServers):
             print "NTP %i: %s" %(int(i+1), str(ntp))
 
+    if idmap_module:
+        print "\r"
+        print "Samba idmap module: %s" % idmap_module
+    elif use_smb:
+        print "\r"
+        print "Samba idmap module skipped; manual post-install configuration required"
+
+    if config_ad:
+        print "\r"
+        print "Active Directory domain: %s" % ad_domain_name
+        print "Active Directory admin user: %s" % ad_admin_user
+
     print "\r"
 
     print "Storage nodes:"
@@ -1535,11 +1543,7 @@ try:
             logger.error("Active Directory integration failed. See log messages for details.")
             logger.debug("Skipping AD join due to playbook failure.")
         else:
-            #TODO: There is a problem putting this in a playbook because the plain text admin
-            #      password must be passed to the 'net ads' command. Should probably look into
-            #      using something like expect here for better security.
             # Join CTDB cluster to the Active Directory domain
-            #host_command('echo %s | /bin/net ads join -U %s' % (ad_admin_pw, ad_admin_user))
             logger.info("Joining the AD domain...")
             ads_join_cmd = '/bin/net ads join -U %s' % ad_admin_user
             logger.debug(ads_join_cmd)
