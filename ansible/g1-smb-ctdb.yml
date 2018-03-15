@@ -14,7 +14,7 @@
 
 #TODO -- First automate the number and enumeration of nodes in python
 - name: Create Gluster volume for CTDB lock
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   volume:
     action:         create
@@ -42,7 +42,7 @@
       insertafter='^\[global\]'
 
 - name: Start CTDB lock volume
-  delegate_to: "{{ play_hosts[0] }}"
+  delegate_to: 127.0.0.1
   run_once: true
   volume:
     action: start

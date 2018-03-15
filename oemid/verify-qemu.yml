@@ -8,8 +8,8 @@
     - assert:
         that: 
           - ansible_processor_vcpus == 2
-          - ansible_product_version == 'pc-i440fx-2.9'
-          - ansible_memtotal_mb == 992
+            #- ansible_product_version == 'pc-i440fx-2.9'
+          - ansible_memtotal_mb >= 992
           - ansible_architecture == 'x86_64'
           - ansible_system_vendor == 'QEMU'
           - ansible_distribution == 'RedHat'

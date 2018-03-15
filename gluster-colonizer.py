@@ -135,6 +135,7 @@ default_volname = oem_id['flavor']['volname']
 consumed_ips = []
 readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
+playbook_path = g1_path + "ansible/"
 
 # Define management network info
 # We are confining to a maximum deployment set of 24 nodes.
@@ -194,10 +195,14 @@ def user_input(msg):
     return keyin
 
 
-def yes_no(answer, do_return=False):
+def yes_no(answer, do_return=False, default='yes'):
     # Simple yes/no prompt function
-    yes = set(['yes', 'y', 'ye', ''])
+    yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
+    if default is 'no':
+        no.add('')
+    else:
+        yes.add('')
     while True:
         choice = user_input(answer).lower()
         if choice in yes:
@@ -209,6 +214,11 @@ def yes_no(answer, do_return=False):
                 abortSetup("Deployment cancelled by user.")
         else:
             print "Please enter either 'yes' or 'no'\r\n"
+
+def natural_sort(string):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(string, key = alphanum_key)
 
 
 def ipValidator(user_message,
@@ -329,8 +339,8 @@ def startDhcpService():
 
     print "\r\nThe default DHCP subnet is: %s" % str(mgmt_subnet)
     print "If you would prefer to choose another subnet for your"
-    print "management network, you may enter it below. Simply leave"
-    print "the field blank to accept the default.\r\n"
+    print "management network, you may enter it below. Simply press"
+    print "Enter to accept the default.\r\n"
 
     while True:
         input_string = user_input("   DHCP subnet [%s]: " % str(mgmt_subnet))
@@ -439,9 +449,9 @@ def collectDeploymentInformation():
 
     logger.debug("Deploying %i nodes" % int(desiredNumOfNodes))
 
-    print "\r\nWe will now configure the Gluster nodes for your storage network"
-    print "infrastructure. Please ensure that all cabling and switch"
-    print "configuration is complete before proceeding."
+    print "\r\nWe will now configure the Gluster nodes for your storage network."
+    print "Please ensure that all cabling and switch configuration is"
+    print "complete before proceeding."
 
     print "\r\nBe prepared to provide network information for all nodes in"
     print "your Gluster deployment, including:\r\n"
@@ -459,7 +469,7 @@ def collectDeploymentInformation():
 
     # Get global network information from user
     while True:
-        input_string = user_input("   Domain name: ")
+        input_string = user_input("   Storage network domain name: ")
         global domain_name
         domain_name = input_string.lower()
         # regular expression to validate domain name based on RFCs
@@ -507,7 +517,54 @@ def collectDeploymentInformation():
                 check_subnet=False)
             dnsServerAddress.append(str(dns))
             if dns is '':
+                if dnsnum is 1:
+                    dnsServerAddress.append('')
                 break
+
+    print "\r\nNTP will be configured for time synchronization. You may enter"
+    print "up to four NTP servers below. If you would prefer to use the RHEL"
+    print "public NTP servers, simply press Enter at the first prompt and the"
+    print "default servers will be applied.\r\n"
+
+    print "NOTE: Using the default public NTP servers requires that all of the"
+    print "      %s nodes have access to the Internet\r\n" % brand_short
+
+    global ntpServers
+    global update_ntp
+    ntpServers = []
+
+    #TODO: Add data validation
+    for i in range(4):
+        inputMessage = "   NTP Server %i" % int(i+1)
+        if i is 0:
+            inputMessage += " (press Enter to accept defaults)"
+        else:
+            inputMessage += " (optional)"
+        inputMessage += ": "
+        while True:
+            ntpInput = user_input(inputMessage)
+            fqdn_or_ip_check = re.compile(
+                    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+            )
+            isvalid = fqdn_or_ip_check.match(ntpInput)
+            if isvalid is not None or ntpInput is '':
+                break
+            else:
+                logger.warning("NTP server must be a hostname or IP address")
+                continue
+
+        if ntpInput is '':
+            break
+        else:
+            ntpServers.append(ntpInput)
+            logger.debug("NTP server %i is %s" % (int(i+1), str(ntpInput)))
+
+
+    if not ntpServers:
+        logger.debug("NTP servers not defined; using defaults")
+        update_ntp = False
+    else:
+        update_ntp = True
 
 
 def collectNodeInformation():
@@ -590,6 +647,7 @@ def collectNodeInformation():
             vip_list.append("VIP_%s.%s=\"%s\"" %
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name), str(vip)))
+        vip_list = natural_sort(vip_list)
 
     return host_interface_information
 
@@ -687,10 +745,10 @@ try:
     print "\r\nWelcome to the \033[31m%s %s\033[0m deployment tool!\r\n" % (
         brand_parent, brand_project)
 
-    print "This node will be configured as the deployment node for your"
+    print "This node will be configured as the deployment master for your"
     print "Gluster storage pool. Before proceeding, please ensure that"
-    print "all %s nodes are connected to the out-of-band" % brand_short
-    print "management network infrastructure and are booted.\r\n"
+    print "all %s nodes are connected to the management" % brand_short
+    print "network infrastructure and are booted.\r\n"
 
     yes_no('Do you wish to continue? [Y/n] ')
 
@@ -726,14 +784,14 @@ try:
     print "\r\n"
 
     # Set this node up as the deployment master
-    print "The deployment tool requires DHCP service on the management"
+    print "The Gluster colonizer requires DHCP service on the management"
     print "network. If the service is not already available on the"
-    print "management network, we can start a DHCP server on this node"
-    print "now. This local DHCP service will only operate for the duration"
-    print "of the deployment process.\r\n"
+    print "management network, we can start a temporary DHCP server on this"
+    print "node now. This local DHCP service will only operate for the"
+    print "duration of the deployment process.\r\n"
 
-    start_dhcp = yes_no('Do you wish to start the DHCP service here? [Y/n] ',
-                        True)
+    start_dhcp = yes_no('Do you wish to start the DHCP service here? [y/N] ',
+                        do_return=True, default='no')
 
     print "\r\n"
 
@@ -743,6 +801,27 @@ try:
         logger.debug("Management subnet is %s" % mgmt_subnet)
     else:
         logger.info("Proceeding with external DHCP service")
+        print "\r\n"
+        logger.info("Detecting management subnet...")
+        #TODO: This needs improvement to get rid of the shell approach
+        while True:
+            try:
+                host_command('/bin/systemctl start NetworkManager')
+                p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
+                p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
+                p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
+                p1.stdout.close()
+                p2.stdout.close()
+                ip = IPNetwork(p3.communicate()[0])
+                mgmt_subnet = IPNetwork("%s/%s" % (ip.network, ip.prefixlen))
+                break
+            except:
+                logger.warning("Unable to detect management network")
+                logger.warning("Please ensure the DHCP service is available")
+                yes_no('Do you wish to attempt detection again? [Y/n] ')
+                print "\r\n"
+                continue
+        logger.info("Management subnet is %s" % mgmt_subnet)
 
     print "\r\n"
 
@@ -764,7 +843,7 @@ try:
     #Possibly borrow from dnsmasq-lease-interpreter.py script
     #TODO: Check for if we found too many nodes
     node_search_timeout = 20  #attempts
-    counter = 0
+    counter = 1
     discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
         random.sample(rand_filename_sample, rand_filename_len))
     while (currentNumOfHosts) < desiredNumOfNodes:
@@ -807,7 +886,7 @@ try:
             sys.stdout.flush()
         time.sleep(1)
         counter += 1
-        if counter >= node_search_timeout:
+        if counter > node_search_timeout:
             abortSetup(
                 "Timeout searching for nodes. Ensure all nodes are online and connected."
             )
@@ -878,7 +957,8 @@ try:
     print "\033[31mNOTE: These hostnames and IP adresses are expected to remain"
     print "      static, so please choose your values carefully. If you"
     print "      choose automatic assignment, the deployment tool assumes"
-    print "      that there are no other devices on the storage network.\033[0m"
+    print "      that there are no other devices on the storage network"
+    print "      and that all IPs are available to use.\033[0m"
     print "\r\n"
 
     # User selects manual or automatic storage network detail assignment
@@ -901,7 +981,8 @@ try:
     # Add all hostnames to a list for peer probing and building the brick string
     hostnames = []
     for node in sorted(nodeInfo):
-        hostnames.append(str(nodeInfo[node]['hostname']))
+        hostnames.append(str(nodeInfo[node]['hostname']) + '.' + str(domain_name))
+    hostnames = natural_sort(hostnames)
 
     logger.debug("Hostnames are %s" % str(hostnames))
 
@@ -913,7 +994,7 @@ try:
             if i != 0:
                 ha_cluster_nodes = ha_cluster_nodes + ","
             ha_cluster_nodes = ha_cluster_nodes + str(
-                hostnames[i]) + '.' + str(domain_name)
+                hostnames[i])
         # Generate random hacluster password
         s = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
         passlen = 20
@@ -927,9 +1008,9 @@ try:
 
     print "\r\n"
 
-    print "Domain name: %s" % str(domain_name)
+    print "Domain name:  %s" % str(domain_name)
 
-    print "Storage network: %s" % str(storage_subnet)
+    print "Storage network:  %s" % str(storage_subnet)
 
     print "Default gateway: ",
     print str(gatewayAddress) if gatewayAddress is not "" else "skipped"
@@ -939,6 +1020,14 @@ try:
         print str(dnsServerAddress[int(
             i - 1)]) if dnsServerAddress and dnsServerAddress[int(
                 i - 1)] is not "" else "skipped"
+
+    print "\r"
+
+    if not ntpServers:
+        print "NTP: Using default public servers"
+    else:
+        for i, ntp in enumerate(ntpServers):
+            print "NTP %i: %s" %(int(i+1), str(ntp))
 
     print "\r"
 
@@ -994,8 +1083,8 @@ try:
 
     # Reset root password
     print "\r\nThe default root password on your %s nodes must be reset." % brand_short
-    print "\033[31mBe careful to select a secure password, and note that"
-    print "the passwords will be updated for the root user on all nodes.\033[0m\r\n"
+    print "\033[31mBe careful to select a secure password, and note that the"
+    print "password will be updated for the root user on all nodes.\033[0m\r\n"
 
     while True:
         # random password salt
@@ -1090,7 +1179,7 @@ try:
         bricks_per_node = len(oem_id['flavor']['node']['backend_devices'])
         replica_peers = []
         for i in range(bricks_per_node):
-            for node in hostnames:
+            for node in natural_sort(hostnames):
                 replica_peers += [{
                     'node':
                     node,
@@ -1121,7 +1210,7 @@ try:
                 # for number of nodes / number of replicas (2)
                 for host_group in range(len(hostnames) / 2):
                     pair = peer_set[peer_set_num]
-                    arbiter_node = hostnames[arbiter_counter]
+                    arbiter_node = natural_sort(hostnames)[arbiter_counter]
                     pair.append({
                         'node':
                         arbiter_node,
@@ -1149,7 +1238,7 @@ try:
 
     #FIXME: Clean up this ugly mess
     # Build the ansible playbook arguments
-    playbook_args = g1_path + 'ansible/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
+    playbook_args = playbook_path + '/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
         cache_devices
     ) + ',part_size: ' + str(cache_part_size) + ',hostnames: ' + str(
         hostnames
@@ -1209,11 +1298,15 @@ try:
         arbiter = False
     playbook_args += ',arbiter: ' + str(arbiter)
 
+    playbook_args += ',update_ntp: ' + str(update_ntp)
+    if update_ntp:
+        playbook_args += ',ntpServers: ' + str(ntpServers)
+
     playbook_args += '}"'
 
     # Run playbook to replace ansible user ssh keys
     if new_ssh_keys:
-        run_ansible_playbook(g1_path + "/ansible/g1-key-dist.yml")
+        run_ansible_playbook(playbook_path + "/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
@@ -1239,7 +1332,7 @@ try:
 
     if run_perf_tests:
         logger.info("Beginning performance tests. Please be patient...")
-        playbook_args = g1_path + '/ansible/g1-perf-test.yml --extra-vars="{default_volname: ' + str(
+        playbook_args = playbook_path + '/g1-perf-test.yml --extra-vars="{default_volname: ' + str(
             default_volname
         ) + ',hostnames: ' + str(hostnames) + ',arbiter: ' + str(
             arbiter) + ',perf_jobfile: ' + str(
@@ -1276,6 +1369,8 @@ try:
             print(line),
 
     print("\r\n")
+
+    print "The above information is available in %s\r\n" % readme_file
 
 except (KeyboardInterrupt, EOFError):
     # Will catch Ctrl+C
