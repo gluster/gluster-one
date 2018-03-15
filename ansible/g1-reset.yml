@@ -79,6 +79,26 @@
       #register: result
       #failed_when: "result.rc != 0 and 'not found' not in result.stderr"
 
+    # we have to try to delete all LVM volumes in reverse order in which they potentially were created before since a simple vgremove --force is not enough since the lvg module is not robust enough - some existing thinpools or VGs still survive this
+    - name: Delete data logical volumes
+      lvol:
+        vg: "{{ item.vg }}"
+        lv: "{{ item.thinLV }}"
+        state: absent
+        force: yes
+      with_items: "{{ backend_configuration }}"
+
+    - name: Delete arbiter logical volumes
+      lvol:
+        vg: "{{ item.vg }}"
+        lv: "arbiter-{{ item.thinLV }}"
+      with_items: "{{ backend_configuration }}"
+      when: arbiter == True
+
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
+
     - name: Clear cache volume
       lvol:
         vg: "FAST{{ item.vg }}"
@@ -97,6 +117,17 @@
         vg: "FAST{{ item.vg }}"
         state: absent
         force: yes
+      with_items: "{{ backend_configuration }}"
+
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
+
+    - name: Remove data thin pools
+      lvol:
+        vg: "{{ item.vg }}"
+        lv: "{{ item.tp }}"
+        state: absent
       with_items: "{{ backend_configuration }}"
 
     - name: wait for udev to settle
