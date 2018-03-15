@@ -1309,6 +1309,15 @@ try:
     # NOTE: Reset the nodes.
 
     print "\r\n"
+    print "\033[31mWARNING: The next step will delete any existing Gluster configurations"
+    print "         and will wipe the LVM block devices and filesystems for drives"
+    print "         other than the system drive."
+    print "\r"
+    print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
+    yes_no('Are you sure you want to continue? [Y/n] ')
+
+    print("\r\nPlease be patient; these steps may take a while...\r\n")
+
     logger.info("Ensuring clean state...")
     print "\r\n"
 
@@ -1335,13 +1344,6 @@ try:
         run_ansible_playbook_interactively(customizationFileName)
 
     yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
-    print "\r\n"
-    print "\033[31mWARNING: This step will delete any existing Gluster configurations"
-    print "         and will wipe the LVM block devices and filesystems for drives"
-    print "         other than the system drive."
-    print "\r"
-    print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
-    yes_no('Are you sure you want to continue? [Y/n] ')
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
 
