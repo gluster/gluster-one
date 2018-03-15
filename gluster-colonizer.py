@@ -923,71 +923,72 @@ try:
                 else:
                     logger.warning("Passwords do not match!")
                     continue
-
-
-            print "\r\nSamba uses an identity mapping (idmap) module to map Active Directory"
-            print "SIDs to POSIX UIDs. You will need to select an idmap module that is"
-            print "appropriate for your environment.\r\n"
-
-            print "NOTE: Changing the idmap module after data has been written to the"
-            print "      storage can be very complicated and time consuming. If you are"
-            print "      unsure which module to choose, or if you have special requirements,"
-            print "      select option 3 to skip the module selection for now. You will need to"
-            print "      configure the idmap module manually before you can access your volume"
-            print "      over SMB.\r\n"
-
-            print "Which idmap module would you like to use?\r\n"
-            print "   1. TDB (Samba default)"
-            print "   2. AutoRID"
-            print "   3. Skip selection and configure manually\r\n"
-
-            idmap_module = ''
-            while True:
-                input_string = user_input("idmap module? [1] ")
-                if str(input_string) is "2":
-                    logger.info("AutoRID idmap module selected")
-                    idmap_module = "autorid"
-                    break
-                elif str(input_string) is "3":
-                    logger.info("Skipping idmap module selection")
-                    print "Please see the documentation for information on manually configuring"
-                    print "the idmap module."
-                    break
-                elif str(input_string) is "1" or input_string is "":
-                    logger.info("TDB idmap module selected")
-                    idmap_module = "tdb"
-                    break
-                else:
-                    logger.warning("Please select from the list.\r\n")
-                    continue
-
-            if idmap_module:
-                print "\r\nThe default idmap range is 1000000-4000000. If you would like to change"
-                print "this, enter a new value here with the same notation (m-n)."
-
-                idmap_range = "1000000-4000000"
-                while True:
-                    input_string = user_input("\r\nidmap range? [1000000-4000000] ")
-                    if input_string is "":
-                        break
-                    try:
-                        idmap_range_start = int(input_string.split("-")[0])
-                        idmap_range_end = int(input_string.split("-")[1])
-                    except:
-                        logger.warning("Invalid format. Please use \'m-n\' for the range.")
-                        continue
-                    # Let's start at 10000 to be safe
-                    if int(idmap_range_start) < 10000:
-                        logger.warning("Please select a starting value 10000 or above")
-                        continue
-                    # Maximum UIDs is 2^32
-                    elif int(idmap_range_end) > 4294967296:
-                        logger.warning("Please select an ending value 4294967296 or below")
-                        continue
-                    idmap_range = str(input_string)
-                    break
-                logger.debug("idmap range is %s" % idmap_range)
             logger.info("Active Directory configuration complete")
+
+
+        print "\r\nSamba uses an identity mapping (idmap) module to map Active Directory"
+        print "SIDs to POSIX UIDs. You will need to select an idmap module that is"
+        print "appropriate for your environment.\r\n"
+
+        print "NOTE: Changing the idmap module after data has been written to the"
+        print "      storage can be very complicated and time consuming. If you are"
+        print "      unsure which module to choose, or if you have special requirements,"
+        print "      select option 3 to skip the module selection for now. You will need to"
+        print "      configure the idmap module manually before you can access your volume"
+        print "      over SMB.\r\n"
+
+        print "Which idmap module would you like to use?\r\n"
+        print "   1. TDB (Samba default)"
+        print "   2. AutoRID"
+        print "   3. Skip selection and configure manually\r\n"
+
+        idmap_module = ''
+        while True:
+            input_string = user_input("idmap module? [1] ")
+            if str(input_string) is "2":
+                logger.info("AutoRID idmap module selected")
+                idmap_module = "autorid"
+                break
+            elif str(input_string) is "3":
+                logger.info("Skipping idmap module selection")
+                print "Please see the documentation for information on manually configuring"
+                print "the idmap module."
+                break
+            elif str(input_string) is "1" or input_string is "":
+                logger.info("TDB idmap module selected")
+                idmap_module = "tdb"
+                break
+            else:
+                logger.warning("Please select from the list.\r\n")
+                continue
+
+        if idmap_module:
+            print "\r\nThe default idmap range is 1000000-4000000. If you would like to change"
+            print "this, enter a new value here with the same notation (m-n)."
+
+            idmap_range = "1000000-4000000"
+            while True:
+                input_string = user_input("\r\nidmap range? [1000000-4000000] ")
+                if input_string is "":
+                    break
+                try:
+                    idmap_range_start = int(input_string.split("-")[0])
+                    idmap_range_end = int(input_string.split("-")[1])
+                except:
+                    logger.warning("Invalid format. Please use \'m-n\' for the range.")
+                    continue
+                # Let's start at 10000 to be safe
+                if int(idmap_range_start) < 10000:
+                    logger.warning("Please select a starting value 10000 or above")
+                    continue
+                # Maximum UIDs is 2^32
+                elif int(idmap_range_end) > 4294967296:
+                    logger.warning("Please select an ending value 4294967296 or below")
+                    continue
+                idmap_range = str(input_string)
+                break
+            logger.debug("idmap range is %s" % idmap_range)
+        logger.info("Samba configuration complete")
 
     # Collect the global deployment details from the user
     print "\r\n"
