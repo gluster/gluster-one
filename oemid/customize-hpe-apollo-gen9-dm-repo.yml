@@ -11,11 +11,6 @@
       default: 'lacp'
       private: no
 
-    - name: apply_disk_config
-      prompt: "\n\nThis playbook will configure 24 RAID0 sets, each with a single disk. This will DESTROY any data on all those devices. The OS disks are not touched. Select 'yes' if you agree or 'no' if you prepared the RAID0 sets yourself as /dev/sd[b-y]."
-      default: 'no'
-      private: no
-
   vars:
     current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
     # current_user: "ansible"
@@ -158,11 +153,6 @@
           - bonding_mode == 'lacp' or bonding_mode == 'tlb'
         msg: "Incorrect network bonding mode defined: {{ bonding_mode }}"
 
-    - assert:
-        that:
-          - apply_disk_config == 'yes' or apply_disk_config == 'no'
-        msg: "Invalid response. Please specify either 'yes' or 'no'."
-
     - name: retrieve NetworkManager connection names for onboard nics
       shell: nmcli -f UUID,DEVICE -t connection show | grep {{ item }}
       changed_when: false
@@ -225,50 +215,46 @@
       delay: 5
       changed_when: false
 
-    - block:
+    - name: enumerate raid controller using hpssacli
+      shell: hpssacli controller all show
+      register: hpssacli_controller_show_cmd
+      changed_when: false
 
-        - name: enumerate raid controller using hpssacli
-          shell: hpssacli controller all show
-          register: hpssacli_controller_show_cmd
-          changed_when: false
+    - set_fact:
+        array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
 
-        - set_fact:
-            array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
+    - name: looking for logical drives except OS RAID
+      shell: hpssacli controller slot={{ array_controller_slot }} ld all show
+      changed_when: false
+      register: hpssacli_pd_show_cmd
 
-        - name: looking for logical drives except OS RAID
-          shell: hpssacli controller slot={{ array_controller_slot }} ld all show
-          changed_when: false
-          register: hpssacli_pd_show_cmd
+    - set_fact:
+        additional_logical_drives: "{{ hpssacli_pd_show_cmd.stdout | regex_findall('array ([B-Z])', '\\1') | sort(true) }}"
 
-        - set_fact:
-            additional_logical_drives: "{{ hpssacli_pd_show_cmd.stdout | regex_findall('array ([B-Z])', '\\1') | sort(true) }}"
+    - name: delete all logical drives except OS RAID
+      shell: hpssacli controller slot={{ array_controller_slot }} array {{ item | upper }} delete forced
+      changed_when: false
+      with_items: "{{ additional_logical_drives }}"
 
-        - name: delete all logical drives except OS RAID
-          shell: hpssacli controller slot={{ array_controller_slot }} array {{ item | upper }} delete forced
-          changed_when: false
-          with_items: "{{ additional_logical_drives }}"
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
 
-        - name: wait for udev to settle
-          shell: udevadm settle --timeout=60
-          changed_when: false
+    - name: create RAID configuration template
+      template:
+        src: customize-hpe-apollo-gen9-dm-repo-raid.j2
+        dest: /tmp/ssainput.ini
 
-        - name: create RAID configuration template
-          template:
-            src: customize-hpe-apollo-gen9-dm-repo-raid.j2
-            dest: /tmp/ssainput.ini
+    - name: apply RAID configuration from template
+      shell: hpssascripting -i /tmp/ssainput.ini
+      changed_when: false
 
-        - name: apply RAID configuration from template
-          shell: hpssascripting -i /tmp/ssainput.ini
-          changed_when: false
+    - name: wait for udev to settle
+      shell: udevadm settle --timeout=60
+      changed_when: false
 
-        - name: wait for udev to settle
-          shell: udevadm settle --timeout=60
-          changed_when: false
-
-        - name: re-gather facts
-          setup:
-
-      when: apply_disk_config == 'yes'
+    - name: re-gather facts
+      setup:
 
     - name: check if disk sizes and naming is as expected
       with_items: "{{ disks.keys() }}"
