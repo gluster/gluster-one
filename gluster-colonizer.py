@@ -1266,6 +1266,8 @@ try:
     mount_opts = "defaults,_netdev"
     if use_nfs or use_smb:
         mount_host = str(vips[0])
+        if use_smb:
+            mount_opts += ",user=[username],pass=[password]"
     else:
         mount_host = "%s.%s" % (str(nodeInfo['1']['hostname']),
                                 str(domain_name))
@@ -1592,6 +1594,7 @@ try:
     playbook_args += ',nodes_min: ' + str(nodes_min)
     playbook_args += ',nodes_deployed: ' + str(desiredNumOfNodes)
     playbook_args += ',use_nfs: ' + str(use_nfs)
+    playbook_args += ',use_smb: ' + str(use_smb)
     playbook_args += '}"'
     run_ansible_playbook(playbook_args, continue_on_fail=True)
 
