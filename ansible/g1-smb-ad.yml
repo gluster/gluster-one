@@ -25,8 +25,8 @@
         line: "{{ item }}"
         insertafter: '^\[global\]'
       with_items:
-        - 'idmap config {{ ad_workgroup }} : range = {{ idmap_range }}'
-        - 'idmap config {{ ad_workgroup }} : backend = {{ idmap_module }}'
+        - 'idmap config * : range = {{ idmap_range }}'
+        - 'idmap config * : backend = {{ idmap_module }}'
         - 'workgroup = {{ ad_workgroup }}'
         - 'realm = {{ ad_domain_name }}'
         - 'netbios name = {{ ad_netbios_name }}'
