@@ -45,7 +45,17 @@
         - passwd
         - group
 
-    - shell: /bin/bash -c 'echo "Stop winbind and samba..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Stopping samba and winbind..." > {{ fifo }}'
+
+    - name: Stop samba
+      systemd:
+        name: smb
+        state: stopped
+
+    - name: Stop winbind
+      systemd:
+        name: winbind
+        state: stopped
 
     - name: Temporarily disable services
       shell: /bin/ctdb event script disable {{ item }}
@@ -54,6 +64,17 @@
       with_items:
         - 49.winbind
         - 50.samba
+
+    - shell: /bin/bash -c 'echo "Configuring CTDB to manage samba and winbind..." > {{ fifo }}'
+
+    - name: Set CTDB to manage samba and winbind
+      lineinfile:
+        dest: /etc/ctdb/ctdbd.conf
+        regexp: '^.*{{ item }}.*$'
+        line: '{{ item }}=yes'
+      with_items:
+        - CTDB_MANAGES_SAMBA
+        - CTDB_MANAGES_WINBIND
 
     - name: Restart CTDB
       systemd:
