@@ -4,37 +4,24 @@
   tasks:
     - shell: /bin/bash -c 'echo "Starting NMB..." > {{ fifo}}'
 
-    - name: Start and enable NMB service
+    - name: Start NMB service
       systemd:
         name: nmb
         state: started
-        enabled: yes
 
-    - shell: /bin/bash -c 'echo "Starting samba and winbind..." > {{ fifo}}'
+    - shell: /bin/bash -c 'echo "Starting winbind and samba..." > {{ fifo}}'
 
-    - name: Start and enable smb
-      systemd:
-        name: smb
-        state: started
-        enabled: yes
-
-    - name: Start and enable winbind
-      systemd:
-        name: winbind
-        state: started
-        enabled: yes
-
-        #- name: Re-enable services
-        #shell: /bin/ctdb event script enable {{ item }}
-        #register: result
-        #failed_when: "result.rc != 0"
-        #with_items:
-        #- 49.winbind
-        #- 50.samba
-
-    - shell: /bin/bash -c 'echo "Restarting CTDB..." > {{ fifo}}'
+    - name: Re-enable services
+      shell: /bin/ctdb event script enable {{ item }}
+      register: result
+      failed_when: "result.rc != 0"
+      with_items:
+        - 49.winbind
+        - 50.samba
 
     - name: Restart CTDB
       systemd:
         name: ctdb
         state: restarted
+
+

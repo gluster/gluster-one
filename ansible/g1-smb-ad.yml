@@ -45,27 +45,15 @@
         - passwd
         - group
 
-    - shell: /bin/bash -c 'echo "Stopping samba and winbind..." > {{ fifo }}'
+    - shell: /bin/bash -c 'echo "Stop winbind and samba..." > {{ fifo }}'
 
-    - name: Stop samba
-      systemd:
-        name: smb
-        state: stopped
-
-    - name: Stop winbind
-      systemd:
-        name: winbind
-        state: stopped
-
-      #- name: Temporarily disable services
-      #shell: /bin/ctdb event script disable {{ item }}
-      #register: result
-      #failed_when: "result.rc != 0"
-      #with_items:
-      #- 49.winbind
-      #- 50.samba
-
-    - shell: /bin/bash -c 'echo "Restarting CTDB..." > {{ fifo }}'
+    - name: Temporarily disable services
+      shell: /bin/ctdb event script disable {{ item }}
+      register: result
+      failed_when: "result.rc != 0"
+      with_items:
+        - 49.winbind
+        - 50.samba
 
     - name: Restart CTDB
       systemd:
