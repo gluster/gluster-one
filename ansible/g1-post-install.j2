@@ -44,15 +44,20 @@ and by design is highly available and load balanced among the Gluster nodes.
 
 Use of the Gluster native client requires the client-side packages to be
 installed on any node that will be mounting the Gluster volume.
- 
+
+All native clients must be able to resolve the Gluster node hostnames to their
+correct IP addresses.
 {% endif %}
 
 {% if use_smb %}
 Mounting volumes via SMB requires first managing users and permissions for the
-volume access. Please see the Red Hat Gluster Storage Administration Guide for
-details on the required configuration.
-{% endif %}
+volume access. Please see the Red Hat Enterprise Linux 7 Administrator's Guide
+and the Windows Integration Guide for details on the required configurations.
 
+Example command for mounting your volume on a Windows system:
+
+net use Z: \\{{ mount_host }}\{{ default_volname }}
+{% else %}
 Example command for mounting your volume on a Linux system:
 
 mount -t {{ mount_protocol }} {{ mount_host }}:/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
@@ -61,6 +66,7 @@ mount -t {{ mount_protocol }} {{ mount_host }}:/{{ default_volname }} [mountpoin
 Example /etc/fstab entry for mounting your volume at boot time:
 
 {{ mount_host }}:/{{ default_volname }}    [mountpoint]    {{ mount_protocol }}    {{ mount_opts }}  0 0
+{% endif %}
 
 Your default volume has been configured on {{ nodes_min }} out of your {{ nodes_deployed }}
 total Gluster nodes.
