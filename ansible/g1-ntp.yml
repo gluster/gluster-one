@@ -30,3 +30,6 @@
   service:
     name: chronyd
     enabled: yes
+
+- name: Force immediate time sync
+  shell: /bin/chronyc makestep
