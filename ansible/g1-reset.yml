@@ -89,6 +89,7 @@
         state: absent
         force: yes
       with_items: "{{ backend_configuration }}"
+      ignore_errors: true
 
     - name: Delete arbiter logical volumes
       lvol:
@@ -97,6 +98,7 @@
         force: yes
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
+      ignore_errors: true
 
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60
@@ -110,6 +112,7 @@
         force: yes
       with_items:
         - "{{ backend_configuration }}"
+      ignore_errors: true
 
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60
@@ -121,6 +124,7 @@
         state: absent
         force: yes
       with_items: "{{ backend_configuration }}"
+      ignore_errors: true
 
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60
@@ -133,6 +137,7 @@
         force: yes
         state: absent
       with_items: "{{ backend_configuration }}"
+      ignore_errors: true
 
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60
@@ -144,6 +149,7 @@
         state: absent
         force: yes
       with_items: "{{ backend_configuration }}"
+      ignore_errors: true
 
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60
