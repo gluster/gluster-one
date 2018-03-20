@@ -62,6 +62,12 @@ net use Z: \\{{ ad_netbios_name }}.{{ ad_domain_name }}\{{ default_volname }}
 Example command for mounting your volume on a Linux system:
 
 mount -t {{ mount_protocol }} //{{ ad_netbios_name }}.{{ ad_domain_name }}/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
+
+
+Please note that for better performance and experience, the standard automated
+method for exporting Gluster volumes via Samba has been replaced with a manual
+re-export of a local native client (FUSE) mount. You can read more about this
+configuration at: https://access.redhat.com/solutions/2969381
 {% else %}
 Example command for mounting your volume on a Linux system:
 
