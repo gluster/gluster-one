@@ -30,7 +30,7 @@
       lineinfile:
         dest: /usr/lib/systemd/system/nmb.service
         insertafter: '^After'
-        line: Requires = ctdb.service
+        line: Requires=ctdb.service
 
     - name: Reload systemd daemon
       command: /bin/systemctl daemon-reload
