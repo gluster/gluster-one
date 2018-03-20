@@ -19,6 +19,22 @@
 
     - shell: /bin/bash -c 'echo "Starting and enabling NMB..." > {{ fifo}}'
 
+    - name: Modify systemd nmb.service to start after ctdb.service
+      lineinfile:
+        dest: /usr/lib/systemd/system/nmb.service
+        regexp: '(^After.*$)'
+        backrefs: yes
+        line: '\1 ctdb.service'
+
+    - name: Modify systemd nmb.service to require ctdb.service
+      lineinfile:
+        dest: /usr/lib/systemd/system/nmb.service
+        insertafter: '^After'
+        line: Requires = ctdb.service
+
+    - name: Reload systemd daemon
+      command: /bin/systemctl daemon-reload
+
     - name: Start and enable NMB service
       systemd:
         name: nmb
