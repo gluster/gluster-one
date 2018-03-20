@@ -19,6 +19,23 @@
   with_items:
     - "{{ ha_cluster_nodes.split(',') }}"
 
+#See https://access.redhat.com/solutions/2969381
+- shell: /bin/bash -c 'echo "Disabling Samba hook scripts..." > {{ fifo }}'
+
+- name: Set base hook path
+  set_fact:
+    hookpath: /var/lib/glusterd/hooks/1
+
+- name: Disable Gluster Samba hook scripts
+  command: mv {{ hookpath }}/{{ item.0 }}/{{ item.1 }} {{ hookpath }}/{{ item.0 }}/disabled-{{ item.1 }}
+  with_together:
+    - - set/post
+      - start/post
+      - stop/pre
+    - - S30samba-set.sh
+      - S30samba-start.sh
+      - S30samba-stop.sh
+
 - shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
 
 - name: Open firewalld ports for CTDB
@@ -155,9 +172,6 @@
   service:
     name: ctdb
     state: started
-
-#- name: Enable ctdb service
-  #service: name=ctdb enabled=yes
 
 - shell: /bin/bash -c 'echo "Tuning default volume for Samba..." > {{ fifo }}'
 
