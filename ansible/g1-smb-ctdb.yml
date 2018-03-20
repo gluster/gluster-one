@@ -36,6 +36,48 @@
       - S30samba-start.sh
       - S30samba-stop.sh
 
+- shell: /bin/bash -c 'echo "Mounting default volume locally..." > {{ fifo }}'
+
+- name: Set default volume mount path
+  set_fact:
+    default_vol_mountpoint: "/gluster/mount/{{ default_volname }}"
+
+- name: Create the default volume mount point, skips if present
+  file:
+    path: "{{ default_vol_mountpoint }}"
+    state: directory
+
+- name: Mount the default volume with FUSE
+  mount:
+    name: "{{ default_vol_mountpoint }}"
+    src: "{{ mount_host }}:/{{ default_volname }}"
+    fstype: glusterfs
+    opts: "{{ mount_opts }}"
+    state: mounted
+
+- name: Set SELinux boolean for samba_share_fusefs
+  seboolean:
+    name: samba_share_fusefs
+    state: on
+    persistent: yes
+
+- shell: /bin/bash -c 'echo "Adding default volume export to smb.conf..." > {{ fifo }}'
+
+- name: Add default volume export to smb.conf
+  lineinfile:
+    dest: /etc/samba/smb.conf
+    state: present
+    insertafter: EOF
+    line: "{{ item }}"
+  with_items:
+    - ""
+    - "# Auto-configured by the gluster-colonizer"
+    - "[{{ default-volname }}]"
+    - "        comment = For samba share of volume {{ default-volname }}"
+    - "        path = {{ default_vol_mountpoint }}"
+    - "        read only = no"
+    - "        guest ok = yes"
+
 - shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
 
 - name: Open firewalld ports for CTDB

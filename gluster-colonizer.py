@@ -1265,6 +1265,15 @@ try:
 
     # Define the default mount host and mount options
     mount_opts = "_netdev"
+    fuse_mount_opts = mount_opts + ",backupvolfile-server="
+    for count, _ in enumerate(nodeInfo):
+        if count == 0:
+            continue
+        fuse_mount_opts += "%s.%s" % (str(nodeInfo[str(count + 1)]['hostname']),
+                                 str(domain_name))
+        if count != len(nodeInfo) - 1:
+            fuse_mount_opts += ":"
+
     if use_nfs or use_smb:
         mount_host = str(vips[0])
         if use_smb:
@@ -1272,14 +1281,8 @@ try:
     else:
         mount_host = "%s.%s" % (str(nodeInfo['1']['hostname']),
                                 str(domain_name))
-        mount_opts += ",backupvolfile-server="
-        for count, _ in enumerate(nodeInfo):
-            if count == 0:
-                continue
-            mount_opts += "%s.%s" % (str(nodeInfo[str(count + 1)]['hostname']),
-                                     str(domain_name))
-            if count != len(nodeInfo) - 1:
-                mount_opts += ":"
+        mount_opts = fuse_mount_opts
+
 
     # Create and deploy new ssh keys for ansible user
     print "Your systems have factory SSH keys for the ansible user. These"
@@ -1494,7 +1497,7 @@ try:
                     mount_protocol) + ',mount_host: ' + str(
                         mount_host) + ',mount_opts: \'' + str(
                             mount_opts
-                        ) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
+                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
                             nodes_min) + ',nodes_deployed: ' + str(
                                 desiredNumOfNodes) + ',tuned_profile: ' + str(
                                     oem_id['flavor']['node']['tuned']
