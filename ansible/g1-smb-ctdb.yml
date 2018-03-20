@@ -72,8 +72,8 @@
   with_items:
     - ""
     - "# Auto-configured by the gluster-colonizer"
-    - "[{{ default-volname }}]"
-    - "        comment = For samba share of volume {{ default-volname }}"
+    - "[{{ default_volname }}]"
+    - "        comment = For samba share of volume {{ default_volname }}"
     - "        path = {{ default_vol_mountpoint }}"
     - "        read only = no"
     - "        guest ok = yes"
