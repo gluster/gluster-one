@@ -19,6 +19,7 @@
 
     - shell: /bin/bash -c 'echo "Starting and enabling NMB..." > {{ fifo}}'
 
+    # These systemd modifications were added for BZ 1558690
     - name: Modify systemd nmb.service to start after ctdb.service
       lineinfile:
         dest: /usr/lib/systemd/system/nmb.service
