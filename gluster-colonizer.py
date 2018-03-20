@@ -1265,7 +1265,7 @@ try:
 
     # Define the default mount host and mount options
     mount_opts = "_netdev"
-    fuse_mount_opts = mount_opts + ",backupvolfile-server="
+    fuse_mount_opts = mount_opts + ",backup-volfile-servers="
     for count, _ in enumerate(nodeInfo):
         if count == 0:
             continue
