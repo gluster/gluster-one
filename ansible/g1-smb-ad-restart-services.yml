@@ -8,6 +8,7 @@
       systemd:
         name: nmb
         state: started
+        enabled: yes
 
     - shell: /bin/bash -c 'echo "Starting samba and winbind..." > {{ fifo}}'
 
