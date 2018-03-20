@@ -2,14 +2,6 @@
   become: yes
 
   tasks:
-    - shell: /bin/bash -c 'echo "Starting NMB..." > {{ fifo}}'
-
-    - name: Start NMB service
-      systemd:
-        name: nmb
-        state: started
-        enabled: yes
-
     - shell: /bin/bash -c 'echo "Starting samba and winbind..." > {{ fifo}}'
 
     - name: Re-enable services
@@ -25,4 +17,10 @@
         name: ctdb
         state: restarted
 
+    - shell: /bin/bash -c 'echo "Starting and enabling NMB..." > {{ fifo}}'
 
+    - name: Start and enable NMB service
+      systemd:
+        name: nmb
+        state: started
+        enabled: yes
