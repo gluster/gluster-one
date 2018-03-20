@@ -15,7 +15,7 @@
   when: item.value.ifname | match(storage_interface)
   delegate_to: '{{ item.value.runOn }}'
   run_once: true
-  shell: /bin/nmcli con modify {{ item['value']['ifname'] }} ipv4.method manual ipv6.method ignore connection.autoconnect yes ipv4.addr {{ item['value']['ifip'] }}/{{ item['value']['netprefix'] }} ipv4.gateway "{{ item['value']['gwaddress'] | default('') }}" ipv4.dns "{{ item.value.dnsaddress.0 | default('') }}" +ipv4.dns "{{ item.value.dnsaddress.1 | default('') }}"
+  shell: /bin/nmcli con modify {{ item['value']['ifname'] }} ipv4.method manual ipv6.method ignore connection.autoconnect yes ipv4.addr {{ item['value']['ifip'] }}/{{ item['value']['netprefix'] }} ipv4.gateway "{{ item['value']['gwaddress'] | default('') }}" ipv4.dns "{{ item.value.dnsaddress.0 | default('') }}" +ipv4.dns "{{ item.value.dnsaddress.1 | default('') }}" ipv4.dns-search "{{ domain_name }}"
 
 - shell: /bin/bash -c 'echo "Starting network interfaces..." > {{ fifo }}'
 
