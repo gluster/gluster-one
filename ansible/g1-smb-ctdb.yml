@@ -52,7 +52,7 @@
     name: "{{ default_vol_mountpoint }}"
     src: "{{ mount_host }}:/{{ default_volname }}"
     fstype: glusterfs
-    opts: "{{ mount_opts }}"
+    opts: "{{ fuse_mount_opts }}"
     state: mounted
 
 - name: Set SELinux boolean for samba_share_fusefs
