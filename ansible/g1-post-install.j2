@@ -56,12 +56,12 @@ and the Windows Integration Guide for details on the required configurations.
 
 Example command for mounting your volume on a Windows system:
 
-net use Z: \\{{ mount_host }}\{{ default_volname }}
+net use Z: \\{{ ad_netbios_name }}.{{ ad_domain_name }}\{{ default_volname }}
 
 
 Example command for mounting your volume on a Linux system:
 
-mount -t {{ mount_protocol }} //{{ mount_host }}/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
+mount -t {{ mount_protocol }} //{{ ad_netbios_name }}.{{ ad_domain_name }}/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
 {% else %}
 Example command for mounting your volume on a Linux system:
 
