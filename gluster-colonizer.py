@@ -124,6 +124,7 @@ perf_output = "/root/g1-perf-results.out"
 # TODO: Move this to OEMID file
 nodes_max = 24
 
+# Note: These are for NFS-Ganesha; CTDB should run on all nodes
 # Set HA node min, max, and factor
 min_ha_nodes = 4
 max_ha_nodes = 16
@@ -1132,8 +1133,10 @@ try:
     logger.debug("Ansible inventory: " + g1_inventory)
 
     # Set the HA node count
-    if use_nfs or use_smb:
+    if use_nfs:
         ha_node_count = set_ha_node_count()
+    elif use_smb:
+        ha_node_count = len(g1Hosts)
     else:
         ha_node_count = 0
 
