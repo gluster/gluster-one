@@ -549,20 +549,6 @@
         value: "{{ item.value }}"
       with_dict: "{{ gluster_vol_set }}"
 
-    - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
-
-    - name: Starts a volume
-      delegate_to: "{{ play_hosts[0] }}"
-      run_once: true
-      volume: 
-        action: start
-        volume: "{{ item }}"
-        force: "{{ force | default(False) }}"
-      with_items:
-        - "{{ default_volname }}"
-      register: result
-      failed_when: "result.rc != 0 and ('already started' not in result.msg)"
-
     - shell: /bin/bash -c 'echo "Initializing NFS-Ganesha..." > {{ fifo}}'
       when: use_nfs == True
 
@@ -580,6 +566,20 @@
 
       #- include: g1-smb-ad.yml
       #when: config_ad == True
+
+    - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
+
+    - name: Starts a volume
+      delegate_to: "{{ play_hosts[0] }}"
+      run_once: true
+      volume: 
+        action: start
+        volume: "{{ item }}"
+        force: "{{ force | default(False) }}"
+      with_items:
+        - "{{ default_volname }}"
+      register: result
+      failed_when: "result.rc != 0 and ('already started' not in result.msg)"
 
     - shell: /bin/bash -c 'echo "Updating root password..." > {{ fifo }}'
 

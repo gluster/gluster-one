@@ -36,6 +36,18 @@
       - S30samba-start.sh
       - S30samba-stop.sh
 
+- name: Start default volume
+  delegate_to: "{{ play_hosts[0] }}"
+  run_once: true
+  volume: 
+    action: start
+    volume: "{{ item }}"
+    force: "{{ force | default(False) }}"
+  with_items:
+    - "{{ default_volname }}"
+  register: result
+  failed_when: "result.rc != 0 and ('already started' not in result.msg)"
+
 - shell: /bin/bash -c 'echo "Mounting default volume locally..." > {{ fifo }}'
 
 - name: Set default volume mount path
