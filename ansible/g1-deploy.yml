@@ -435,6 +435,8 @@
         - mountd
         - nlm
         - rquota
+        #For samba
+        - samba
           
     - name: Open firewalld ports for glusterfs
       firewalld:
