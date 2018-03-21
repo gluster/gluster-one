@@ -159,13 +159,17 @@ domain_check = re.compile(
 # TODO: Better user selection of managemenet network config
 mgmt_subnet = IPNetwork('172.16.222.64/27')
 nm_mgmt_interface = oem_id['flavor']['node']['mgmt_interface']
-storage_interface = oem_id['flavor']['node']['storage_interface']
+nm_storage_interface = oem_id['flavor']['node']['storage_interface']
 
-if nm_mgmt_interface.startswith("bond-") or nm_mgmt_interface.startswith(
-        "team-"):
+if nm_mgmt_interface.startswith("bond-") or nm_mgmt_interface.startswith("team-"):
     mgmt_interface = nm_mgmt_interface[5:]
 else:
     mgmt_interface = nm_mgmt_interface
+
+if nm_storage_interface.startswith("bond-") or nm_storage_interface.startswith("team-"):
+    storage_interface = nm_storage_interface[5:]
+else:
+    storage_interface = nm_storage_interface
 
 # Init logging to log to console screen and file
 # Create logger
