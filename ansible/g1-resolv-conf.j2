@@ -1,6 +1,6 @@
 domain {{ domain_name }}
 search {{ domain_name }}
-{% set key = ansible_host + '-' + storage_interface %}
+{% set key = ansible_host + '-' + nm_storage_interface %}
 {% for dns in network_config[key]['dnsaddress'] %}
 nameserver {{ dns }}
 {% endfor %}

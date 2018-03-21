@@ -589,9 +589,9 @@ def collectNodeInformation():
             "dnsaddress":
             dnsServerAddress
         }
-        host_interface_information[node + "-" + storage_interface] = {
+        host_interface_information[node + "-" + nm_storage_interface] = {
             "ifname":
-            storage_interface,
+            nm_storage_interface,
             "ifip":
             str(nodeInfo[nodeNum]['ip']),
             "hostname":
@@ -675,9 +675,9 @@ def autoNodeInformation():
             "dnsaddress":
             dnsServerAddress
         }
-        host_interface_information[node + "-" + storage_interface] = {
+        host_interface_information[node + "-" + nm_storage_interface] = {
             "ifname":
-            storage_interface,
+            nm_storage_interface,
             "ifip":
             str(nodeInfo[nodeNum]['ip']),
             "hostname":
@@ -1493,7 +1493,7 @@ try:
                 host_interface_information
             ) + ',nodeInfo: ' + str(nodeInfo) + ',storage_interface: ' + str(
                 storage_interface
-            ) + ',brand_distributor: ' + str(
+                ) + 'nm_storage_interface: ' + str(nm_storage_interface) + ',brand_distributor: ' + str(
                 brand_distributor
             ) + ',brand_parent: ' + str(
                 brand_parent
