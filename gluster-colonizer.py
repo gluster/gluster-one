@@ -1606,8 +1606,8 @@ try:
     playbook_args += ',nodes_deployed: ' + str(desiredNumOfNodes)
     playbook_args += ',use_nfs: ' + str(use_nfs)
     playbook_args += ',use_smb: ' + str(use_smb)
-    playbook_args += ',ad_netbios_name: ' + str(ad_netbios_name)
-    playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
+    playbook_args += ',ad_netbios_name: \'' + str(ad_netbios_name) + '\''
+    playbook_args += ',ad_domain_name: \'' + str(ad_domain_name) + '\''
     playbook_args += '}"'
     run_ansible_playbook(playbook_args, continue_on_fail=True)
 
