@@ -50,18 +50,21 @@ correct IP addresses.
 {% endif %}
 
 {% if use_smb %}
+  {% if ad_netbios_name != '' %}
+    {% set mount_host = ad_netbios_name + '.' + ad_domain_name %}
+  {% endif %}
 Mounting volumes via SMB requires first managing users and permissions for the
 volume access. Please see the Red Hat Enterprise Linux 7 Administrator's Guide
 and the Windows Integration Guide for details on the required configurations.
 
 Example command for mounting your volume on a Windows system:
 
-net use Z: \\{{ ad_netbios_name }}.{{ ad_domain_name }}\{{ default_volname }}
+net use Z: \\{{ mount_host }}\{{ default_volname }}
 
 
 Example command for mounting your volume on a Linux system:
 
-mount -t {{ mount_protocol }} //{{ ad_netbios_name }}.{{ ad_domain_name }}/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
+mount -t {{ mount_protocol }} //{{ mount_host }}/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
 
 
 Please note that for better performance and experience, the standard automated
