@@ -1637,7 +1637,7 @@ try:
         ) + ',hostnames: ' + str(hostnames) + ',arbiter: ' + str(
             arbiter) + ',perf_jobfile: ' + str(
                 perf_jobfile) + ',perf_server_list: ' + str(
-                    perf_server_list) + ',perf_output : ' + str(perf_output)
+                    perf_server_list) + ',perf_output : ' + str(perf_output) + ',disperse: ' + str(disperse)
         if 'peer_set' in globals():
             playbook_args += ',replica_peers: ' + str(peer_list_min)
         playbook_args += '}"'
