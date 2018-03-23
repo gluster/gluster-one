@@ -27,109 +27,15 @@
         pv_dalign: "{{ dalign }}"
       when: disktype != 'RAID'
 
-    - shell: /bin/bash -c 'echo "Cleaning up any existing Gluster configurations..." > {{ fifo }}'
-
-    - name: Stop glusterd service
-      systemd:
-        name: glusterd
-        state: stopped
-
-    - name: Kill all Gluster processes
-      shell: /bin/bash -c 'pkill -9 {{ item }}'
-      with_items:
-        - glusterfs
-        - glusterfsd
-      ignore_errors: yes
-
-    - name: Clear existing Gluster configuration
-      file:
-        path: "/var/lib/glusterd/{{ item }}"
-        state: absent
-      with_items:
-        - glusterd.info
-        - glustershd
-        - bitd
-        - glusterfind
-        - glustershd
-        - nfs
-        - peers
-        - quotad
-        - scrub
-        - snaps
-        - ss_brick
-        - vols
-      ignore_errors: yes
-
     - name: Start glusterd service
       systemd:
         name: glusterd
         state: started
 
-    - name: Unmount data bricks
-      mount:
-        name: "{{ item.0.path }}"
-        state: "{{ item.1 }}"
-      with_nested:
-        - "{{ mntpaths }}"
-        - ['absent', 'unmounted']
-
-    - name: Unmount arbiter bricks
-      mount:
-        name: "{{ item.0.path }}"
-        state: "{{ item.1 }}"
-      with_nested:
-        - "{{ arbiter_mntpaths }}"
-        - ['absent', 'unmounted']
-      when: arbiter == True
-
-      #- name: Deactivate VGs
-      #shell: /bin/bash -c 'vgchange -a n --activationmode partial {{ item.vg }}'
-      #with_items: "{{ backend_configuration }}"
-      #register: result
-      #failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-
-    - name: Clear LVM
-      lvg:
-        vg: "{{ item.vg }}"
-        state: absent
-        force: yes
-      with_items: "{{ backend_configuration }}"
-
-    - name: Clear cache LVM
-      lvg:
-        vg: "FAST{{ item.vg }}"
-        state: absent
-        force: yes
-      with_items: "{{ backend_configuration }}"
-
-    - name: Remove PV
-      shell: /bin/bash -c 'pvremove --force {{ item.device }}'
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_items: "{{ backend_configuration }}"
-
-    - name: Remove cache PV
-      #FIXME: The 'p' is needed below for nvme drives, but should not be
-      #       there for devices with normal /dev/sdX disk paths.
-      shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_nested:
-        - "{{ cache_devices }}"
-        - "{{ backend_configuration }}"
-
-    - name: Cleanup data devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
-      with_items: "{{ backend_configuration }}"
-
-    - name: Cleanup cache devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items: "{{ cache_devices }}"
-
     - shell: /bin/bash -c 'echo "Creating LVM structures..." > {{ fifo }}'
 
     - name: Create data volume groups
-      vg: 
+      vg:
         action: create
         disks: "{{ item.device }}"
         vgname: "{{ item.vg }}"
@@ -144,7 +50,7 @@
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
     - name: Create data thin pools
-      lvol: 
+      lvol:
         vg: "{{ item.vg }}"
         lv: "{{ item.tp }}"
         size: "100%FREE"
@@ -208,7 +114,7 @@
     - name: Calculate cache partition sizes
       set_fact:
         cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices }}"
-    
+
     - name: Define partition incrementer
       set_fact:
         part_incr: 1
@@ -232,7 +138,7 @@
         - "{{ backend_configuration }}"
 
     - name: Create fast volume groups, initially only with arbiter PVs
-      vg: 
+      vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
         disks: "{{ item[0] }}p1"
@@ -380,7 +286,7 @@
 
     - name: Create the arbiter brick mount points, skips if present
       file: path={{ item.0.path }} state=directory
-      with_nested: 
+      with_nested:
         - "{{ arbiter_mntpaths }}"
         - "{{ backend_configuration }}"
       when: arbiter == True
@@ -404,7 +310,7 @@
 
     - name: Set the arbiter mount SELinux context
       file: path={{ item.0.path }} setype=glusterd_brick_t
-      with_nested: 
+      with_nested:
         - "{{ arbiter_mntpaths }}"
         - "{{ backend_configuration }}"
       when: arbiter == True
@@ -435,7 +341,7 @@
         - mountd
         - nlm
         - rquota
-          
+
     - name: Open firewalld ports for glusterfs
       firewalld:
         port: "{{ item }}"
@@ -504,11 +410,11 @@
     - debug: var=brickstring_fuse verbosity=2
     - debug: var=brickstring_nfs verbosity=2
     - debug: var=brickstring_smb verbosity=2
-      
+
     - name: Create Gluster volume for FUSE
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      volume:  
+      volume:
         action:         create
         volume:         "{{ default_volname }}"
         bricks:         "{{ brickstring_fuse }}"
@@ -550,7 +456,7 @@
     - name: Starts a volume
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      volume: 
+      volume:
         action: start
         volume: "{{ item }}"
         force: "{{ force | default(False) }}"

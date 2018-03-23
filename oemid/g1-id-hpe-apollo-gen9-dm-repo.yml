@@ -1,0 +1,49 @@
+# Colonizer example flavor ID file for KVM (test lab) deployment
+
+flavor:
+    name: Digital Media Repository
+    g1_path: /usr/share/gluster-colonizer/
+    node:
+        name: HPE Apollo Gen9
+        needs_bootstrap: true
+        customization_file_name: customize-hpe-apollo-gen9-dm-repo.yml
+        verify_file_name: verify-hpe-apollo-gen9-dm-repo.yml
+        mgmt_interface: eno1
+        storage_interface: bond0
+        backend_devices:
+          - /dev/sdb
+          - /dev/sdc
+          - /dev/sdd
+          - /dev/sde
+          - /dev/sdf
+          - /dev/sdg
+          - /dev/sdh
+          - /dev/sdi
+          - /dev/sdj
+          - /dev/sdk
+          - /dev/sdl
+          - /dev/sdm
+          - /dev/sdn
+          - /dev/sdo
+          - /dev/sdp
+          - /dev/sdq
+          - /dev/sdr
+          - /dev/sds
+          - /dev/sdt
+          - /dev/sdu
+          - /dev/sdv
+          - /dev/sdw
+          - /dev/sdx
+          - /dev/sdy
+        cache_devices:
+          - /dev/nvme0n1
+        disktype: JBOD
+        diskcount: 1
+        dalign: 256
+        tuned: rhgs-sequential-io
+        gluster_vol_set:
+            server.event-threads: 4
+            client.event-threads: 4
+    volname: gluster1
+    voltype: disperse
+    arbiter_size: None

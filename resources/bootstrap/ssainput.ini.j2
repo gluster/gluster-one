@@ -1,0 +1,63 @@
+; Date captured: Thu Mar  1 12:46:58 2018
+
+; Version: 2.40.13.0
+
+Action= Configure
+Method= Custom
+
+
+; __________________________ Controller Specifications SLOT 0 ________________________________
+;
+Controller= SLOT {{ array_controller_slot }}
+PowerMode= MaxPerformance
+ReadCache= 10
+WriteCache= 90
+RebuildPriority= High
+ExpandPriority= Medium
+ParallelSurfaceScanCount= 1
+SurfaceScanMode= Idle
+SurfaceScanDelay= 3
+Latency= Disable
+DriveWriteCache= Disabled
+NoBatteryWriteCache= Disabled
+MNPDelay= 60
+IRPEnable= Disabled
+DPOEnable= Disabled
+ElevatorSortEnable= Enabled
+QueueDepth= Automatic
+PredictiveSpareActivation= Disable
+
+; Array Specifications
+; Array= A
+; Drive= 1I:1:51, 1I:1:52
+; OnlineSpare= No
+
+; Logical Drive Specifications
+; LogicalDrive= 1
+; RAID= 1
+; Sectors= 32
+; StripSize= 256
+; Caching= Enabled
+
+; Array Specifications
+Array= B
+Drive= 1I:1:13, 1I:1:14, 1I:1:15, 1I:1:16, 1I:1:17, 1I:1:18, 1I:1:19, 1I:1:20, 1I:1:21, 1I:1:22, 1I:1:49, 1I:1:50
+OnlineSpare= No
+
+; Logical Drive Specifications
+LogicalDrive= 2
+RAID= 6
+Sectors= 32
+StripSize= 256
+Caching= Enabled
+
+; Array Specifications
+Array= C
+Drive= 2I:1:1, 2I:1:2, 2I:1:3, 2I:1:4, 2I:1:5, 2I:1:6, 2I:1:7, 2I:1:8, 2I:1:9, 2I:1:10, 2I:1:11, 2I:1:12
+OnlineSpare= No
+
+LogicalDrive= 3
+RAID= 6
+Sectors= 32
+StripSize= 256
+Caching= Enabled
