@@ -435,6 +435,8 @@
         - mountd
         - nlm
         - rquota
+        #For samba
+        - samba
           
     - name: Open firewalld ports for glusterfs
       firewalld:
@@ -460,6 +462,14 @@
     - include: g1-etc-hosts.yml
 
     - include: g1-ntp.yml
+
+    - name: Update resolv.conf
+      template:
+        src: g1-resolv-conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: 0644
 
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
@@ -545,6 +555,18 @@
     - include: g1-nfs-ganesha.yml
       when: use_nfs == True
 
+    - shell: /bin/bash -c 'echo "Initializing SMB & CTDB..." > {{ fifo}}'
+      when: use_smb == True
+
+    - include: g1-smb-ctdb.yml
+      when: use_smb == True
+
+      #- shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
+      #when: config_ad == True
+
+      #- include: g1-smb-ad.yml
+      #when: config_ad == True
+
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 
     - name: Starts a volume
@@ -566,28 +588,3 @@
         name: root
         password: "{{ root_password_hashed }}"
 
-    - shell: /bin/bash -c 'echo "Collecting post-install information..." > {{ fifo }}'
-
-    - name: Get timestamp at finish
-      shell: /bin/date -u
-      register: result
-
-    - set_fact:
-        finish_time: "{{ result['stdout'] }}"
-
-    - name: Get volume information
-      shell: /sbin/gluster volume info {{ default_volname }}
-      register: result
-
-    - set_fact:
-        vol_info: "{{ result['stdout'] }}"
-
-    - shell: /bin/bash -c 'echo "Generating post-install README..." > {{ fifo }}'
-
-    - name: Create post-install instructions file
-      template:
-        src: g1-post-install.j2
-        dest: "{{ readme_file }}"
-        owner: root
-        group: root
-        mode: 0644
