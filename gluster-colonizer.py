@@ -14,6 +14,8 @@
 #                                                                              *
 # Authors:              Dustin Black <dustin@redhat.com>                       *
 #                         https://github.com/dustinblack                       *
+#                       Daniel Messer                                          *
+#                         https://github.com/dmesser                           *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
 #                                                                              *
