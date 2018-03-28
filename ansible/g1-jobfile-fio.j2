@@ -23,6 +23,7 @@ readwrite=readwrite
 rwmixread=90
 filesize=4g
 
+{% if disperse == 'no' %}
 [create]
 description=Small File Create Test
 readwrite=write
@@ -41,3 +42,4 @@ filesize=4m
 norandommap
 nrfiles=300
 iodepth=300
+{% endif %}

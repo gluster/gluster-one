@@ -10,8 +10,15 @@ Below is your default storage volume information:
 ====================
 
 {% if use_nfs %}
-Your volume has been configured for the NFS client. The volume can be accessed
-via the virtual IP addresses (VIPs) configured during the deployment:
+Your volume has been configured for the NFS client.
+{% endif %}
+{% if use_smb %}
+Your volume has been configured for the SMB client.
+{% endif %}
+
+{% if use_nfs or use_smb %}
+The volume can be accessed via the virtual IP addresses (VIPs) configured
+during the deployment:
 
 {% for vip in vips %}
 {{ vip }}
@@ -37,9 +44,34 @@ and by design is highly available and load balanced among the Gluster nodes.
 
 Use of the Gluster native client requires the client-side packages to be
 installed on any node that will be mounting the Gluster volume.
- 
+
+All native clients must be able to resolve the Gluster node hostnames to their
+correct IP addresses.
 {% endif %}
 
+{% if use_smb %}
+  {% if ad_netbios_name != '' %}
+    {% set mount_host = ad_netbios_name + '.' + ad_domain_name %}
+  {% endif %}
+Mounting volumes via SMB requires first managing users and permissions for the
+volume access. Please see the Red Hat Enterprise Linux 7 Administrator's Guide
+and the Windows Integration Guide for details on the required configurations.
+
+Example command for mounting your volume on a Windows system:
+
+net use Z: \\{{ mount_host }}\{{ default_volname }}
+
+
+Example command for mounting your volume on a Linux system:
+
+mount -t {{ mount_protocol }} //{{ mount_host }}/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
+
+
+Please note that for better performance and experience, the standard automated
+method for exporting Gluster volumes via Samba has been replaced with a manual
+re-export of a local native client (FUSE) mount. You can read more about this
+configuration at: https://access.redhat.com/solutions/2969381
+{% else %}
 Example command for mounting your volume on a Linux system:
 
 mount -t {{ mount_protocol }} {{ mount_host }}:/{{ default_volname }} [mountpoint] -o {{ mount_opts }}
@@ -48,14 +80,16 @@ mount -t {{ mount_protocol }} {{ mount_host }}:/{{ default_volname }} [mountpoin
 Example /etc/fstab entry for mounting your volume at boot time:
 
 {{ mount_host }}:/{{ default_volname }}    [mountpoint]    {{ mount_protocol }}    {{ mount_opts }}  0 0
+{% endif %}
+
 
 Your default volume has been configured on {{ nodes_min }} out of your {{ nodes_deployed }}
 total Gluster nodes.
 
 {% if nodes_deployed|int > nodes_min|int %}
-Gluster brick file systems have been pre-configured on the remaining
-nodes and may be used to expand the default volume or create new volumes.
-{% endif %}
+Gluster brick file systems have been pre-configured on the remaining nodes
+and may be used to expand the default volume or create new volumes.
 
+{% endif %}
 Please see the documentation for instructions regarding the creation,
 expansion, and deletion of Gluster volumes.
