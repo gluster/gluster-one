@@ -1076,9 +1076,6 @@ try:
         logger.info("Your deployment flavor is \t\033[31m" +
                     oem_id['flavor']['name'] + "\033[0m")
 
-        # Collect the global deployment details from the user
-        collectDeploymentInformation()
-
         print "\r\n"
 
         logger.info(
