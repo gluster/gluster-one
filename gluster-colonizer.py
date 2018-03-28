@@ -772,6 +772,16 @@ try:
     # === PHASE 1 ===
     # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
 
+    print "\r\n"
+    logger.info("Begin %s inventory phase" % brand_short)
+    print "\r\n"
+
+    # Tell the user what we expect to deploy based on OEMID files
+    logger.info("Your deployment node type is \t\033[31m" +
+                oem_id['flavor']['node']['name'] + "\033[0m")
+    logger.info("Your deployment flavor is \t\033[31m" +
+                oem_id['flavor']['name'] + "\033[0m")
+
     try:
         if str(oem_id['flavor']['voltype']) == "replica":
             # Set gdeploy values for replica volume type
@@ -1065,16 +1075,6 @@ try:
     else:
         # === PHASE 1b ===
         # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
-
-        print "\r\n"
-        logger.info("Begin %s inventory phase" % brand_short)
-        print "\r\n"
-
-        # Tell the user what we expect to deploy based on OEMID files
-        logger.info("Your deployment node type is \t\033[31m" +
-                    oem_id['flavor']['node']['name'] + "\033[0m")
-        logger.info("Your deployment flavor is \t\033[31m" +
-                    oem_id['flavor']['name'] + "\033[0m")
 
         print "\r\n"
 
