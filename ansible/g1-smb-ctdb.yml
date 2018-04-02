@@ -19,23 +19,26 @@
   with_items:
     - "{{ ha_cluster_nodes.split(',') }}"
 
+#== DISABLED DUE TO SMALL FILE PERFORMANCE PROBLEMS
+# Convert SMB exports from libgfap to FUSE re-exports
 #See https://access.redhat.com/solutions/2969381
-- shell: /bin/bash -c 'echo "Disabling Samba hook scripts..." > {{ fifo }}'
-
-- name: Set base hook path
-  set_fact:
-    hookpath: /var/lib/glusterd/hooks/1
-
-- name: Disable Gluster Samba hook scripts
-  command: mv {{ hookpath }}/{{ item.0 }}/{{ item.1 }} {{ hookpath }}/{{ item.0 }}/disabled-{{ item.1 }}
-  with_together:
-    - - set/post
-      - start/post
-      - stop/pre
-    - - S30samba-set.sh
-      - S30samba-start.sh
-      - S30samba-stop.sh
-
+#- shell: /bin/bash -c 'echo "Disabling Samba hook scripts..." > {{ fifo }}'
+#
+#- name: Set base hook path
+#  set_fact:
+#    hookpath: /var/lib/glusterd/hooks/1
+#
+#- name: Disable Gluster Samba hook scripts
+#  command: mv {{ hookpath }}/{{ item.0 }}/{{ item.1 }} {{ hookpath }}/{{ item.0 }}/disabled-{{ item.1 }}
+#  with_together:
+#    - - set/post
+#      - start/post
+#      - stop/pre
+#    - - S30samba-set.sh
+#      - S30samba-start.sh
+#      - S30samba-stop.sh
+#
+#== DISABLED DUE TO SMALL FILE PERFORMANCE PROBLEMS
 - name: Start default volume
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
@@ -47,48 +50,50 @@
     - "{{ default_volname }}"
   register: result
   failed_when: "result.rc != 0 and ('already started' not in result.msg)"
-
-- shell: /bin/bash -c 'echo "Mounting default volume locally..." > {{ fifo }}'
-
-- name: Set default volume mount path
-  set_fact:
-    default_vol_mountpoint: "/gluster/mount/{{ default_volname }}"
-
-- name: Create the default volume mount point, skips if present
-  file:
-    path: "{{ default_vol_mountpoint }}"
-    state: directory
-
-- name: Mount the default volume with FUSE
-  mount:
-    name: "{{ default_vol_mountpoint }}"
-    src: "{{ mount_host }}:/{{ default_volname }}"
-    fstype: glusterfs
-    opts: "{{ fuse_mount_opts }}"
-    state: mounted
-
-- name: Set SELinux boolean for samba_share_fusefs
-  seboolean:
-    name: samba_share_fusefs
-    state: on
-    persistent: yes
-
-- shell: /bin/bash -c 'echo "Adding default volume export to smb.conf..." > {{ fifo }}'
-
-- name: Add default volume export to smb.conf
-  lineinfile:
-    dest: /etc/samba/smb.conf
-    state: present
-    insertafter: EOF
-    line: "{{ item }}"
-  with_items:
-    - ""
-    - "# Auto-configured by the gluster-colonizer"
-    - "[{{ default_volname }}]"
-    - "        comment = For samba share of volume {{ default_volname }}"
-    - "        path = {{ default_vol_mountpoint }}"
-    - "        read only = no"
-    - "        guest ok = yes"
+#== DISABLED DUE TO SMALL FILE PERFORMANCE PROBLEMS
+#
+#- shell: /bin/bash -c 'echo "Mounting default volume locally..." > {{ fifo }}'
+#
+#- name: Set default volume mount path
+#  set_fact:
+#    default_vol_mountpoint: "/gluster/mount/{{ default_volname }}"
+#
+#- name: Create the default volume mount point, skips if present
+#  file:
+#    path: "{{ default_vol_mountpoint }}"
+#    state: directory
+#
+#- name: Mount the default volume with FUSE
+#  mount:
+#    name: "{{ default_vol_mountpoint }}"
+#    src: "{{ mount_host }}:/{{ default_volname }}"
+#    fstype: glusterfs
+#    opts: "{{ fuse_mount_opts }}"
+#    state: mounted
+#
+#- name: Set SELinux boolean for samba_share_fusefs
+#  seboolean:
+#    name: samba_share_fusefs
+#    state: on
+#    persistent: yes
+#
+#- shell: /bin/bash -c 'echo "Adding default volume export to smb.conf..." > {{ fifo }}'
+#
+#- name: Add default volume export to smb.conf
+#  lineinfile:
+#    dest: /etc/samba/smb.conf
+#    state: present
+#    insertafter: EOF
+#    line: "{{ item }}"
+#  with_items:
+#    - ""
+#    - "# Auto-configured by the gluster-colonizer"
+#    - "[{{ default_volname }}]"
+#    - "        comment = For samba share of volume {{ default_volname }}"
+#    - "        path = {{ default_vol_mountpoint }}"
+#    - "        read only = no"
+#    - "        guest ok = yes"
+#== DISABLED DUE TO SMALL FILE PERFORMANCE PROBLEMS
 
 - shell: /bin/bash -c 'echo "Configuring firewall for CTDB..." > {{ fifo }}'
 
