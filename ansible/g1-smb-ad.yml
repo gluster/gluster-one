@@ -1,0 +1,82 @@
+- hosts: gluster_nodes
+  become: yes
+  any_errors_fatal: True
+
+  tasks:
+    - shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
+
+    - shell: /bin/bash -c 'echo "Configuring smb.conf file..." > {{ fifo }}'
+
+    - name: Remove conflicting lines from smb.conf
+      lineinfile:
+        dest: /etc/samba/smb.conf
+        state: absent
+        regexp: '^\s*{{ item }}'
+      with_items:
+        - netbios name
+        - workgroup
+        - realm
+        - security
+        - idmap config
+
+    - name: Configure smb.conf for Active Directory
+      lineinfile:
+        dest: /etc/samba/smb.conf
+        line: "{{ item }}"
+        insertafter: '^\[global\]'
+      with_items:
+        - 'idmap config * : range = {{ idmap_range }}'
+        - 'idmap config * : backend = {{ idmap_module }}'
+        - 'workgroup = {{ ad_workgroup }}'
+        - 'realm = {{ ad_domain_name }}'
+        - 'netbios name = {{ ad_netbios_name }}'
+        - 'security = ads'
+        - '# Auto-configured by the gluster-colonizer'
+
+    - shell: /bin/bash -c 'echo "Configuring nsswitch.conf file..." > {{ fifo }}'
+
+    - name: Configure nsswitch.conf for winbind
+      lineinfile:
+        dest: /etc/nsswitch.conf
+        backrefs: yes
+        regexp: '^({{ item }}.*)'
+        line: '\1 winbind'
+      with_items:
+        - passwd
+        - group
+
+    - shell: /bin/bash -c 'echo "Stopping samba and winbind..." > {{ fifo }}'
+
+    - name: Stop samba
+      systemd:
+        name: smb
+        state: stopped
+
+    - name: Stop winbind
+      systemd:
+        name: winbind
+        state: stopped
+
+    - name: Temporarily disable services
+      shell: /bin/ctdb event script disable {{ item }}
+      register: result
+      failed_when: "result.rc != 0"
+      with_items:
+        - 49.winbind
+        - 50.samba
+
+    - shell: /bin/bash -c 'echo "Configuring CTDB to manage samba and winbind..." > {{ fifo }}'
+
+    - name: Set CTDB to manage samba and winbind
+      lineinfile:
+        dest: /etc/ctdb/ctdbd.conf
+        regexp: '^.*{{ item }}.*$'
+        line: '{{ item }}=yes'
+      with_items:
+        - CTDB_MANAGES_SAMBA
+        - CTDB_MANAGES_WINBIND
+
+    - name: Restart CTDB
+      systemd:
+        name: ctdb
+        state: restarted

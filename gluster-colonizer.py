@@ -14,6 +14,8 @@
 #                                                                              *
 # Authors:              Dustin Black <dustin@redhat.com>                       *
 #                         https://github.com/dustinblack                       *
+#                       Daniel Messer                                          *
+#                         https://github.com/dmesser                           *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
 #                                                                              *
@@ -43,6 +45,7 @@ import signal
 from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
+import pexpect
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -110,7 +113,7 @@ rand_filename_len = 8
 # Ansible configuration
 peerInventory = "/var/tmp/peerInventory.ansible-" + "".join(
     random.sample(rand_filename_sample, rand_filename_len))
-ansible_ssh_key = "~/.ssh/id_rsa"
+ansible_ssh_key = "/home/ansible/.ssh/id_rsa"
 
 # Performance test files
 perf_jobfile = "/var/tmp/g1-perf-jobfile.fio-" + "".join(
@@ -123,6 +126,13 @@ perf_output = "/root/g1-perf-results.out"
 # TODO: Move this to OEMID file
 nodes_max = 24
 
+# Note: These are for NFS-Ganesha; CTDB should run on all nodes
+# Set HA node min, max, and factor
+min_ha_nodes = 4
+max_ha_nodes = 16
+# Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
+ha_node_factor = 1.5
+
 # Initialize variables
 hostlist = []
 desiredNumOfNodes = 0
@@ -132,10 +142,18 @@ storage_subnet = ""
 gatewayAddress = ""
 dnsServerAddress = []
 default_volname = oem_id['flavor']['volname']
+ad_netbios_name = ""
+ad_domain_name = ""
 consumed_ips = []
 readme_file = "/root/colonizer.README.txt"
 g1_inventory = ""
 playbook_path = g1_path + "ansible/"
+config_ad = ''
+idmap_module = ''
+# regular expression to validate domain name based on RFCs
+domain_check = re.compile(
+    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+)
 
 # Define management network info
 # We are confining to a maximum deployment set of 24 nodes.
@@ -143,13 +161,17 @@ playbook_path = g1_path + "ansible/"
 # TODO: Better user selection of managemenet network config
 mgmt_subnet = IPNetwork('172.16.222.64/27')
 nm_mgmt_interface = oem_id['flavor']['node']['mgmt_interface']
-storage_interface = oem_id['flavor']['node']['storage_interface']
+nm_storage_interface = oem_id['flavor']['node']['storage_interface']
 
-if nm_mgmt_interface.startswith("bond-") or nm_mgmt_interface.startswith(
-        "team-"):
+if nm_mgmt_interface.startswith("bond-") or nm_mgmt_interface.startswith("team-"):
     mgmt_interface = nm_mgmt_interface[5:]
 else:
     mgmt_interface = nm_mgmt_interface
+
+if nm_storage_interface.startswith("bond-") or nm_storage_interface.startswith("team-"):
+    storage_interface = nm_storage_interface[5:]
+else:
+    storage_interface = nm_storage_interface
 
 # Init logging to log to console screen and file
 # Create logger
@@ -215,11 +237,20 @@ def yes_no(answer, do_return=False, default='yes'):
         else:
             print "Please enter either 'yes' or 'no'\r\n"
 
+def set_ha_node_count():
+    ha_node_count = int(
+        math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
+    if int(ha_node_count) < int(min_ha_nodes):
+        ha_node_count = int(min_ha_nodes)
+    elif int(ha_node_count) > int(max_ha_nodes):
+        ha_node_count = int(max_ha_nodes)
+    logger.debug("HA node count is %i" % int(ha_node_count))
+    return ha_node_count
+
 def natural_sort(string):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(string, key = alphanum_key)
-
 
 def ipValidator(user_message,
                 null_valid=False,
@@ -422,88 +453,24 @@ def collectDeploymentInformation():
     global disperse
     global disperse_count
     global redundancy_count
-    try:
-        if str(oem_id['flavor']['voltype']) == "replica":
-            # Set gdeploy values for replica volume type
-            nodes_min = 4
-            nodes_multiple = 2
-            replica = 'yes'
-            if str(oem_id['flavor']['arbiter_size']) == "None":
-                replica_count = str('\'2\'')
-                arbiter_count = str('\'0\'')
-            else:
-                replica_count = str('\'3\'')
-                arbiter_count = str('\'1\'')
-            disperse = str('\'no\'')
-            disperse_count = str('\'0\'')
-            redundancy_count = str('\'0\'')
-        elif str(oem_id['flavor']['voltype']) == "disperse":
-            # Set gdeploy values for disperse volume type
-            nodes_min = 6
-            nodes_multiple = 6
-            replica = 'no'
-            replica_count = str('\'0\'')
-            arbiter_count = str('\'0\'')
-            disperse = str('\'yes\'')
-            disperse_count = str('\'4\'')
-            redundancy_count = str('\'2\'')
-        else:
-            abortSetup("Error: Invalid voltype detected in OEMID file")
-    except:
-        abortSetup("Error: No voltype defined in OEMID file")
-
-    # Get number of Gluster nodes from user
-    print("\r\nHow many %s nodes are you deploying?" % brand_short)
-    while True:
-        try:
-            input_string = int(
-                user_input("\r\n   Number of nodes (valid range is %i-%i): " %
-                           (nodes_min, nodes_max)))
-        except ValueError:
-            logger.error("Please enter a valid integer\n")
-            continue
-        global desiredNumOfNodes
-        desiredNumOfNodes = int(input_string) if input_string else 0
-        if desiredNumOfNodes < nodes_min or desiredNumOfNodes > nodes_max:
-            logger.error(
-                "The number is outside of the supported range. Please try again.\n"
-            )
-        elif desiredNumOfNodes % nodes_multiple != 0:
-            logger.error(
-                "The number must be a multiple of %i. Please try again.\n" %
-                nodes_multiple)
-        else:
-            break
 
     logger.debug("Deploying %i nodes" % int(desiredNumOfNodes))
-
-    print "\r\nWe will now configure the Gluster nodes for your storage network."
-    print "Please ensure that all cabling and switch configuration is"
-    print "complete before proceeding."
-
-    print "\r\nBe prepared to provide network information for all nodes in"
-    print "your Gluster deployment, including:\r\n"
-
-    print "   * hostnames"
-    print "   * IP addresses"
-    print "   * subnet mask"
-    print "   * default gateway"
-    print "   * DNS servers\r\n"
-
-    yes_no('Do you wish to continue? [Y/n] ')
 
     print "\r\nAll nodes are expected to be on the same storage subnet, so we"
     print "will first collect all shared network information.\r\n"
 
     # Get global network information from user
     while True:
-        input_string = user_input("   Storage network domain name: ")
+        domain_name_prompt = "   Storage network domain name"
+        if ad_domain_name:
+            domain_name_prompt += " [%s]" % str(ad_domain_name.lower())
+        domain_name_prompt += ": "
+        input_string = user_input(domain_name_prompt)
         global domain_name
-        domain_name = input_string.lower()
-        # regular expression to validate domain name based on RFCs
-        domain_check = re.compile(
-            "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
-        )
+        if input_string is '' and ad_domain_name:
+            domain_name = ad_domain_name.lower()
+        else:
+            domain_name = input_string.lower()
         isdomain = domain_check.match(domain_name)
         if isdomain is None:
             logger.warning("The domain name string is invalid")
@@ -529,25 +496,37 @@ def collectDeploymentInformation():
 
     logger.debug("Storage network is %s" % str(storage_subnet))
 
-    print "\r\nGateway and DNS fields may be left blank for now, if you prefer.\r\n"
+    if not config_ad:
+        print "\r\nGateway and DNS fields may be left blank for now, if you prefer.\r\n"
 
     global gatewayAddress
-    gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True)
 
-    if gatewayAddress is not '':
-        global dnsServerAddress
-        for i in range(2):
-            dnsnum = i + 1
-            dns = ipValidator(
-                "   DNS%i server address: " % dnsnum,
-                null_valid=True,
-                check_dupes=False,
-                check_subnet=False)
-            dnsServerAddress.append(str(dns))
-            if dns is '':
-                if dnsnum is 1:
-                    dnsServerAddress.append('')
-                break
+    while True:
+        gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True)
+        if gatewayAddress is '' and config_ad:
+            logger.warning("Gateway address is required for Active Directory connection")
+            continue
+        elif gatewayAddress is not '':
+            global dnsServerAddress
+            for i in range(2):
+                dnsnum = i + 1
+                while True:
+                    dns = ipValidator(
+                        "   DNS%i server address: " % dnsnum,
+                        null_valid=True,
+                        check_dupes=False,
+                        check_subnet=False)
+                    if dns is '' and config_ad and int(dnsnum) is 1:
+                        logger.warning("One DNS server address is required for Active Directory connection")
+                        continue
+                    dnsServerAddress.append(str(dns))
+                    if dns is '':
+                        if dnsnum is 1:
+                            dnsServerAddress.append('')
+                    break
+                if len(dnsServerAddress) is 2:
+                    break
+        break
 
     print "\r\nNTP will be configured for time synchronization. You may enter"
     print "up to four NTP servers below. If you would prefer to use the RHEL"
@@ -555,13 +534,17 @@ def collectDeploymentInformation():
     print "default servers will be applied.\r\n"
 
     print "NOTE: Using the default public NTP servers requires that all of the"
-    print "      %s nodes have access to the Internet\r\n" % brand_short
+    print "      %s nodes have access to the Internet.\r\n" % brand_short
+
+    if config_ad:
+        print "\033[31mTime synchronization is essential for Active Directory authentication"
+        print "via Kerberos. Generally, AD servers will also act as NTP servers, so you can"
+        print "likely use those hostnames or IPs here.\033[0m\r\n"
 
     global ntpServers
     global update_ntp
     ntpServers = []
 
-    #TODO: Add data validation
     for i in range(4):
         inputMessage = "   NTP Server %i" % int(i+1)
         if i is 0:
@@ -586,7 +569,6 @@ def collectDeploymentInformation():
         else:
             ntpServers.append(ntpInput)
             logger.debug("NTP server %i is %s" % (int(i+1), str(ntpInput)))
-
 
     if not ntpServers:
         logger.debug("NTP servers not defined; using defaults")
@@ -637,9 +619,9 @@ def collectNodeInformation():
             "dnsaddress":
             dnsServerAddress
         }
-        host_interface_information[node + "-" + storage_interface] = {
+        host_interface_information[node + "-" + nm_storage_interface] = {
             "ifname":
-            storage_interface,
+            nm_storage_interface,
             "ifip":
             str(nodeInfo[nodeNum]['ip']),
             "hostname":
@@ -663,9 +645,9 @@ def collectNodeInformation():
     vips = []
 
     # Enumerate the list of VIPs if we are using the NFS client
-    if use_nfs:
-        print "\r\nYour deployment will be configured with %i NFS-Ganesha HA nodes." % int(
-            ha_node_count)
+    if use_nfs or use_smb:
+        print "\r\nYour deployment will be configured with %i %s HA nodes." % (int(
+            ha_node_count), str(ha_protocol_name))
         print "You will need to provide a VIP from the %s subnet for each of the nodes.\r\n" % str(
             storage_subnet)
         for i in range(int(ha_node_count)):
@@ -684,7 +666,9 @@ def autoNodeInformation():
     logger.debug("Auto-assigning node info...")
     # Function to automatically assign node specifics
     host_interface_information = {}
-    storageIPCounter = 0
+    #Starting counter at 1 so that the first IP selected below
+    #is .2 just to be safe we don't conflict w/ a gateway
+    storageIPCounter = 1
     global nodeInfo
     nodeInfo = {}
 
@@ -721,9 +705,9 @@ def autoNodeInformation():
             "dnsaddress":
             dnsServerAddress
         }
-        host_interface_information[node + "-" + storage_interface] = {
+        host_interface_information[node + "-" + nm_storage_interface] = {
             "ifname":
-            storage_interface,
+            nm_storage_interface,
             "ifip":
             str(nodeInfo[nodeNum]['ip']),
             "hostname":
@@ -747,7 +731,7 @@ def autoNodeInformation():
     vips = []
 
     # Enumerate the list of VIPs if we are using the NFS client
-    if use_nfs:
+    if use_nfs or use_smb:
         logger.debug("Assigning VIPs")
         for i in range(int(ha_node_count)):
             storageIPCounter += 1
@@ -788,15 +772,273 @@ try:
     # === PHASE 1 ===
     # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
 
+    print "\r\n"
+    logger.info("Begin %s inventory phase" % brand_short)
+    print "\r\n"
+
+    # Tell the user what we expect to deploy based on OEMID files
+    logger.info("Your deployment node type is \t\033[31m" +
+                oem_id['flavor']['node']['name'] + "\033[0m")
+    logger.info("Your deployment flavor is \t\033[31m" +
+                oem_id['flavor']['name'] + "\033[0m")
+
+    try:
+        if str(oem_id['flavor']['voltype']) == "replica":
+            # Set gdeploy values for replica volume type
+            nodes_min = 4
+            nodes_multiple = 2
+            replica = 'yes'
+            if str(oem_id['flavor']['arbiter_size']) == "None":
+                replica_count = str('\'2\'')
+                arbiter_count = str('\'0\'')
+            else:
+                replica_count = str('\'3\'')
+                arbiter_count = str('\'1\'')
+            disperse = str('\'no\'')
+            disperse_count = str('\'0\'')
+            redundancy_count = str('\'0\'')
+        elif str(oem_id['flavor']['voltype']) == "disperse":
+            # Set gdeploy values for disperse volume type
+            nodes_min = 6
+            nodes_multiple = 6
+            replica = 'no'
+            replica_count = str('\'0\'')
+            arbiter_count = str('\'0\'')
+            disperse = str('\'yes\'')
+            disperse_count = str('\'4\'')
+            redundancy_count = str('\'2\'')
+        else:
+            abortSetup("Error: Invalid voltype detected in OEMID file")
+    except:
+        abortSetup("Error: No voltype defined in OEMID file")
+
+    # Get number of Gluster nodes from user
+    print("\r\nHow many %s nodes are you deploying?" % brand_short)
+    while True:
+        try:
+            input_string = int(
+                user_input("\r\n   Number of nodes (valid range is %i-%i): " %
+                           (nodes_min, nodes_max)))
+        except ValueError:
+            logger.error("Please enter a valid integer\n")
+            continue
+        desiredNumOfNodes = int(input_string) if input_string else 0
+        if desiredNumOfNodes < nodes_min or desiredNumOfNodes > nodes_max:
+            logger.error(
+                "The number is outside of the supported range. Please try again.\n"
+            )
+        elif desiredNumOfNodes % nodes_multiple != 0:
+            logger.error(
+                "The number must be a multiple of %i. Please try again.\n" %
+                nodes_multiple)
+        else:
+            break
+
+    print "\r\nPlease choose the client access method you will use for the"
+    print "default storage volume. This applies only to the volume that is"
+    print "automatically created during deployment, and the method can be"
+    print "changed manually post-install.\r\n"
+    print "    1. NFS"
+    print "    2. Gluster Native Client (FUSE)"
+    print "    3. SMB\r\n"
+
+    # User selects client access method
+    use_nfs = False
+    use_smb = False
+    global mount_protocol
+    global ha_protocol_name
+    while True:
+        input_string = user_input("Client method? [1] ")
+        if str(input_string) is "2":
+            logger.info("Gluster Native Client selected")
+            mount_protocol = "glusterfs"
+            break
+        elif str(input_string) is "3":
+            logger.info("SMB Client selected")
+            mount_protocol = "cifs"
+            ha_protocol_name = "CTDB"
+            use_smb = True
+            break
+        elif str(input_string) is "1" or input_string is "":
+            logger.info("NFS Client selected")
+            mount_protocol = "nfs"
+            ha_protocol_name = "NFS-Ganesha"
+            use_nfs = True
+            break
+        else:
+            logger.warning("Please select from the list.\r\n")
+            continue
+
+    # Collect Active Directory configuration or skip
+    if use_smb:
+        print "\r\nFor SMB, Active Directory integration can optionally be configured."
+        print "The provided method will use winbind to connect the Gluster nodes"
+        print "to Active Directory and join the domain. This will require an"
+        print "Active Directory username and password for an account with rights"
+        print "to add systems to the domain.\r\n"
+
+        config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, True)
+
+        if config_ad:
+            logger.info("Proceeding with Active Directory configuration")
+        else:
+            logger.info("Active Directory configuration skipped")
+
+
+    print "\r\nWe will now configure the Gluster nodes for your storage network."
+    print "Please ensure that all cabling and switch configuration is complete"
+    print "before proceeding."
+
+    print "\r\nBe prepared to provide network information for all nodes in"
+    print "your Gluster deployment, including:\r\n"
+
+    print "   * hostnames"
+    print "   * IP addresses"
+    if use_nfs or use_smb:
+        print "   * VIP addresses for HA"
+    print "   * subnet mask"
+    print "   * default gateway"
+    print "   * DNS servers"
+    print "   * NTP servers"
+    if config_ad:
+        print "   * AD domain"
+        print "   * AD admin credentials"
+
+    print "\r\n"
+
+    yes_no('Do you wish to continue? [Y/n] ')
+
+
+    if use_smb:
+        #FIXME
+        #TODO: Enforce input and do validation below
+        if config_ad:
+            print "\r\nThe Samba HA cluster requires a single short name for entry"
+            print "in the Active Directory tree. This is the name by which the cluster"
+            print "will be referenced in DNS.\r\n"
+
+            while True:
+                ad_netbios_name = user_input("   Samba cluster short name: ")
+                if len(ad_netbios_name) < 1 or len(ad_netbios_name) > 15:
+                    logger.warning("The short name must be 1 to 15 characters in length.")
+                    continue
+                # Check against allowed NetBIOS character set
+                netbios_name_check = re.compile(r"(^[A-Za-z\d_!@#$%^()\-'{}\.~]{1,15}$)")
+                isnetbiosname = netbios_name_check.match(ad_netbios_name)
+                if isnetbiosname is None:
+                    logger.warning("The NetBIOS name entered is invalid.")
+                    continue
+                break
+
+            logger.debug("SMB NetBIOS name is %s" % ad_netbios_name)
+
+            print "\r\nPlease provide the fully-qualified Active Directory domain name and"
+            print "the credentials for a user with rights to add systems to the domain.\r\n"
+
+            while True:
+                ad_domain_name = user_input("   Active Directory domain name: ")
+                isdomain = domain_check.match(ad_domain_name)
+                if isdomain is None:
+                    logger.warning("The AD domain name string is invalid")
+                    continue
+                break
+
+            ad_workgroup = ad_domain_name.split(".")[0].upper()
+
+            logger.debug("Active Directory domain is %s" % ad_domain_name)
+            logger.debug("Active Directory workgroup is %s" % ad_workgroup)
+
+            #TODO: Input validation
+            ad_admin_user = user_input("   AD admin username [Administrator]: ")
+            if str(ad_admin_user) is '':
+                ad_admin_user = 'Administrator'
+            logger.debug("Active Directory user is %s" % ad_admin_user)
+            while True:
+                ad_admin_pw = getpass.getpass("   Active Directory admin password: ")
+                if ad_admin_pw is '':
+                    continue
+                if ad_admin_pw == getpass.getpass("   Confirm admin password: "):
+                    logger.debug("Active Directory password collected")
+                    break
+                else:
+                    logger.warning("Passwords do not match!")
+                    continue
+
+
+            print "\r\nSamba uses an identity mapping (idmap) module to map Active Directory"
+            print "SIDs to POSIX UIDs. You will need to select an idmap module that is"
+            print "appropriate for your environment.\r\n"
+
+            print "NOTE: Changing the idmap module after data has been written to the"
+            print "      storage can be very complicated and time consuming. If you are"
+            print "      unsure which module to choose, or if you have special requirements,"
+            print "      select option 3 to skip the module selection for now. You will need to"
+            print "      configure the idmap module manually before you can access your volume"
+            print "      over SMB.\r\n"
+
+            print "Which idmap module would you like to use?\r\n"
+            print "   1. TDB (Samba default)"
+            print "   2. AutoRID"
+            print "   3. Skip selection and configure manually\r\n"
+
+            idmap_module = ''
+            while True:
+                input_string = user_input("idmap module? [1] ")
+                if str(input_string) is "2":
+                    logger.info("AutoRID idmap module selected")
+                    idmap_module = "autorid"
+                    break
+                elif str(input_string) is "3":
+                    logger.info("Skipping idmap module selection")
+                    print "Please see the documentation for information on manually configuring"
+                    print "the idmap module."
+                    break
+                elif str(input_string) is "1" or input_string is "":
+                    logger.info("TDB idmap module selected")
+                    idmap_module = "tdb"
+                    break
+                else:
+                    logger.warning("Please select from the list.\r\n")
+                    continue
+
+            if idmap_module:
+                print "\r\nThe default idmap range is 1000000-4000000. If you would like to change"
+                print "this, enter a new value here with the same notation (m-n)."
+
+                idmap_range = "1000000-4000000"
+                while True:
+                    input_string = user_input("\r\nidmap range? [1000000-4000000] ")
+                    if input_string is "":
+                        break
+                    try:
+                        idmap_range_start = int(input_string.split("-")[0])
+                        idmap_range_end = int(input_string.split("-")[1])
+                    except:
+                        logger.warning("Invalid format. Please use \'m-n\' for the range.")
+                        continue
+                    # Let's start at 10000 to be safe
+                    if int(idmap_range_start) < 10000:
+                        logger.warning("Please select a starting value 10000 or above")
+                        continue
+                    # Maximum UIDs is 2^32
+                    elif int(idmap_range_end) > 4294967296:
+                        logger.warning("Please select an ending value 4294967296 or below")
+                        continue
+                    idmap_range = str(input_string)
+                    break
+                logger.debug("idmap range is %s" % idmap_range)
+            logger.info("Active Directory configuration complete")
+
+    # Collect the global deployment details from the user
+    print "\r\n"
+    collectDeploymentInformation()
+
     if needsBootstrapping:
 
         # === PHASE 1a ===
         # NOTE: The OEMID file indicates the nodes need bootstrapping. Hence we need to ask the user where they are since they do not run the the discovery service and have not been boostrapped.
 
         logger.debug("Node config indicates bootstrapping is needed.")
-
-        # Collect the global deployment details from the user
-        collectDeploymentInformation()
 
         print "\r\nThis node type will require manual discovery.\r\n"
 
@@ -833,19 +1075,6 @@ try:
     else:
         # === PHASE 1b ===
         # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
-
-        print "\r\n"
-        logger.info("Begin %s inventory phase" % brand_short)
-        print "\r\n"
-
-        # Tell the user what we expect to deploy based on OEMID files
-        logger.info("Your deployment node type is \t\033[31m" +
-                    oem_id['flavor']['node']['name'] + "\033[0m")
-        logger.info("Your deployment flavor is \t\033[31m" +
-                    oem_id['flavor']['name'] + "\033[0m")
-
-        # Collect the global deployment details from the user
-        collectDeploymentInformation()
 
         print "\r\n"
 
@@ -1004,48 +1233,13 @@ try:
     # === PHASE 3 ===
     # NOTE: Capture essential configuration information
 
-    print "\r\nPlease choose the client access method you will use for the"
-    print "default storage volume. This applies only to the volume that is"
-    print "automatically created during deployment, and the method can be"
-    print "changed manually post-install.\r\n"
-    print "    1. NFS"
-    print "    2. Gluster Native Client (FUSE)\r\n"
-
-    # User selects client access method
-    use_nfs = False
-    min_ha_nodes = 4
-    max_ha_nodes = 16
-    # Total nodes per HA node; 1.5 equals 2 HA nodes for every 3 nodes
-    ha_node_factor = 1.5
-    global mount_protocol
-    global mount_protocol_name
-    while True:
-        input_string = user_input("Client method? [1] ")
-        if str(input_string) is "2":
-            logger.info("Gluster Native Client selected")
-            mount_protocol = "glusterfs"
-            mount_protocol_name = "Gluster native client"
-            ha_node_count = 0
-            break
-        elif str(input_string) is "1" or input_string is "":
-            logger.info("NFS Client selected")
-            mount_protocol = "nfs"
-            mount_protocol_name = "NFS"
-            use_nfs = True
-            #TODO: Double-check that this calculation works correctly.
-            #      The quotient should be a float value, and the math.ceil
-            #      function should round this up.
-            ha_node_count = int(
-                math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
-            if int(ha_node_count) < int(min_ha_nodes):
-                ha_node_count = int(min_ha_nodes)
-            elif int(ha_node_count) > int(max_ha_nodes):
-                ha_node_count = int(max_ha_nodes)
-            logger.debug("HA node count is %i" % int(ha_node_count))
-            break
-        else:
-            logger.warning("Please select from the list.\r\n")
-            continue
+    # Set the HA node count
+    if use_nfs:
+        ha_node_count = set_ha_node_count()
+    elif use_smb:
+        ha_node_count = len(g1Hosts)
+    else:
+        ha_node_count = 0
 
     print "\r\nYou may choose to either assign production storage network"
     print "hostnames and static IP addresses to your nodes manually, or"
@@ -1082,9 +1276,15 @@ try:
         hostnames.append(str(nodeInfo[node]['hostname']) + '.' + str(domain_name))
     hostnames = natural_sort(hostnames)
 
+    if use_smb:
+      # Add all IPs to a list for CTDB use
+      ips = []
+      for node in sorted(nodeInfo):
+          ips.append(str(nodeInfo[node]['ip']))
+
     logger.debug("Hostnames are %s" % str(hostnames))
 
-    # Enumerate the HA node list for NFS-Ganesha
+    # Enumerate the HA node hostname list for NFS-Ganesha
     ha_cluster_nodes = ''
     hacluster_password = ''
     if use_nfs:
@@ -1097,6 +1297,13 @@ try:
         s = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
         passlen = 20
         hacluster_password = "".join(random.sample(s, passlen))
+    # Enumerate the HA node IP list for CTDB
+    elif use_smb:
+        for i in range(int(ha_node_count)):
+            if i != 0:
+                ha_cluster_nodes = ha_cluster_nodes + ","
+            ha_cluster_nodes = ha_cluster_nodes + str(
+                ips[i])
 
     logger.debug("HA nodes are %s" % str(ha_cluster_nodes))
 
@@ -1127,6 +1334,18 @@ try:
         for i, ntp in enumerate(ntpServers):
             print "NTP %i: %s" %(int(i+1), str(ntp))
 
+    if config_ad:
+        if idmap_module:
+            print "\r"
+            print "Samba idmap module: %s" % idmap_module
+            print "Samba idmap range: %s" % idmap_range
+        else:
+            print "\r"
+            print "Samba idmap module skipped; manual post-install configuration required"
+        print "\r"
+        print "Active Directory domain: %s" % ad_domain_name
+        print "Active Directory admin user: %s" % ad_admin_user
+
     print "\r"
 
     print "Storage nodes:"
@@ -1136,7 +1355,7 @@ try:
                                      (str(v['hostname']), str(domain_name)),
                                      str(v['ip']))
 
-    if use_nfs:
+    if use_nfs or use_smb:
         print "\r"
         print "Virtual IPs (VIPs):"
         for vip in vips:
@@ -1149,20 +1368,25 @@ try:
     print "\r\n"
 
     # Define the default mount host and mount options
-    mount_opts = "defaults,_netdev"
-    if use_nfs:
+    mount_opts = "_netdev"
+    fuse_mount_opts = mount_opts + ",backup-volfile-servers="
+    for count, _ in enumerate(nodeInfo):
+        if count == 0:
+            continue
+        fuse_mount_opts += "%s.%s" % (str(nodeInfo[str(count + 1)]['hostname']),
+                                 str(domain_name))
+        if count != len(nodeInfo) - 1:
+            fuse_mount_opts += ":"
+
+    if use_nfs or use_smb:
         mount_host = str(vips[0])
+        if use_smb:
+            mount_opts += ",user=[username],pass=[password]"
     else:
         mount_host = "%s.%s" % (str(nodeInfo['1']['hostname']),
                                 str(domain_name))
-        mount_opts += ",backupvolfile-server="
-        for count, _ in enumerate(nodeInfo):
-            if count == 0:
-                continue
-            mount_opts += "%s.%s" % (str(nodeInfo[str(count + 1)]['hostname']),
-                                     str(domain_name))
-            if count != len(nodeInfo) - 1:
-                mount_opts += ":"
+        mount_opts = fuse_mount_opts
+
 
     # Create and deploy new ssh keys for ansible user
     print "Your systems have factory SSH keys for the ansible user. These"
@@ -1375,7 +1599,7 @@ try:
         disperse
     ) + ',disperse_count: ' + str(disperse_count) + ',redundancy_count: ' + str(
         redundancy_count
-    ) + ',use_nfs: ' + str(use_nfs) + ',vip_list: ' + str(
+        ) + ',use_nfs: ' + str(use_nfs) + ',use_smb: ' + str(use_smb) + ',config_ad: ' + str(config_ad) + ',vip_list: ' + str(
         vip_list
     ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
@@ -1385,7 +1609,7 @@ try:
                 host_interface_information
             ) + ',nodeInfo: ' + str(nodeInfo) + ',storage_interface: ' + str(
                 storage_interface
-            ) + ',brand_distributor: ' + str(
+                ) + ',nm_storage_interface: ' + str(nm_storage_interface) + ',brand_distributor: ' + str(
                 brand_distributor
             ) + ',brand_parent: ' + str(
                 brand_parent
@@ -1396,7 +1620,7 @@ try:
                     mount_protocol) + ',mount_host: ' + str(
                         mount_host) + ',mount_opts: \'' + str(
                             mount_opts
-                        ) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
+                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
                             nodes_min) + ',nodes_deployed: ' + str(
                                 desiredNumOfNodes) + ',tuned_profile: ' + str(
                                     oem_id['flavor']['node']['tuned']
@@ -1407,6 +1631,12 @@ try:
 
     if 'peer_set' in globals():
         playbook_args += ',replica_peers: ' + str(peer_list_min)
+
+    if use_smb:
+        #TODO: Add try/except to catch missing parameters
+        playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
+        playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
+        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
 
     global arbiter
     if str(oem_id['flavor']['arbiter_size']) != "None":
@@ -1427,6 +1657,75 @@ try:
 
     # Run the primary g1-deploy ansible playbook
     run_ansible_playbook(playbook_args)
+
+    if config_ad:
+        # Build the ansible-playbook args for the AD playbook
+        #TODO: Add try/except to catch missing parameters
+        logger.debug("Building ansible-playbook command for AD playbook")
+        playbook_args = playbook_path + '/g1-smb-ad.yml --extra-vars="{'
+        playbook_args += 'ad_netbios_name: ' + str(ad_netbios_name)
+        playbook_args += ',ad_domain_name: ' + str(ad_domain_name)
+        playbook_args += ',ad_workgroup: ' + str(ad_workgroup)
+        playbook_args += ',idmap_module: ' + str(idmap_module)
+        playbook_args += ',idmap_range: ' + str(idmap_range)
+        playbook_args += '}"'
+        # Run the g1-smb-ad ansible playbook; continue on failure
+        logger.debug("Running AD integration playbook")
+        check_ad_play = run_ansible_playbook(playbook_args, continue_on_fail=True)
+        if not check_ad_play:
+            logger.error("Active Directory integration failed. See log messages for details.")
+            logger.debug("Skipping AD join due to playbook failure.")
+        else:
+            # Join CTDB cluster to the Active Directory domain
+            logger.info("Joining the AD domain...")
+            ads_join_cmd = '/bin/net ads join -U %s' % ad_admin_user
+            logger.debug(ads_join_cmd)
+            ads = pexpect.spawn(ads_join_cmd)
+            ads.expect('Enter.*password:')
+            ads.sendline(ad_admin_pw)
+            ads.expect(pexpect.EOF)
+            ads.close()
+            if str(ads.exitstatus) is '0':
+                logger.debug(ads.before)
+            else:
+                logger.warning(ads.before)
+            logger.info("Registering VIPs with AD DNS...")
+            ads_dns_cmd = '/bin/net ads dns register %s.%s %s -U %s' % (ad_netbios_name, domain_name, " ".join(vips), ad_admin_user)
+            logger.debug(ads_dns_cmd)
+            ads = pexpect.spawn(ads_dns_cmd)
+            ads.expect('Enter.*password:')
+            ads.sendline(ad_admin_pw)
+            ads.expect(pexpect.EOF)
+            ads.close()
+            if str(ads.exitstatus) is '0':
+                logger.debug(ads.before)
+            else:
+                logger.warning(ads.before)
+  
+        # Re-start winbind and samba services
+        logger.debug("Build ansible-playbook command for CTDB service restart playbook")
+        run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
+
+    # Run post-install ansible playbook
+    playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{'
+    playbook_args += 'default_volname: ' + str(default_volname)
+    playbook_args += ',readme_file: ' + str(readme_file)
+    playbook_args += ',brand_parent: ' + str(brand_parent)
+    playbook_args += ',brand_project: ' + str(brand_project)
+    playbook_args += ',vips: ' + str(vips)
+    playbook_args += ',hostnames: ' + str(hostnames)
+    playbook_args += ',domain_name: ' + str(domain_name)
+    playbook_args += ',mount_protocol: ' + str(mount_protocol)
+    playbook_args += ',mount_host: ' + str(mount_host)
+    playbook_args += ',mount_opts: \'' + str(mount_opts) + '\''
+    playbook_args += ',nodes_min: ' + str(nodes_min)
+    playbook_args += ',nodes_deployed: ' + str(desiredNumOfNodes)
+    playbook_args += ',use_nfs: ' + str(use_nfs)
+    playbook_args += ',use_smb: ' + str(use_smb)
+    playbook_args += ',ad_netbios_name: \'' + str(ad_netbios_name) + '\''
+    playbook_args += ',ad_domain_name: \'' + str(ad_domain_name) + '\''
+    playbook_args += '}"'
+    run_ansible_playbook(playbook_args, continue_on_fail=True)
 
     print "\r\n"
 
@@ -1454,7 +1753,7 @@ try:
         ) + ',hostnames: ' + str(hostnames) + ',arbiter: ' + str(
             arbiter) + ',perf_jobfile: ' + str(
                 perf_jobfile) + ',perf_server_list: ' + str(
-                    perf_server_list) + ',perf_output : ' + str(perf_output)
+                    perf_server_list) + ',perf_output : ' + str(perf_output) + ',disperse: ' + str(disperse)
         if 'peer_set' in globals():
             playbook_args += ',replica_peers: ' + str(peer_list_min)
         playbook_args += '}"'

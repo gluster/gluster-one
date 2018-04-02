@@ -1,0 +1,43 @@
+- hosts: gluster_nodes
+  become: yes
+
+  tasks:
+    - shell: /bin/bash -c 'echo "Starting samba and winbind..." > {{ fifo}}'
+
+    - name: Re-enable services
+      shell: /bin/ctdb event script enable {{ item }}
+      register: result
+      failed_when: "result.rc != 0"
+      with_items:
+        - 49.winbind
+        - 50.samba
+
+    - name: Restart CTDB
+      systemd:
+        name: ctdb
+        state: restarted
+
+    - shell: /bin/bash -c 'echo "Starting and enabling NMB..." > {{ fifo}}'
+
+    # These systemd modifications were added for BZ 1558690
+    - name: Modify systemd nmb.service to start after ctdb.service
+      lineinfile:
+        dest: /usr/lib/systemd/system/nmb.service
+        regexp: '(^After.*$)'
+        backrefs: yes
+        line: '\1 ctdb.service'
+
+    - name: Modify systemd nmb.service to require ctdb.service
+      lineinfile:
+        dest: /usr/lib/systemd/system/nmb.service
+        insertafter: '^After'
+        line: Requires=ctdb.service
+
+    - name: Reload systemd daemon
+      command: /bin/systemctl daemon-reload
+
+    - name: Start and enable NMB service
+      systemd:
+        name: nmb
+        state: started
+        enabled: yes

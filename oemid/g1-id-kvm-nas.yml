@@ -23,6 +23,14 @@ flavor:
             features.cache-invalidation: on
             performance.cache-invalidation: on
             performance.stat-prefetch: on
+            group: metadata-cache
+        gluster_vol_set_smb:
+            server.allow-insecure: on
+            performance.cache-samba-metadata: on
+            storage.batch-fsync-delay-usec: 0
+            performance.readdir-ahead: on
+            performance.parallel-readdir: on
+            group: nl-cache
     volname: gluster1
     voltype: replica           #replica|disperse
     #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
