@@ -150,8 +150,13 @@ g1_inventory = ""
 playbook_path = g1_path + "ansible/"
 config_ad = ''
 idmap_module = ''
+needsBootstrapping = 'needs_bootstrap' in oem_id['flavor']['node'] and oem_id['flavor']['node']['needs_bootstrap'] is True
 # regular expression to validate domain name based on RFCs
 domain_check = re.compile(
+    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+)
+# regular expression to validate FQDN or IP based on RFCs
+fqdn_or_ip_check = re.compile(
     "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
 )
 
@@ -307,7 +312,7 @@ def host_command(command, shell=False):
     return proc_output
 
 
-def run_ansible_playbook(playbook, continue_on_fail=False):
+def run_ansible_playbook(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
     # Function to run ansible playbooks
     FIFO = "/var/tmp/g1.pipe-" + "".join(
         random.sample(rand_filename_sample, rand_filename_len))
@@ -317,7 +322,23 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
         if oe.errno != errno.EEXIST:
             abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
-    playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
+
+    #playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key, "--extra-vars=\"{fifo: " + FIFO + "}\""]
+    
+    if become:
+        playbookCmdArgs.append("-b")
+
+    if askConnPass:
+        playbookCmdArgs.append("-k")
+
+    if askSudoPass:
+        playbookCmdArgs.append("-K")
+
+    playbookCmdArgs.append(playbook)
+
+    playbookCmd = ' '.join(playbookCmdArgs)
+
     if int(args.loglevel) == 10:
         playbookCmd = playbookCmd + " -vvv"
     logger.debug("Ansible playbook command: " + playbookCmd)
@@ -554,9 +575,6 @@ def collectDeploymentInformation():
         inputMessage += ": "
         while True:
             ntpInput = user_input(inputMessage)
-            fqdn_or_ip_check = re.compile(
-                    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
-            )
             isvalid = fqdn_or_ip_check.match(ntpInput)
             if isvalid is not None or ntpInput is '':
                 break
@@ -767,7 +785,6 @@ try:
     logger.debug("** Begin %s %s**" % (brand_parent, brand_project))
 
     g1Hosts = []
-    needsBootstrapping = 'needs_bootstrap' in oem_id['flavor']['node'] and oem_id['flavor']['node']['needs_bootstrap'] is True
 
     # === PHASE 1 ===
     # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
@@ -1042,36 +1059,34 @@ try:
 
         print "\r\nThis node type will require manual discovery.\r\n"
 
-        print "Please enter the IPs / FQDNs of the servers on the management"
+        print "Please enter the IPs / FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
         print "network. These servers will be boostrapped using the user"
         print "\033[31m%s\033[0m - this account needs" % os.environ['USER']
         print "to be present on all systems and needs to have \033[31msudo\033[0m privileges.\r\n"
 
         while True:
-            input_string = user_input("Servers (comma-separated): ")
+            input_string = user_input("   Servers (comma-separated): ")
 
             g1Hosts = [item.strip() for item in input_string.lower().split(",")]
 
-            # regular expression to validate domain name based on RFCs
-            fqdn_check = re.compile(
-                "^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(?:\.(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$"
-            )
+            # Check that the user entered values for exactly the
+            # number of hosts requested early in the deployment
+            if len(g1Hosts) is not desiredNumOfNodes:
+                logger.warning("Please enter the FQDNs or IPs for exactly %i nodes." % int(desiredNumOfNodes))
+                continue
 
-            # regular expression to validate IPv4 based on RFCs
-            ip_check = re.compile("^(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
-
+            # Validate that entries are either IPs or FQDNs
             for entry in g1Hosts:
-                isfqdn = fqdn_check.match(entry)
-                isip = ip_check.match(entry)
+                isvalid = fqdn_or_ip_check.match(entry)
 
-                if isfqdn is None and isip is None:
+                if isvalid is None:
                     logger.warning("At least one of the entries is neither a valid FQDN or IPv4 address.")
                     break
             else:
                 break # executed if foor loop ended normally (no break)
             continue # executed if there was a break statement in the for loop
 
-        logger.info("All items validated.\r\n")
+        logger.info("Manual node entries validated.\r\n")
     else:
         # === PHASE 1b ===
         # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
@@ -1208,8 +1223,20 @@ try:
     logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
 
     if needsBootstrapping:
-        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
-        run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
+        logger.debug("Begin bootstrapping")
+        print "\r\nIn the following step, you will be prompted for the SSH and"
+        print "the SUDO passwords for the ansible user on the target nodes."
+        print "The users and passwords must already be configured on all nodes"
+        print "in order to continue.\r\n" 
+
+        yes_no("Do you wish to proceed? [Y/n] ")
+
+        print "\r\n"
+
+        run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
+        run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
+#        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
+        #run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
@@ -1387,49 +1414,51 @@ try:
                                 str(domain_name))
         mount_opts = fuse_mount_opts
 
+    # Update ansible ssh keys and root password only if these are
+    # pre-configured nodes
+    if not needsBootstrapping:
+        # Create and deploy new ssh keys for ansible user
+        print "Your systems have factory SSH keys for the ansible user. These"
+        print "keys \033[31mshould not be considered secure\033[0m. It is highly recommended"
+        print "that we replace these keys now with a newly-generated set.\r\n"
+        new_ssh_keys = yes_no(
+            'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
+            True)
 
-    # Create and deploy new ssh keys for ansible user
-    print "Your systems have factory SSH keys for the ansible user. These"
-    print "keys \033[31mshould not be considered secure\033[0m. It is highly recommended"
-    print "that we replace these keys now with a newly-generated set.\r\n"
-    new_ssh_keys = yes_no(
-        'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
-        True)
+        print "\r\n"
 
-    print "\r\n"
-
-    if new_ssh_keys:
-        logger.info("New ansible user SSH keys will be exchanged")
-    else:
-        logger.warning("Existing ansible user SSH keys will be kept")
-
-    # Reset root password
-    print "\r\nThe default root password on your %s nodes must be reset." % brand_short
-    print "\033[31mBe careful to select a secure password, and note that the"
-    print "password will be updated for the root user on all nodes.\033[0m\r\n"
-
-    while True:
-        # random password salt
-        pwsalt = ''.join(
-            random.SystemRandom().choice(string.ascii_letters + string.digits)
-            for _ in range(8))
-        try:
-            root_password_hashed = crypt.crypt(
-                getpass.getpass("Please enter the new root password: "),
-                "$6$" + pwsalt)
-        except Exception as err:
-            print('ERROR:', err)
-        # check for blank password
-        if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
-            continue
-        # confirm password
-        if root_password_hashed == crypt.crypt(
-                getpass.getpass("Confirm password: "), "$6$" + pwsalt):
-            logger.info("New root password collected")
-            break
+        if new_ssh_keys:
+            logger.info("New ansible user SSH keys will be exchanged")
         else:
-            print "Passwords do not match!\r\n"
-            continue
+            logger.warning("Existing ansible user SSH keys will be kept")
+
+        # Reset root password
+        print "\r\nThe default root password on your %s nodes must be reset." % brand_short
+        print "\033[31mBe careful to select a secure password, and note that the"
+        print "password will be updated for the root user on all nodes.\033[0m\r\n"
+
+        while True:
+            # random password salt
+            pwsalt = ''.join(
+                random.SystemRandom().choice(string.ascii_letters + string.digits)
+                for _ in range(8))
+            try:
+                root_password_hashed = crypt.crypt(
+                    getpass.getpass("Please enter the new root password: "),
+                    "$6$" + pwsalt)
+            except Exception as err:
+                print('ERROR:', err)
+            # check for blank password
+            if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
+                continue
+            # confirm password
+            if root_password_hashed == crypt.crypt(
+                    getpass.getpass("Confirm password: "), "$6$" + pwsalt):
+                logger.info("New root password collected")
+                break
+            else:
+                print "Passwords do not match!\r\n"
+                continue
 
     # === PHASE 4 ===
     # NOTE: Initiate deployment
@@ -1568,6 +1597,8 @@ try:
 
         run_ansible_playbook_interactively(customizationFileName)
 
+    print "\r\n"
+
     yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
@@ -1626,8 +1657,7 @@ try:
                                     oem_id['flavor']['node']['tuned']
                                 ) + ',gluster_vol_set: ' + str(
                                     oem_id['flavor']['node']['gluster_vol_set']
-                                ) + ',root_password_hashed: ' + re.sub(
-                                    '\$', '\\\$', root_password_hashed)
+                                )
 
     if 'peer_set' in globals():
         playbook_args += ',replica_peers: ' + str(peer_list_min)
@@ -1652,7 +1682,7 @@ try:
     playbook_args += '}"'
 
     # Run playbook to replace ansible user ssh keys
-    if new_ssh_keys:
+    if not needsBootstrapping and new_ssh_keys:
         run_ansible_playbook(playbook_path + "/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
@@ -1705,6 +1735,11 @@ try:
         # Re-start winbind and samba services
         logger.debug("Build ansible-playbook command for CTDB service restart playbook")
         run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
+
+    # Run playbook to reset root passwords
+    # if this is a pre-configured node
+    if not needsBootstrapping:
+        run_ansible_playbook(playbook_path + "/g1-root-pw.yml" + " --extra-vars=\"{root_password_hashed: " + re.sub('\$', '\\\$', root_password_hashed) + "}\"", continue_on_fail=True)
 
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{'

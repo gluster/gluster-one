@@ -377,6 +377,22 @@
         group: root
         mode: 0644
 
+    - shell: /bin/bash -c 'echo "Testing storage network..." > {{ fifo }}'
+
+    # This is actually necessary to kick-start the interface after bonding
+    # The net_ping module apparently isn't in the RH ansible build :-/
+    - name: Test reachability of host for peer probing
+      delegate_to: 127.0.0.1
+      run_once: true
+    #  net_ping:
+    #    dest: "{{ hostnames[0] }}"
+    #    count: 5
+      shell: /bin/ping -c 5 {{ hostnames[0] }}
+      register: result
+      until: result.rc == 0
+      retries: 5
+      delay: 2
+
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     #NOTE: The delegate_to host must match the master host or it is possible for a
@@ -486,11 +502,3 @@
         - "{{ default_volname }}"
       register: result
       failed_when: "result.rc != 0 and ('already started' not in result.msg)"
-
-    - shell: /bin/bash -c 'echo "Updating root password..." > {{ fifo }}'
-
-    - name: Update root password on all the cluster nodes
-      user:
-        name: root
-        password: "{{ root_password_hashed }}"
-
