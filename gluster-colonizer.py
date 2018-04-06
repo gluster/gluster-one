@@ -1231,6 +1231,8 @@ try:
 
         yes_no("Do you wish to proceed? [Y/n] ")
 
+        print "\r\n"
+
         run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
         run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
 #        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")

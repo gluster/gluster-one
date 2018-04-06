@@ -62,6 +62,8 @@
 ##      notify:
 ##        - reload sshd
 
+    - shell: /bin/bash -c 'echo "Installing package dependencies..." > {{ fifo }}'
+
     - name: install gluster and colonizer dependencies
       yum: name={{ item }} state=present
       with_items:
@@ -104,6 +106,8 @@
     #     path: /etc/avahi/avahi-daemon.conf
     #     insertafter: "\\[server\\]"
     #     state: present
+
+    - shell: /bin/bash -c 'echo "Configuring system settings..." > {{ fifo }}'
 
     - name: configure system panic settings
       blockinfile:
