@@ -1043,15 +1043,19 @@ try:
 
         print "\r\nThis node type will require manual discovery.\r\n"
 
-        print "Please enter the IPs / FQDNs of the servers on the management"
+        print "Please enter the IPs / FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
         print "network. These servers will be boostrapped using the user"
         print "\033[31m%s\033[0m - this account needs" % os.environ['USER']
         print "to be present on all systems and needs to have \033[31msudo\033[0m privileges.\r\n"
 
         while True:
-            input_string = user_input("Servers (comma-separated): ")
+            input_string = user_input("   Servers (comma-separated): ")
 
             g1Hosts = [item.strip() for item in input_string.lower().split(",")]
+
+            if len(g1Hosts) is not desiredNumOfNodes:
+                logger.warning("Please enter the FQDNs or IPs for exactly %i nodes." % int(desiredNumOfNodes))
+                continue
 
             for entry in g1Hosts:
                 isvalid = fqdn_or_ip_check.match(entry)
