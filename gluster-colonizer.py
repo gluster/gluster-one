@@ -150,8 +150,13 @@ g1_inventory = ""
 playbook_path = g1_path + "ansible/"
 config_ad = ''
 idmap_module = ''
+needsBootstrapping = 'needs_bootstrap' in oem_id['flavor']['node'] and oem_id['flavor']['node']['needs_bootstrap'] is True
 # regular expression to validate domain name based on RFCs
 domain_check = re.compile(
+    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+)
+# regular expression to validate FQDN or IP based on RFCs
+fqdn_or_ip_check = re.compile(
     "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
 )
 
@@ -554,9 +559,6 @@ def collectDeploymentInformation():
         inputMessage += ": "
         while True:
             ntpInput = user_input(inputMessage)
-            fqdn_or_ip_check = re.compile(
-                    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
-            )
             isvalid = fqdn_or_ip_check.match(ntpInput)
             if isvalid is not None or ntpInput is '':
                 break
@@ -767,7 +769,6 @@ try:
     logger.debug("** Begin %s %s**" % (brand_parent, brand_project))
 
     g1Hosts = []
-    needsBootstrapping = 'needs_bootstrap' in oem_id['flavor']['node'] and oem_id['flavor']['node']['needs_bootstrap'] is True
 
     # === PHASE 1 ===
     # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
@@ -1052,19 +1053,10 @@ try:
 
             g1Hosts = [item.strip() for item in input_string.lower().split(",")]
 
-            # regular expression to validate domain name based on RFCs
-            fqdn_check = re.compile(
-                "^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(?:\.(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$"
-            )
-
-            # regular expression to validate IPv4 based on RFCs
-            ip_check = re.compile("^(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
-
             for entry in g1Hosts:
-                isfqdn = fqdn_check.match(entry)
-                isip = ip_check.match(entry)
+                isvalid = fqdn_or_ip_check.match(entry)
 
-                if isfqdn is None and isip is None:
+                if isvalid is None:
                     logger.warning("At least one of the entries is neither a valid FQDN or IPv4 address.")
                     break
             else:
