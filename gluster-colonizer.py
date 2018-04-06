@@ -1224,9 +1224,14 @@ try:
 
     if needsBootstrapping:
         logger.debug("Begin bootstrapping")
-        print "\r\nIn the following step, you ..."
-        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
-        run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
+        print "\r\nIn the following step, you will be prompted for the SSH and"
+        print "the SUDO passwords for the ansible user on the target nodes."
+        print "The user and passwords must already be configured on all nodes"
+        print "in order to continue.\r\n" 
+        run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
+        run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
+#        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
+        #run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
