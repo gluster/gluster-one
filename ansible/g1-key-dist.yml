@@ -49,3 +49,26 @@
         mode: 0700
         content: "{{ ansible_ssh_private }}"
         dest: /home/ansible/.ssh/id_rsa
+
+    - name: add sudoers configuration for the ansible user
+      lineinfile:
+        path: /etc/sudoers.d/ansible
+        line: "ansible        ALL=(ALL)       NOPASSWD: ALL"
+        create: yes
+        state: present
+
+    - name: allow non-interactive sudo access
+      lineinfile:
+        path: /etc/sudoers
+        line: "#Defaults requiretty"
+        regexp: "^Defaults(.*?)requiretty"
+        backrefs: yes
+        state: present
+
+    - name: disable DNS lookup in sshd
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "UseDNS no"
+        state: present
+      notify:
+        - reload sshd
