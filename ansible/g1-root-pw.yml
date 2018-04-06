@@ -1,0 +1,9 @@
+- hosts: gluster_nodes
+  become: yes
+  any_errors_fatal: True
+
+  tasks:
+    - name: Update root password on all the cluster nodes
+      user:
+        name: root
+        password: "{{ root_password_hashed }}"

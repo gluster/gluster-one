@@ -1655,8 +1655,7 @@ try:
                                     oem_id['flavor']['node']['tuned']
                                 ) + ',gluster_vol_set: ' + str(
                                     oem_id['flavor']['node']['gluster_vol_set']
-                                ) + ',root_password_hashed: ' + re.sub(
-                                    '\$', '\\\$', root_password_hashed)
+                                )
 
     if 'peer_set' in globals():
         playbook_args += ',replica_peers: ' + str(peer_list_min)
@@ -1734,6 +1733,11 @@ try:
         # Re-start winbind and samba services
         logger.debug("Build ansible-playbook command for CTDB service restart playbook")
         run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
+
+    # Run playbook to reset root passwords
+    # if this is a pre-configured node
+    if not needsBootstrapping:
+        run_ansible_playbook(playbook_path + "/g1-root-pw.yml" + "--extra-vars=\"{root_password_hashed: ' + re.sub('\$', '\\\$', root_password_hashed)}\"")
 
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{'
