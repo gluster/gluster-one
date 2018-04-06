@@ -502,11 +502,3 @@
         - "{{ default_volname }}"
       register: result
       failed_when: "result.rc != 0 and ('already started' not in result.msg)"
-
-    - shell: /bin/bash -c 'echo "Updating root password..." > {{ fifo }}'
-
-    - name: Update root password on all the cluster nodes
-      user:
-        name: root
-        password: "{{ root_password_hashed }}"
-
