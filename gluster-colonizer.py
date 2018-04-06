@@ -1680,7 +1680,7 @@ try:
     playbook_args += '}"'
 
     # Run playbook to replace ansible user ssh keys
-    if new_ssh_keys:
+    if not needsBootstrapping and new_ssh_keys:
         run_ansible_playbook(playbook_path + "/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
