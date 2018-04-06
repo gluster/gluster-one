@@ -312,7 +312,7 @@ def host_command(command, shell=False):
     return proc_output
 
 
-def run_ansible_playbook(playbook, continue_on_fail=False):
+def run_ansible_playbook(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
     # Function to run ansible playbooks
     FIFO = "/var/tmp/g1.pipe-" + "".join(
         random.sample(rand_filename_sample, rand_filename_len))
@@ -322,7 +322,23 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
         if oe.errno != errno.EEXIST:
             abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
-    playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
+
+    #playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key, "--extra-vars=\"{fifo: " + FIFO + "}\""]
+    
+    if become:
+        playbookCmdArgs.append("-b")
+
+    if askConnPass:
+        playbookCmdArgs.append("-k")
+
+    if askSudoPass:
+        playbookCmdArgs.append("-K")
+
+    playbookCmdArgs.append(playbook)
+
+    playbookCmd = ' '.join(playbookCmdArgs)
+
     if int(args.loglevel) == 10:
         playbookCmd = playbookCmd + " -vvv"
     logger.debug("Ansible playbook command: " + playbookCmd)
@@ -1207,6 +1223,8 @@ try:
     logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
 
     if needsBootstrapping:
+        logger.debug("Begin bootstrapping")
+        print "\r\nIn the following step, you ..."
         logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
         run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
