@@ -72,3 +72,8 @@
         state: present
       notify:
         - reload sshd
+
+  handlers:
+
+      - name: reload sshd
+        service: name=sshd state=reloaded

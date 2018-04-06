@@ -121,10 +121,11 @@
     - name: enable networkmanager
       service: name=NetworkManager state=started enabled=yes
 
-  handlers:
-
-      - name: reload sshd
-        service: name=sshd state=reloaded
+## moved to g1-key-dist.yml
+##  handlers:
+##
+##      - name: reload sshd
+##        service: name=sshd state=reloaded
 
       # - name: enable avahi socket
       #   systemd: unit=avahi-daemon.socket state=started enabled=yes
