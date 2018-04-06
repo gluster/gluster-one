@@ -1053,10 +1053,13 @@ try:
 
             g1Hosts = [item.strip() for item in input_string.lower().split(",")]
 
+            # Check that the user entered values for exactly the
+            # number of hosts requested early in the deployment
             if len(g1Hosts) is not desiredNumOfNodes:
                 logger.warning("Please enter the FQDNs or IPs for exactly %i nodes." % int(desiredNumOfNodes))
                 continue
 
+            # Validate that entries are either IPs or FQDNs
             for entry in g1Hosts:
                 isvalid = fqdn_or_ip_check.match(entry)
 
@@ -1067,7 +1070,7 @@ try:
                 break # executed if foor loop ended normally (no break)
             continue # executed if there was a break statement in the for loop
 
-        logger.info("All items validated.\r\n")
+        logger.info("Manual node entries validated.\r\n")
     else:
         # === PHASE 1b ===
         # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
