@@ -1597,6 +1597,8 @@ try:
 
         run_ansible_playbook_interactively(customizationFileName)
 
+    print "\r\n"
+
     yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
