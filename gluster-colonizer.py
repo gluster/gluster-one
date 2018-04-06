@@ -1737,7 +1737,7 @@ try:
     # Run playbook to reset root passwords
     # if this is a pre-configured node
     if not needsBootstrapping:
-        run_ansible_playbook(playbook_path + "/g1-root-pw.yml" + " --extra-vars=\"{root_password_hashed: ' + re.sub('\$', '\\\$', root_password_hashed)}\"")
+        run_ansible_playbook(playbook_path + "/g1-root-pw.yml" + " --extra-vars=\"{root_password_hashed: ' + re.sub('\$', '\\\$', root_password_hashed)}\"", continue_on_fail=True)
 
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{'
