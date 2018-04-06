@@ -1226,8 +1226,11 @@ try:
         logger.debug("Begin bootstrapping")
         print "\r\nIn the following step, you will be prompted for the SSH and"
         print "the SUDO passwords for the ansible user on the target nodes."
-        print "The user and passwords must already be configured on all nodes"
+        print "The users and passwords must already be configured on all nodes"
         print "in order to continue.\r\n" 
+
+        yes_no("Do you wish to proceed? [Y/n] ")
+
         run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
         run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
 #        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
@@ -1409,49 +1412,51 @@ try:
                                 str(domain_name))
         mount_opts = fuse_mount_opts
 
+    # Update ansible ssh keys and root password only if these are
+    # pre-configured nodes
+    if not needsBootstrapping:
+        # Create and deploy new ssh keys for ansible user
+        print "Your systems have factory SSH keys for the ansible user. These"
+        print "keys \033[31mshould not be considered secure\033[0m. It is highly recommended"
+        print "that we replace these keys now with a newly-generated set.\r\n"
+        new_ssh_keys = yes_no(
+            'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
+            True)
 
-    # Create and deploy new ssh keys for ansible user
-    print "Your systems have factory SSH keys for the ansible user. These"
-    print "keys \033[31mshould not be considered secure\033[0m. It is highly recommended"
-    print "that we replace these keys now with a newly-generated set.\r\n"
-    new_ssh_keys = yes_no(
-        'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
-        True)
+        print "\r\n"
 
-    print "\r\n"
-
-    if new_ssh_keys:
-        logger.info("New ansible user SSH keys will be exchanged")
-    else:
-        logger.warning("Existing ansible user SSH keys will be kept")
-
-    # Reset root password
-    print "\r\nThe default root password on your %s nodes must be reset." % brand_short
-    print "\033[31mBe careful to select a secure password, and note that the"
-    print "password will be updated for the root user on all nodes.\033[0m\r\n"
-
-    while True:
-        # random password salt
-        pwsalt = ''.join(
-            random.SystemRandom().choice(string.ascii_letters + string.digits)
-            for _ in range(8))
-        try:
-            root_password_hashed = crypt.crypt(
-                getpass.getpass("Please enter the new root password: "),
-                "$6$" + pwsalt)
-        except Exception as err:
-            print('ERROR:', err)
-        # check for blank password
-        if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
-            continue
-        # confirm password
-        if root_password_hashed == crypt.crypt(
-                getpass.getpass("Confirm password: "), "$6$" + pwsalt):
-            logger.info("New root password collected")
-            break
+        if new_ssh_keys:
+            logger.info("New ansible user SSH keys will be exchanged")
         else:
-            print "Passwords do not match!\r\n"
-            continue
+            logger.warning("Existing ansible user SSH keys will be kept")
+
+        # Reset root password
+        print "\r\nThe default root password on your %s nodes must be reset." % brand_short
+        print "\033[31mBe careful to select a secure password, and note that the"
+        print "password will be updated for the root user on all nodes.\033[0m\r\n"
+
+        while True:
+            # random password salt
+            pwsalt = ''.join(
+                random.SystemRandom().choice(string.ascii_letters + string.digits)
+                for _ in range(8))
+            try:
+                root_password_hashed = crypt.crypt(
+                    getpass.getpass("Please enter the new root password: "),
+                    "$6$" + pwsalt)
+            except Exception as err:
+                print('ERROR:', err)
+            # check for blank password
+            if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
+                continue
+            # confirm password
+            if root_password_hashed == crypt.crypt(
+                    getpass.getpass("Confirm password: "), "$6$" + pwsalt):
+                logger.info("New root password collected")
+                break
+            else:
+                print "Passwords do not match!\r\n"
+                continue
 
     # === PHASE 4 ===
     # NOTE: Initiate deployment
