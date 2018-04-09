@@ -1,4 +1,6 @@
-# Colonizer example flavor ID file for KVM (test lab) deployment
+# Gluster Colonizer OEMID file for
+# HPE Apollo Gen9 in disperse configuration
+# for media repository
 
 flavor:
     name: Digital Media Repository
@@ -44,6 +46,13 @@ flavor:
         gluster_vol_set:
             server.event-threads: 4
             client.event-threads: 4
+        gluster_vol_set_smb:
+            server.allow-insecure: on
+            performance.cache-samba-metadata: on
+            storage.batch-fsync-delay-usec: 0
+            performance.readdir-ahead: on
+            performance.parallel-readdir: on
+            group: nl-cache
     volname: gluster1
-    voltype: disperse
-    arbiter_size: None
+    voltype: disperse          #replica|disperse
+    arbiter_size: None         #<integer in GB>|None

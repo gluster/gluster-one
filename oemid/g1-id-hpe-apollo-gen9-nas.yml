@@ -1,4 +1,6 @@
-# Colonizer example flavor ID file for KVM (test lab) deployment
+# Gluster Colonizer OEMID file for
+# HPE Apollo Gen9 in replica configuration
+# for general-purpose NAS
 
 flavor:
     name: General-Purpose NAS
@@ -14,10 +16,10 @@ flavor:
           - /dev/sdc
         cache_devices:
           - /dev/nvme0n1
-        disktype: RAID
-        diskcount: 10
-        dalign: 256
-        tuned: rhgs-random-io
+        disktype: RAID         #JBOD|RAID
+        diskcount: 10          #Number of data disks; for 12 disk RAID 6 this is 10; for {J,RAID}BOD it is 1
+        dalign: 128            #<integer in KB>
+        tuned: rhgs-random-io  #tuned profile name
         gluster_vol_set:
             server.event-threads: 4
             client.event-threads: 4
@@ -25,6 +27,15 @@ flavor:
             features.cache-invalidation: on
             performance.cache-invalidation: on
             performance.stat-prefetch: on
+            group: metadata-cache
+        gluster_vol_set_smb:
+            server.allow-insecure: on
+            performance.cache-samba-metadata: on
+            storage.batch-fsync-delay-usec: 0
+            performance.readdir-ahead: on
+            performance.parallel-readdir: on
+            group: nl-cache
     volname: gluster1
-    voltype: replica
-    arbiter_size: 1
+    voltype: replica           #replica|disperse
+    #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
+    arbiter_size: 9            #<integer in GB>|None
