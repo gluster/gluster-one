@@ -186,7 +186,8 @@
     - name: Remove cache PV
       #FIXME: The 'p' is needed below for nvme drives, but should not be
       #       there for devices with normal /dev/sdX disk paths.
-      shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      #shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      shell: /bin/bash -c 'pvremove --force {{ item.0 }}{{ item.1["id"]|int + 1 }}'
       register: result
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_nested:

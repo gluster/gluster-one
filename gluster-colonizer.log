@@ -1,0 +1,1178 @@
+
+2018-04-09 06:09:51,092 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 06:09:51,092 - INFO - Comparing nodes to expected configurations...
+2018-04-09 06:09:51,096 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-SLWenap1 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-UMjtreJT}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 06:10:16,278 - INFO - 
+All node validations passed
+2018-04-09 06:10:16,278 - DEBUG - HA node count is 4
+2018-04-09 06:14:24,961 - DEBUG - Auto-assigning node info...
+2018-04-09 06:14:24,962 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}}
+2018-04-09 06:14:24,962 - INFO - All node info successfully assigned
+2018-04-09 06:14:24,962 - DEBUG - Assigning VIPs
+2018-04-09 06:14:24,963 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"']
+2018-04-09 06:14:24,963 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com']
+2018-04-09 06:14:24,963 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 06:14:26,863 - INFO - Begin Colonizer deployment phase
+2018-04-09 06:14:26,864 - DEBUG - Backend config[{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 06:14:26,864 - DEBUG - Building replica peer sets...
+2018-04-09 06:14:26,864 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:14:26,864 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:14:26,864 - DEBUG - Replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:14:26,864 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 06:14:26,864 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:14:26,864 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:14:26,864 - DEBUG - Arbitrated replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:14:28,403 - INFO - Ensuring clean state...
+2018-04-09 06:14:28,410 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-SLWenap1 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-N6ZUHw7S}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 06:16:58,222 - INFO - Initiating Gluster deployment...
+2018-04-09 06:16:58,230 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-SLWenap1 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-tTK96Ef8}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'g*QmoRCBkXyG9qv?(#Y4',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth1': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.10.6', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth0': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.2.154', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth1': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.10.7', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth0': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.2.155', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.8,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com:g1-5.example.com:g1-6.example.com',vips: ['192.168.10.8', '192.168.10.9', '192.168.10.10', '192.168.10.11'],nodes_min: 4,nodes_deployed: 6,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 06:16:59,220 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 06:16:59,221 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 06:16:59,221 - ERROR - 
+2018-04-09 06:16:59,221 - ERROR - ERROR! 'debugger' is not a valid attribute for a Play
+
+The error appears to have been in '/usr/share/gluster-colonizer/ansible/g1-deploy.yml': line 1, column 3, but may
+be elsewhere in the file depending on the exact syntax problem.
+
+The offending line appears to be:
+
+
+- hosts: gluster_nodes
+  ^ here
+
+2018-04-09 06:16:59,221 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 06:16:59,221 - CRITICAL - Ansible playbook error
+2018-04-09 06:16:59,221 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 06:16:59,272 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 06:16:59,272 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 06:16:59,277 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 06:16:59,278 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 06:16:59,774 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 06:16:59,774 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 06:16:59,811 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 06:16:59,812 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 06:17:00,166 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 06:17:00,166 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 06:17:41,130 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 06:17:41,131 - INFO - Begin Colonizer inventory phase
+2018-04-09 06:17:41,131 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 06:17:41,131 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 06:17:45,436 - INFO - NFS Client selected
+2018-04-09 06:17:46,873 - DEBUG - Deploying 6 nodes
+2018-04-09 06:17:51,441 - DEBUG - Domain name is example.com
+2018-04-09 06:17:55,396 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 06:17:57,918 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 06:17:57,918 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 06:18:20,284 - INFO - Manual node entries validated.
+
+2018-04-09 06:18:20,284 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-KiHSPQ93
+2018-04-09 06:18:20,286 - INFO - Inventory complete.
+
+2018-04-09 06:18:20,286 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153,192.168.2.154,192.168.2.155
+2018-04-09 06:18:20,286 - DEBUG - Begin bootstrapping
+2018-04-09 06:18:22,349 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-KiHSPQ93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-3J4ihcoz}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 06:18:42,375 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-KiHSPQ93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-tz2i58Nb}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 06:21:26,749 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 06:21:26,749 - INFO - Comparing nodes to expected configurations...
+2018-04-09 06:21:26,753 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-KiHSPQ93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-ExOfzQai}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 06:21:51,046 - INFO - 
+All node validations passed
+2018-04-09 06:21:51,046 - DEBUG - HA node count is 4
+2018-04-09 06:23:09,410 - DEBUG - Auto-assigning node info...
+2018-04-09 06:23:09,412 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}}
+2018-04-09 06:23:09,412 - INFO - All node info successfully assigned
+2018-04-09 06:23:09,412 - DEBUG - Assigning VIPs
+2018-04-09 06:23:09,413 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"']
+2018-04-09 06:23:09,413 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com']
+2018-04-09 06:23:09,413 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 06:23:12,225 - INFO - Begin Colonizer deployment phase
+2018-04-09 06:23:12,225 - DEBUG - Backend config[{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 06:23:12,225 - DEBUG - Building replica peer sets...
+2018-04-09 06:23:12,225 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:23:12,226 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:23:12,226 - DEBUG - Replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:23:12,226 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 06:23:12,226 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:23:12,226 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:23:12,226 - DEBUG - Arbitrated replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:23:13,774 - INFO - Ensuring clean state...
+2018-04-09 06:23:13,781 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-KiHSPQ93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-beYsS872}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 06:24:40,873 - INFO - Initiating Gluster deployment...
+2018-04-09 06:24:40,880 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-KiHSPQ93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-U4Fv75ry}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'g?74NiQIFBZc6XymJ1j*',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth1': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.10.6', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth0': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.2.154', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth1': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.10.7', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth0': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.2.155', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.8,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com:g1-5.example.com:g1-6.example.com',vips: ['192.168.10.8', '192.168.10.9', '192.168.10.10', '192.168.10.11'],nodes_min: 4,nodes_deployed: 6,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 06:24:41,883 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 06:24:41,884 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 06:24:41,884 - ERROR - 
+2018-04-09 06:24:41,884 - ERROR - ERROR! 'debugger' is not a valid attribute for a Play
+
+The error appears to have been in '/usr/share/gluster-colonizer/ansible/g1-deploy.yml': line 1, column 3, but may
+be elsewhere in the file depending on the exact syntax problem.
+
+The offending line appears to be:
+
+
+- hosts: gluster_nodes
+  ^ here
+
+2018-04-09 06:24:41,884 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 06:24:41,884 - CRITICAL - Ansible playbook error
+2018-04-09 06:24:41,884 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 06:24:41,934 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 06:24:41,934 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 06:24:41,939 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 06:24:41,940 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 06:24:42,467 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 06:24:42,468 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 06:24:42,500 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 06:24:42,500 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 06:24:42,854 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 06:24:42,854 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 06:28:01,287 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 06:28:01,287 - INFO - Begin Colonizer inventory phase
+2018-04-09 06:28:01,288 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 06:28:01,288 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 06:28:04,066 - INFO - NFS Client selected
+2018-04-09 06:28:05,239 - DEBUG - Deploying 6 nodes
+2018-04-09 06:28:08,103 - DEBUG - Domain name is example.com
+2018-04-09 06:28:11,634 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 06:28:12,881 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 06:28:12,881 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 06:28:25,876 - INFO - Manual node entries validated.
+
+2018-04-09 06:28:25,876 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-2BMSxR7V
+2018-04-09 06:28:25,878 - INFO - Inventory complete.
+
+2018-04-09 06:28:25,878 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153,192.168.2.154,192.168.2.155
+2018-04-09 06:28:25,878 - DEBUG - Begin bootstrapping
+2018-04-09 06:28:27,176 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-2BMSxR7V --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-CtH8qsKd}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 06:28:47,065 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-2BMSxR7V --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-hr6p1Ak5}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 06:32:28,826 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 06:32:28,826 - INFO - Comparing nodes to expected configurations...
+2018-04-09 06:32:28,830 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-2BMSxR7V --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-iCoQYfxL}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 06:32:53,704 - INFO - 
+All node validations passed
+2018-04-09 06:32:53,704 - DEBUG - HA node count is 4
+2018-04-09 06:33:01,371 - DEBUG - Auto-assigning node info...
+2018-04-09 06:33:01,371 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}}
+2018-04-09 06:33:01,372 - INFO - All node info successfully assigned
+2018-04-09 06:33:01,372 - DEBUG - Assigning VIPs
+2018-04-09 06:33:01,372 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"']
+2018-04-09 06:33:01,373 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com']
+2018-04-09 06:33:01,373 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 06:33:02,193 - INFO - Begin Colonizer deployment phase
+2018-04-09 06:33:02,194 - DEBUG - Backend config[{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 06:33:02,194 - DEBUG - Building replica peer sets...
+2018-04-09 06:33:02,194 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:33:02,194 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:33:02,194 - DEBUG - Replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:33:02,194 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 06:33:02,194 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:33:02,194 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:33:02,195 - DEBUG - Arbitrated replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:33:02,986 - INFO - Ensuring clean state...
+2018-04-09 06:33:02,991 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-2BMSxR7V --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-eUG36IX8}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 06:33:52,853 - INFO - Initiating Gluster deployment...
+2018-04-09 06:33:52,858 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-2BMSxR7V --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-a3sFwHmN}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'urZQ4SI*#^GqVmdC1%&J',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth1': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.10.6', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth0': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.2.154', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth1': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.10.7', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth0': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.2.155', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.8,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com:g1-5.example.com:g1-6.example.com',vips: ['192.168.10.8', '192.168.10.9', '192.168.10.10', '192.168.10.11'],nodes_min: 4,nodes_deployed: 6,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 06:33:53,795 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 06:33:53,795 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 06:33:53,795 - ERROR - 
+2018-04-09 06:33:53,796 - ERROR - ERROR! Syntax Error while loading YAML.
+
+
+The error appears to have been in '/usr/share/gluster-colonizer/ansible/g1-deploy.yml': line 84, column 14, but may
+be elsewhere in the file depending on the exact syntax problem.
+
+The offending line appears to be:
+
+    - name: Debugging attempt - run partprobe
+        shell: /usr/sbin/partprobe
+             ^ here
+
+exception type: <class 'yaml.scanner.ScannerError'>
+exception: mapping values are not allowed in this context
+  in "<unicode string>", line 84, column 14
+
+2018-04-09 06:33:53,796 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 06:33:53,796 - CRITICAL - Ansible playbook error
+2018-04-09 06:33:53,796 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 06:33:53,833 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 06:33:53,833 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 06:33:53,838 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 06:33:53,838 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 06:33:54,337 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 06:33:54,338 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 06:33:54,373 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 06:33:54,373 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 06:33:54,726 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 06:33:54,727 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 06:34:35,921 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 06:34:35,921 - INFO - Begin Colonizer inventory phase
+2018-04-09 06:34:35,921 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 06:34:35,921 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 06:34:38,721 - INFO - NFS Client selected
+2018-04-09 06:34:39,537 - DEBUG - Deploying 6 nodes
+2018-04-09 06:34:42,462 - DEBUG - Domain name is example.com
+2018-04-09 06:34:46,458 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 06:34:48,957 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 06:34:48,957 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 06:35:10,175 - INFO - Manual node entries validated.
+
+2018-04-09 06:35:10,175 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-Zjxf2WrO
+2018-04-09 06:35:10,176 - INFO - Inventory complete.
+
+2018-04-09 06:35:10,176 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153,192.168.2.154,192.168.2.155
+2018-04-09 06:35:10,177 - DEBUG - Begin bootstrapping
+2018-04-09 06:35:30,498 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Zjxf2WrO --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-fMymJ9a1}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 06:35:50,086 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Zjxf2WrO --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-LwZfN9FC}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 06:38:30,017 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 06:38:30,017 - INFO - Comparing nodes to expected configurations...
+2018-04-09 06:38:30,022 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Zjxf2WrO --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-cOpq4FTa}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 06:38:55,030 - INFO - 
+All node validations passed
+2018-04-09 06:38:55,031 - DEBUG - HA node count is 4
+2018-04-09 06:42:34,644 - DEBUG - Auto-assigning node info...
+2018-04-09 06:42:34,645 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}}
+2018-04-09 06:42:34,645 - INFO - All node info successfully assigned
+2018-04-09 06:42:34,645 - DEBUG - Assigning VIPs
+2018-04-09 06:42:34,646 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"']
+2018-04-09 06:42:34,646 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com']
+2018-04-09 06:42:34,646 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 06:42:35,859 - INFO - Begin Colonizer deployment phase
+2018-04-09 06:42:35,860 - DEBUG - Backend config[{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 06:42:35,860 - DEBUG - Building replica peer sets...
+2018-04-09 06:42:35,860 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:42:35,860 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:42:35,860 - DEBUG - Replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:42:35,860 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 06:42:35,860 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:42:35,860 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:42:35,861 - DEBUG - Arbitrated replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:42:37,269 - INFO - Ensuring clean state...
+2018-04-09 06:42:37,278 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Zjxf2WrO --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-59NX7Ptr}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 06:43:35,092 - INFO - Initiating Gluster deployment...
+2018-04-09 06:43:35,097 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Zjxf2WrO --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-woTqhnL6}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'ZKG0MD#e)5YBdsmOqS8t',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth1': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.10.6', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth0': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.2.154', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth1': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.10.7', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth0': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.2.155', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.8,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com:g1-5.example.com:g1-6.example.com',vips: ['192.168.10.8', '192.168.10.9', '192.168.10.10', '192.168.10.11'],nodes_min: 4,nodes_deployed: 6,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 06:44:03,670 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 06:44:03,670 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 06:44:03,670 - ERROR - 
+PLAY [gluster_nodes] *******************************************************************************************************************************
+
+TASK [Gathering Facts] *****************************************************************************************************************************
+ok: [192.168.2.154]
+ok: [192.168.2.150]
+ok: [192.168.2.153]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.155]
+
+TASK [Build mntpath variable] **********************************************************************************************************************
+ok: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Build arbiter_mntpath variable] **************************************************************************************************************
+ok: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Set PV data alignment for RAID] **************************************************************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Set PV data alignment for JBOD] **************************************************************************************************************
+skipping: [192.168.2.150]
+skipping: [192.168.2.151]
+skipping: [192.168.2.152]
+skipping: [192.168.2.153]
+skipping: [192.168.2.154]
+skipping: [192.168.2.155]
+
+TASK [Start glusterd service] **********************************************************************************************************************
+changed: [192.168.2.154]
+changed: [192.168.2.151]
+changed: [192.168.2.153]
+changed: [192.168.2.152]
+changed: [192.168.2.150]
+changed: [192.168.2.155]
+
+TASK [command] *************************************************************************************************************************************
+changed: [192.168.2.154]
+changed: [192.168.2.151]
+changed: [192.168.2.152]
+changed: [192.168.2.153]
+changed: [192.168.2.150]
+changed: [192.168.2.155]
+
+TASK [Create data volume groups] *******************************************************************************************************************
+changed: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Create data thin pools] **********************************************************************************************************************
+changed: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [command] *************************************************************************************************************************************
+changed: [192.168.2.150]
+changed: [192.168.2.151]
+changed: [192.168.2.152]
+changed: [192.168.2.153]
+changed: [192.168.2.154]
+changed: [192.168.2.155]
+
+TASK [set_fact] ************************************************************************************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Set cache disk labels] ***********************************************************************************************************************
+changed: [192.168.2.150] => (item=/dev/sdc)
+changed: [192.168.2.154] => (item=/dev/sdc)
+changed: [192.168.2.152] => (item=/dev/sdc)
+changed: [192.168.2.153] => (item=/dev/sdc)
+changed: [192.168.2.151] => (item=/dev/sdc)
+changed: [192.168.2.155] => (item=/dev/sdc)
+
+TASK [Debugging attempt - run partprobe] ***********************************************************************************************************
+changed: [192.168.2.150]
+changed: [192.168.2.153]
+changed: [192.168.2.154]
+changed: [192.168.2.151]
+changed: [192.168.2.152]
+changed: [192.168.2.155]
+
+TASK [Get size of fast device] *********************************************************************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Delete temporary partition] ******************************************************************************************************************
+changed: [192.168.2.150] => (item=/dev/sdc)
+changed: [192.168.2.151] => (item=/dev/sdc)
+changed: [192.168.2.152] => (item=/dev/sdc)
+changed: [192.168.2.154] => (item=/dev/sdc)
+changed: [192.168.2.153] => (item=/dev/sdc)
+changed: [192.168.2.155] => (item=/dev/sdc)
+
+TASK [Create arbiter partitions] *******************************************************************************************************************
+failed: [192.168.2.150] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": false, "err": "Error: msdos disk labels do not support partition names.\nError: msdos disk labels do not support partition names.\n", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "Error while running parted script: /sbin/parted -s -m -a optimal /dev/sdc -- unit s name 1 p1 set 1 lvm on", "out": "", "rc": 1}
+failed: [192.168.2.151] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": false, "err": "Error: msdos disk labels do not support partition names.\nError: msdos disk labels do not support partition names.\n", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "Error while running parted script: /sbin/parted -s -m -a optimal /dev/sdc -- unit s name 1 p1 set 1 lvm on", "out": "", "rc": 1}
+failed: [192.168.2.152] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": false, "err": "Error: msdos disk labels do not support partition names.\nError: msdos disk labels do not support partition names.\n", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "Error while running parted script: /sbin/parted -s -m -a optimal /dev/sdc -- unit s name 1 p1 set 1 lvm on", "out": "", "rc": 1}
+failed: [192.168.2.153] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": false, "err": "Error: msdos disk labels do not support partition names.\nError: msdos disk labels do not support partition names.\n", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "Error while running parted script: /sbin/parted -s -m -a optimal /dev/sdc -- unit s name 1 p1 set 1 lvm on", "out": "", "rc": 1}
+failed: [192.168.2.154] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": false, "err": "Error: msdos disk labels do not support partition names.\nError: msdos disk labels do not support partition names.\n", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "Error while running parted script: /sbin/parted -s -m -a optimal /dev/sdc -- unit s name 1 p1 set 1 lvm on", "out": "", "rc": 1}
+failed: [192.168.2.155] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": false, "err": "Error: msdos disk labels do not support partition names.\nError: msdos disk labels do not support partition names.\n", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "Error while running parted script: /sbin/parted -s -m -a optimal /dev/sdc -- unit s name 1 p1 set 1 lvm on", "out": "", "rc": 1}
+
+NO MORE HOSTS LEFT *********************************************************************************************************************************
+
+PLAY RECAP *****************************************************************************************************************************************
+192.168.2.150              : ok=14   changed=8    unreachable=0    failed=1   
+192.168.2.151              : ok=14   changed=8    unreachable=0    failed=1   
+192.168.2.152              : ok=14   changed=8    unreachable=0    failed=1   
+192.168.2.153              : ok=14   changed=8    unreachable=0    failed=1   
+192.168.2.154              : ok=14   changed=8    unreachable=0    failed=1   
+192.168.2.155              : ok=14   changed=8    unreachable=0    failed=1   
+
+
+2018-04-09 06:44:03,671 - ERROR - [DEPRECATION WARNING]: The use of 'include' for tasks has been deprecated. Use 'import_tasks' for static inclusions or 'include_tasks' for dynamic 
+inclusions. This feature will be removed in a future release. Deprecation warnings can be disabled by setting deprecation_warnings=False in 
+ansible.cfg.
+[DEPRECATION WARNING]: include is kept for backwards compatibility but usage is discouraged. The module documentation details page may explain more
+ about this rationale.. This feature will be removed in a future release. Deprecation warnings can be disabled by setting 
+deprecation_warnings=False in ansible.cfg.
+
+2018-04-09 06:44:03,671 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 06:44:03,671 - CRITICAL - Ansible playbook error
+2018-04-09 06:44:03,671 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 06:44:03,724 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 06:44:03,725 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 06:44:03,730 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 06:44:03,731 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 06:44:04,232 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 06:44:04,233 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 06:44:04,269 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 06:44:04,270 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 06:44:04,622 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 06:44:04,622 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 06:53:42,758 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 06:53:42,758 - INFO - Begin Colonizer inventory phase
+2018-04-09 06:53:42,758 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 06:53:42,758 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 06:53:46,878 - INFO - NFS Client selected
+2018-04-09 06:53:56,613 - DEBUG - Deploying 6 nodes
+2018-04-09 06:53:59,467 - DEBUG - Domain name is example.com
+2018-04-09 06:54:04,380 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 06:54:05,872 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 06:54:05,872 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 06:54:14,867 - INFO - Manual node entries validated.
+
+2018-04-09 06:54:14,868 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-LnhuZqDx
+2018-04-09 06:54:14,869 - INFO - Inventory complete.
+
+2018-04-09 06:54:14,870 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153,192.168.2.154,192.168.2.155
+2018-04-09 06:54:14,870 - DEBUG - Begin bootstrapping
+2018-04-09 06:54:15,976 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-LnhuZqDx --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-KPNgFnay}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 06:54:37,309 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-LnhuZqDx --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-SqnaM1Gh}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 06:57:20,290 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 06:57:20,290 - INFO - Comparing nodes to expected configurations...
+2018-04-09 06:57:20,294 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-LnhuZqDx --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-f8Cnzodu}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 06:57:45,387 - INFO - 
+All node validations passed
+2018-04-09 06:57:45,387 - DEBUG - HA node count is 4
+2018-04-09 06:58:45,217 - DEBUG - Auto-assigning node info...
+2018-04-09 06:58:45,218 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}}
+2018-04-09 06:58:45,218 - INFO - All node info successfully assigned
+2018-04-09 06:58:45,218 - DEBUG - Assigning VIPs
+2018-04-09 06:58:45,219 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"']
+2018-04-09 06:58:45,219 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com']
+2018-04-09 06:58:45,219 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 06:58:47,294 - INFO - Begin Colonizer deployment phase
+2018-04-09 06:58:47,294 - DEBUG - Backend config[{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 06:58:47,294 - DEBUG - Building replica peer sets...
+2018-04-09 06:58:47,295 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:58:47,295 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:58:47,295 - DEBUG - Replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 06:58:47,295 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 06:58:47,295 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:58:47,295 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:58:47,295 - DEBUG - Arbitrated replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 06:58:48,493 - INFO - Ensuring clean state...
+2018-04-09 06:58:48,500 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-LnhuZqDx --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-YWwCQ8tm}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 06:59:48,629 - INFO - Initiating Gluster deployment...
+2018-04-09 06:59:48,635 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-LnhuZqDx --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-r1z5p8dV}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'L9DJpM&Y7zAG6tI4lRKy',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth1': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.10.6', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth0': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.2.154', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth1': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.10.7', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth0': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.2.155', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.8,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com:g1-5.example.com:g1-6.example.com',vips: ['192.168.10.8', '192.168.10.9', '192.168.10.10', '192.168.10.11'],nodes_min: 4,nodes_deployed: 6,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 06:59:49,574 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 06:59:49,574 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 06:59:49,575 - ERROR - 
+2018-04-09 06:59:49,575 - ERROR - ERROR! Syntax Error while loading YAML.
+
+
+The error appears to have been in '/usr/share/gluster-colonizer/ansible/g1-deploy.yml': line 102, column 6, but may
+be elsewhere in the file depending on the exact syntax problem.
+
+The offending line appears to be:
+
+        device: "{{ item }}"
+     with_items: "{{ cache_devices }}"
+     ^ here
+We could be wrong, but this one looks like it might be an issue with
+missing quotes.  Always quote template expression brackets when they
+start a value. For instance:
+
+    with_items:
+      - {{ foo }}
+
+Should be written as:
+
+    with_items:
+      - "{{ foo }}"
+
+exception type: <class 'yaml.parser.ParserError'>
+exception: while parsing a block collection
+  in "<unicode string>", line 10, column 5
+did not find expected '-' indicator
+  in "<unicode string>", line 102, column 6
+
+2018-04-09 06:59:49,575 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 06:59:49,575 - CRITICAL - Ansible playbook error
+2018-04-09 06:59:49,575 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 06:59:49,626 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 06:59:49,626 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 06:59:49,631 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 06:59:49,632 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 06:59:50,130 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 06:59:50,130 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 06:59:50,164 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 06:59:50,164 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 06:59:50,517 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 06:59:50,517 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 07:09:54,732 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 07:09:54,734 - INFO - Begin Colonizer inventory phase
+2018-04-09 07:09:54,734 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 07:09:54,734 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 07:09:58,773 - INFO - NFS Client selected
+2018-04-09 07:10:01,052 - DEBUG - Deploying 6 nodes
+2018-04-09 07:10:06,590 - DEBUG - Domain name is example.com
+2018-04-09 07:10:11,198 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 07:10:13,976 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 07:10:13,976 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 07:10:48,169 - INFO - Manual node entries validated.
+
+2018-04-09 07:10:48,169 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-J2GqdxEl
+2018-04-09 07:10:48,170 - INFO - Inventory complete.
+
+2018-04-09 07:10:48,170 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153,192.168.2.154,192.168.2.155
+2018-04-09 07:10:48,171 - DEBUG - Begin bootstrapping
+2018-04-09 07:10:51,343 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-J2GqdxEl --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-s8wmxL7o}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 07:11:13,415 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-J2GqdxEl --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-2bVfyv0p}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 07:14:01,621 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 07:14:01,621 - INFO - Comparing nodes to expected configurations...
+2018-04-09 07:14:01,626 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-J2GqdxEl --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-JrqMlGHj}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 07:14:26,836 - INFO - 
+All node validations passed
+2018-04-09 07:14:26,836 - DEBUG - HA node count is 4
+2018-04-09 07:28:40,263 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 07:28:40,264 - CRITICAL - Keyboard Interrupt detected! Exiting!
+2018-04-09 07:28:40,264 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 07:28:40,319 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 07:28:40,320 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 07:28:40,326 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 07:28:40,326 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 07:28:40,859 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 07:28:40,859 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 07:28:40,892 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 07:28:40,893 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 07:28:41,246 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 07:28:41,247 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 07:29:40,230 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 07:29:40,231 - INFO - Begin Colonizer inventory phase
+2018-04-09 07:29:40,231 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 07:29:40,231 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 07:29:43,755 - INFO - NFS Client selected
+2018-04-09 07:29:45,419 - DEBUG - Deploying 6 nodes
+2018-04-09 07:29:49,612 - DEBUG - Domain name is example.com
+2018-04-09 07:29:54,574 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 07:29:58,222 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 07:29:58,222 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 07:30:19,515 - INFO - Manual node entries validated.
+
+2018-04-09 07:30:19,515 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-Ce3Y0jMw
+2018-04-09 07:30:19,517 - INFO - Inventory complete.
+
+2018-04-09 07:30:19,517 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153,192.168.2.154,192.168.2.155
+2018-04-09 07:30:19,517 - DEBUG - Begin bootstrapping
+2018-04-09 07:30:22,259 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Ce3Y0jMw --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-ja7Izwvi}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 07:33:35,673 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Ce3Y0jMw --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-2sQ07nEU}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 07:36:18,293 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 07:36:18,294 - INFO - Comparing nodes to expected configurations...
+2018-04-09 07:36:18,298 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Ce3Y0jMw --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-1V3roTPb}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 07:36:43,734 - INFO - 
+All node validations passed
+2018-04-09 07:36:43,734 - DEBUG - HA node count is 4
+2018-04-09 07:40:47,168 - DEBUG - Auto-assigning node info...
+2018-04-09 07:40:47,170 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}}
+2018-04-09 07:40:47,170 - INFO - All node info successfully assigned
+2018-04-09 07:40:47,170 - DEBUG - Assigning VIPs
+2018-04-09 07:40:47,170 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"']
+2018-04-09 07:40:47,171 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com']
+2018-04-09 07:40:47,171 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 07:40:48,466 - INFO - Begin Colonizer deployment phase
+2018-04-09 07:40:48,466 - DEBUG - Backend config[{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 07:40:48,467 - DEBUG - Building replica peer sets...
+2018-04-09 07:40:48,467 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 07:40:48,467 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 07:40:48,467 - DEBUG - Replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 07:40:48,467 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 07:40:48,467 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 07:40:48,467 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 07:40:48,467 - DEBUG - Arbitrated replica peer set 2 is [{'node': 'g1-5.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-6.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 07:40:49,475 - INFO - Ensuring clean state...
+2018-04-09 07:40:49,484 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Ce3Y0jMw --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-q0WaJ5gc}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 08:10:11,021 - INFO - Initiating Gluster deployment...
+2018-04-09 08:10:11,031 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-Ce3Y0jMw --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-yBjiU3JC}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com', 'g1-5.example.com', 'g1-6.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '9', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.8"', 'VIP_g1-2.example.com="192.168.10.9"', 'VIP_g1-3.example.com="192.168.10.10"', 'VIP_g1-4.example.com="192.168.10.11"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'h0wnzE%$pVd7DG)r^X9U',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth1': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.10.6', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.154-eth0': {'gwaddress': '', 'runOn': '192.168.2.154', 'hostname': 'g1-5.example.com', 'ifip': '192.168.2.154', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth1': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.10.7', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.155-eth0': {'gwaddress': '', 'runOn': '192.168.2.155', 'hostname': 'g1-6.example.com', 'ifip': '192.168.2.155', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '5': {'node': '192.168.2.154', 'ip': '192.168.10.6', 'hostname': 'g1-5'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}, '6': {'node': '192.168.2.155', 'ip': '192.168.10.7', 'hostname': 'g1-6'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.8,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com:g1-5.example.com:g1-6.example.com',vips: ['192.168.10.8', '192.168.10.9', '192.168.10.10', '192.168.10.11'],nodes_min: 4,nodes_deployed: 6,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 08:10:40,748 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 08:10:40,748 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 08:10:40,748 - ERROR - 
+PLAY [gluster_nodes] ***********************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [192.168.2.154]
+ok: [192.168.2.150]
+ok: [192.168.2.152]
+ok: [192.168.2.151]
+ok: [192.168.2.153]
+ok: [192.168.2.155]
+
+TASK [Build mntpath variable] **************************************************
+ok: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Build arbiter_mntpath variable] ******************************************
+ok: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Set PV data alignment for RAID] ******************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Set PV data alignment for JBOD] ******************************************
+skipping: [192.168.2.150]
+skipping: [192.168.2.151]
+skipping: [192.168.2.152]
+skipping: [192.168.2.153]
+skipping: [192.168.2.154]
+skipping: [192.168.2.155]
+
+TASK [Start glusterd service] **************************************************
+changed: [192.168.2.154]
+changed: [192.168.2.150]
+changed: [192.168.2.153]
+changed: [192.168.2.152]
+changed: [192.168.2.151]
+changed: [192.168.2.155]
+
+TASK [command] *****************************************************************
+changed: [192.168.2.154]
+changed: [192.168.2.152]
+changed: [192.168.2.150]
+changed: [192.168.2.151]
+changed: [192.168.2.153]
+changed: [192.168.2.155]
+
+TASK [Create data volume groups] ***********************************************
+changed: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Create data thin pools] **************************************************
+changed: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [command] *****************************************************************
+changed: [192.168.2.150]
+changed: [192.168.2.151]
+changed: [192.168.2.152]
+changed: [192.168.2.153]
+changed: [192.168.2.154]
+changed: [192.168.2.155]
+
+TASK [set_fact] ****************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Set cache disk labels] ***************************************************
+changed: [192.168.2.154] => (item=/dev/sdc)
+changed: [192.168.2.153] => (item=/dev/sdc)
+changed: [192.168.2.150] => (item=/dev/sdc)
+changed: [192.168.2.151] => (item=/dev/sdc)
+changed: [192.168.2.152] => (item=/dev/sdc)
+changed: [192.168.2.155] => (item=/dev/sdc)
+
+TASK [Get size of fast device] *************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Delete temporary partition] **********************************************
+changed: [192.168.2.150] => (item=/dev/sdc)
+changed: [192.168.2.151] => (item=/dev/sdc)
+changed: [192.168.2.152] => (item=/dev/sdc)
+changed: [192.168.2.153] => (item=/dev/sdc)
+changed: [192.168.2.154] => (item=/dev/sdc)
+changed: [192.168.2.155] => (item=/dev/sdc)
+
+TASK [Create arbiter partitions] ***********************************************
+changed: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.154] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.155] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+
+TASK [Get end point of arbiter partition] **************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Calculate cache partition sizes] *****************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [Define partition incrementer] ********************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [set_fact] ****************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+ok: [192.168.2.154]
+ok: [192.168.2.155]
+
+TASK [debug] *******************************************************************
+ok: [192.168.2.150] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.151] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.152] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.153] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.154] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.155] => {
+    "msg": "partition counter set to 2"
+}
+
+TASK [Create cache partitions] *************************************************
+changed: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.154] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.155] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+
+TASK [Create fast volume groups, initially only with arbiter PVs] **************
+changed: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.154] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.155] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+
+TASK [Create arbiter thin pools] ***********************************************
+changed: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Set data thin pool zeroing mode off] *************************************
+changed: [192.168.2.150] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.154] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.155] => (item={u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Add cache partitions to fast VGs] ****************************************
+skipping: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.154] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.155] => (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+
+TASK [command] *****************************************************************
+failed: [192.168.2.150] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdcp2\"", "delta": "0:00:00.040809", "end": "2018-04-09 08:10:40.106365", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:10:40.065556", "stderr": "  Device /dev/sdcp2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdcp2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.151] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdcp2\"", "delta": "0:00:00.041680", "end": "2018-04-09 08:10:40.133064", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:10:40.091384", "stderr": "  Device /dev/sdcp2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdcp2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.152] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdcp2\"", "delta": "0:00:00.041512", "end": "2018-04-09 08:10:40.153257", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:10:40.111745", "stderr": "  Device /dev/sdcp2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdcp2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.153] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdcp2\"", "delta": "0:00:00.042730", "end": "2018-04-09 08:10:40.164900", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:10:40.122170", "stderr": "  Device /dev/sdcp2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdcp2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.154] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdcp2\"", "delta": "0:00:00.033608", "end": "2018-04-09 08:10:40.166305", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:10:40.132697", "stderr": "  Device /dev/sdcp2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdcp2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.155] (item=[u'/dev/sdc', {u'arbiter_size': u'9', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdcp2\"", "delta": "0:00:00.033358", "end": "2018-04-09 08:10:40.623771", "item": ["/dev/sdc", {"arbiter_size": "9", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:10:40.590413", "stderr": "  Device /dev/sdcp2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdcp2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+
+NO MORE HOSTS LEFT *************************************************************
+
+PLAY RECAP *********************************************************************
+192.168.2.150              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.151              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.152              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.153              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.154              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.155              : ok=23   changed=12   unreachable=0    failed=1   
+
+
+2018-04-09 08:10:40,749 - ERROR - [DEPRECATION WARNING]: The use of 'include' for tasks has been deprecated. Use 
+'import_tasks' for static inclusions or 'include_tasks' for dynamic inclusions.
+ This feature will be removed in a future release. Deprecation warnings can be 
+disabled by setting deprecation_warnings=False in ansible.cfg.
+[DEPRECATION WARNING]: include is kept for backwards compatibility but usage is
+ discouraged. The module documentation details page may explain more about this
+ rationale.. This feature will be removed in a future release. Deprecation 
+warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
+
+2018-04-09 08:10:40,749 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 08:10:40,749 - CRITICAL - Ansible playbook error
+2018-04-09 08:10:40,749 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 08:10:40,803 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 08:10:40,804 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 08:10:40,809 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 08:10:40,809 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 08:10:41,305 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 08:10:41,306 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 08:10:41,340 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 08:10:41,341 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 08:10:41,692 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 08:10:41,692 - CRITICAL - Abort complete. Please reboot all nodes and try again.
+2018-04-09 08:24:34,064 - DEBUG - ** Begin Gluster Colonizer**
+2018-04-09 08:24:34,064 - INFO - Begin Colonizer inventory phase
+2018-04-09 08:24:34,064 - INFO - Your deployment node type is 	[31mCisco-UCS-node[0m
+2018-04-09 08:24:34,064 - INFO - Your deployment flavor is 	[31mGeneral purpose NAS[0m
+2018-04-09 08:24:38,273 - INFO - NFS Client selected
+2018-04-09 08:24:39,463 - DEBUG - Deploying 4 nodes
+2018-04-09 08:24:41,978 - DEBUG - Domain name is example.com
+2018-04-09 08:27:04,169 - DEBUG - Storage network is 192.168.10.0/24
+2018-04-09 08:27:06,303 - DEBUG - NTP servers not defined; using defaults
+2018-04-09 08:27:06,304 - DEBUG - Node config indicates bootstrapping is needed.
+2018-04-09 08:27:15,975 - WARNING - Please enter the FQDNs or IPs for exactly 4 nodes.
+2018-04-09 08:28:15,330 - INFO - Manual node entries validated.
+
+2018-04-09 08:28:15,330 - DEBUG - Ansible inventory file: /var/tmp/peerInventory.ansible-1aD7iV93
+2018-04-09 08:28:15,331 - INFO - Inventory complete.
+
+2018-04-09 08:28:15,331 - DEBUG - Ansible inventory: 192.168.2.150,192.168.2.151,192.168.2.152,192.168.2.153
+2018-04-09 08:28:15,332 - DEBUG - Begin bootstrapping
+2018-04-09 08:28:17,249 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-1aD7iV93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-8JObmrf0}" -b -k -K /usr/share/gluster-colonizer/ansible//g1-key-dist.yml
+2018-04-09 08:28:50,750 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-1aD7iV93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-jZOeXHn4}" /usr/share/gluster-colonizer/ansible//g1-bootstrap.yml
+2018-04-09 08:30:15,142 - INFO - 
+Begin Colonizer validation phase
+
+2018-04-09 08:30:15,142 - INFO - Comparing nodes to expected configurations...
+2018-04-09 08:30:15,146 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-1aD7iV93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-bOTKvpZS}" /usr/share/gluster-colonizer/oemid/verify-cisco-nas.yml
+2018-04-09 08:30:29,440 - INFO - 
+All node validations passed
+2018-04-09 08:30:29,440 - DEBUG - HA node count is 4
+2018-04-09 08:30:33,568 - DEBUG - Auto-assigning node info...
+2018-04-09 08:30:33,569 - DEBUG - Node info: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}}
+2018-04-09 08:30:33,569 - INFO - All node info successfully assigned
+2018-04-09 08:30:33,569 - DEBUG - Assigning VIPs
+2018-04-09 08:30:33,569 - DEBUG - VIP list is: ['VIP_g1-1.example.com="192.168.10.6"', 'VIP_g1-2.example.com="192.168.10.7"', 'VIP_g1-3.example.com="192.168.10.8"', 'VIP_g1-4.example.com="192.168.10.9"']
+2018-04-09 08:30:33,570 - DEBUG - Hostnames are ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com']
+2018-04-09 08:30:33,570 - DEBUG - HA nodes are g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com
+2018-04-09 08:30:40,271 - INFO - Begin Colonizer deployment phase
+2018-04-09 08:30:40,271 - DEBUG - Backend config[{'arbiter_size': '90', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]
+2018-04-09 08:30:40,271 - DEBUG - Building replica peer sets...
+2018-04-09 08:30:40,271 - DEBUG - Replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 08:30:40,271 - DEBUG - Replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}]
+2018-04-09 08:30:40,271 - DEBUG - Adding arbiter bricks to replica peer sets...
+2018-04-09 08:30:40,271 - DEBUG - Arbitrated replica peer set 0 is [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 08:30:40,272 - DEBUG - Arbitrated replica peer set 1 is [{'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}]
+2018-04-09 08:30:44,583 - INFO - Ensuring clean state...
+2018-04-09 08:30:44,588 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-1aD7iV93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-8uaG6Mti}" /usr/share/gluster-colonizer/ansible//g1-reset.yml --user ansible --extra-vars="{cache_devices: ['/dev/sdc'],arbiter: yes,backend_configuration: [{'arbiter_size': '90', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}]}"
+2018-04-09 08:31:18,325 - INFO - Initiating Gluster deployment...
+2018-04-09 08:31:18,330 - DEBUG - Ansible playbook command: ansible-playbook -i /var/tmp/peerInventory.ansible-1aD7iV93 --ssh-common-args '-o StrictHostKeyChecking=no' --user ansible --private-key /home/ansible/.ssh/id_rsa --extra-vars="{fifo: /var/tmp/g1.pipe-gVfMPXJQ}" /usr/share/gluster-colonizer/ansible//g1-deploy.yml --extra-vars="{cache_devices: ['/dev/sdc'],part_size: 100,hostnames: ['g1-1.example.com', 'g1-2.example.com', 'g1-3.example.com', 'g1-4.example.com'],domain_name: example.com,dalign: 256,diskcount: 10,numdevices: 1,disktype: RAID,force: no,backend_configuration: [{'arbiter_size': '90', 'vg': 'VG1', 'thinLV': 'brick1', 'tp': 'TP1', 'device': '/dev/sdb', 'id': 0}],replica: yes,replica_count: '3',arbiter_count: '1',disperse: 'no',disperse_count: '0',redundancy_count: '0',use_nfs: True,use_smb: False,config_ad: ,vip_list: ['VIP_g1-1.example.com="192.168.10.6"', 'VIP_g1-2.example.com="192.168.10.7"', 'VIP_g1-3.example.com="192.168.10.8"', 'VIP_g1-4.example.com="192.168.10.9"'],ha_cluster_nodes: 'g1-1.example.com,g1-2.example.com,g1-3.example.com,g1-4.example.com',hacluster_password: 'Q5GMzNsf!JP6gA&jd%Xh',default_volname: gluster1,network_config: {'192.168.2.151-eth0': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.2.151', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.151-eth1': {'gwaddress': '', 'runOn': '192.168.2.151', 'hostname': 'g1-2.example.com', 'ifip': '192.168.10.3', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.153-eth0': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.2.153', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.153-eth1': {'gwaddress': '', 'runOn': '192.168.2.153', 'hostname': 'g1-4.example.com', 'ifip': '192.168.10.5', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth1': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.10.2', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.150-eth0': {'gwaddress': '', 'runOn': '192.168.2.150', 'hostname': 'g1-1.example.com', 'ifip': '192.168.2.150', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}, '192.168.2.152-eth1': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.10.4', 'dnsaddress': [], 'ifname': 'eth1', 'netprefix': 24}, '192.168.2.152-eth0': {'gwaddress': '', 'runOn': '192.168.2.152', 'hostname': 'g1-3.example.com', 'ifip': '192.168.2.152', 'dnsaddress': [], 'ifname': 'eth0', 'netprefix': 27}},nodeInfo: {'1': {'node': '192.168.2.150', 'ip': '192.168.10.2', 'hostname': 'g1-1'}, '3': {'node': '192.168.2.152', 'ip': '192.168.10.4', 'hostname': 'g1-3'}, '2': {'node': '192.168.2.151', 'ip': '192.168.10.3', 'hostname': 'g1-2'}, '4': {'node': '192.168.2.153', 'ip': '192.168.10.5', 'hostname': 'g1-4'}},storage_interface: eth1,nm_storage_interface: eth1,brand_distributor: Gluster,brand_parent: Gluster,brand_project: Colonizer,brand_short: Colonizer,readme_file: '/root/colonizer.README.txt',mount_protocol: nfs,mount_host: 192.168.10.6,mount_opts: '_netdev',fuse_mount_opts: '_netdev,backup-volfile-servers=g1-2.example.com:g1-3.example.com:g1-4.example.com',vips: ['192.168.10.6', '192.168.10.7', '192.168.10.8', '192.168.10.9'],nodes_min: 4,nodes_deployed: 4,tuned_profile: rhgs-random-io,gluster_vol_set: {'features.cache-invalidation': True, 'client.event-threads': 4, 'group': 'metadata-cache', 'performance.stat-prefetch': True, 'performance.cache-invalidation': True, 'server.event-threads': 4, 'cluster.lookup-optimize': True},replica_peers: [{'node': 'g1-1.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}, {'node': 'g1-3.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-4.example.com', 'brick': '/gluster/bricks/brick1'}, {'node': 'g1-2.example.com', 'brick': '/gluster/bricks/arbiter-brick1'}],arbiter: True,update_ntp: False}"
+2018-04-09 08:31:35,617 - ERROR - 
+
+Failed to execute ansible playbook correctly!!
+2018-04-09 08:31:35,617 - ERROR - Find the stdout and stderr below...
+
+
+2018-04-09 08:31:35,617 - ERROR - 
+PLAY [gluster_nodes] ***********************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [192.168.2.153]
+ok: [192.168.2.151]
+ok: [192.168.2.150]
+ok: [192.168.2.152]
+
+TASK [Build mntpath variable] **************************************************
+ok: [192.168.2.150] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.151] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.152] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.153] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Build arbiter_mntpath variable] ******************************************
+ok: [192.168.2.150] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.151] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.152] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+ok: [192.168.2.153] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Set PV data alignment for RAID] ******************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [Set PV data alignment for JBOD] ******************************************
+skipping: [192.168.2.150]
+skipping: [192.168.2.151]
+skipping: [192.168.2.152]
+skipping: [192.168.2.153]
+
+TASK [Start glusterd service] **************************************************
+changed: [192.168.2.150]
+changed: [192.168.2.151]
+changed: [192.168.2.153]
+changed: [192.168.2.152]
+
+TASK [command] *****************************************************************
+changed: [192.168.2.150]
+changed: [192.168.2.152]
+changed: [192.168.2.151]
+changed: [192.168.2.153]
+
+TASK [Create data volume groups] ***********************************************
+changed: [192.168.2.152] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.150] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Create data thin pools] **************************************************
+changed: [192.168.2.151] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.150] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [command] *****************************************************************
+changed: [192.168.2.150]
+changed: [192.168.2.151]
+changed: [192.168.2.152]
+changed: [192.168.2.153]
+
+TASK [set_fact] ****************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [Set cache disk labels] ***************************************************
+changed: [192.168.2.153] => (item=/dev/sdc)
+changed: [192.168.2.151] => (item=/dev/sdc)
+changed: [192.168.2.150] => (item=/dev/sdc)
+changed: [192.168.2.152] => (item=/dev/sdc)
+
+TASK [Get size of fast device] *************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [Delete temporary partition] **********************************************
+changed: [192.168.2.150] => (item=/dev/sdc)
+changed: [192.168.2.151] => (item=/dev/sdc)
+changed: [192.168.2.152] => (item=/dev/sdc)
+changed: [192.168.2.153] => (item=/dev/sdc)
+
+TASK [Create arbiter partitions] ***********************************************
+changed: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+
+TASK [Get end point of arbiter partition] **************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [Calculate cache partition sizes] *****************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [Define partition incrementer] ********************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [set_fact] ****************************************************************
+ok: [192.168.2.150]
+ok: [192.168.2.151]
+ok: [192.168.2.152]
+ok: [192.168.2.153]
+
+TASK [debug] *******************************************************************
+ok: [192.168.2.150] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.151] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.152] => {
+    "msg": "partition counter set to 2"
+}
+ok: [192.168.2.153] => {
+    "msg": "partition counter set to 2"
+}
+
+TASK [Create cache partitions] *************************************************
+changed: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+
+TASK [Create fast volume groups, initially only with arbiter PVs] **************
+changed: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+changed: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}])
+
+TASK [Create arbiter thin pools] ***********************************************
+changed: [192.168.2.150] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Set data thin pool zeroing mode off] *************************************
+changed: [192.168.2.150] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.151] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.152] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+changed: [192.168.2.153] => (item={u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0})
+
+TASK [Add cache partitions to fast VGs] ****************************************
+skipping: [192.168.2.150] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.151] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.152] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+skipping: [192.168.2.153] => (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) 
+
+TASK [command] *****************************************************************
+failed: [192.168.2.150] (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdc2\"", "delta": "0:00:00.042169", "end": "2018-04-09 08:31:35.421581", "item": ["/dev/sdc", {"arbiter_size": "90", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:31:35.379412", "stderr": "  Device /dev/sdc2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdc2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.151] (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdc2\"", "delta": "0:00:00.041225", "end": "2018-04-09 08:31:35.451447", "item": ["/dev/sdc", {"arbiter_size": "90", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:31:35.410222", "stderr": "  Device /dev/sdc2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdc2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.152] (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdc2\"", "delta": "0:00:00.041542", "end": "2018-04-09 08:31:35.460478", "item": ["/dev/sdc", {"arbiter_size": "90", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:31:35.418936", "stderr": "  Device /dev/sdc2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdc2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+failed: [192.168.2.153] (item=[u'/dev/sdc', {u'arbiter_size': u'90', u'vg': u'VG1', u'thinLV': u'brick1', u'tp': u'TP1', u'device': u'/dev/sdb', u'id': 0}]) => {"changed": true, "cmd": "/bin/bash -c \"/sbin/vgextend FASTVG1 /dev/sdc2\"", "delta": "0:00:00.042142", "end": "2018-04-09 08:31:35.484253", "item": ["/dev/sdc", {"arbiter_size": "90", "device": "/dev/sdb", "id": 0, "thinLV": "brick1", "tp": "TP1", "vg": "VG1"}], "msg": "non-zero return code", "rc": 5, "start": "2018-04-09 08:31:35.442111", "stderr": "  Device /dev/sdc2 not found (or ignored by filtering).", "stderr_lines": ["  Device /dev/sdc2 not found (or ignored by filtering)."], "stdout": "", "stdout_lines": []}
+
+NO MORE HOSTS LEFT *************************************************************
+
+PLAY RECAP *********************************************************************
+192.168.2.150              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.151              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.152              : ok=23   changed=12   unreachable=0    failed=1   
+192.168.2.153              : ok=23   changed=12   unreachable=0    failed=1   
+
+
+2018-04-09 08:31:35,617 - ERROR - [DEPRECATION WARNING]: The use of 'include' for tasks has been deprecated. Use 
+'import_tasks' for static inclusions or 'include_tasks' for dynamic inclusions.
+ This feature will be removed in a future release. Deprecation warnings can be 
+disabled by setting deprecation_warnings=False in ansible.cfg.
+[DEPRECATION WARNING]: include is kept for backwards compatibility but usage is
+ discouraged. The module documentation details page may explain more about this
+ rationale.. This feature will be removed in a future release. Deprecation 
+warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
+
+2018-04-09 08:31:35,618 - CRITICAL - Something went wrong and the deployment is being aborted.
+2018-04-09 08:31:35,618 - CRITICAL - Ansible playbook error
+2018-04-09 08:31:35,618 - DEBUG - Killing any existing dnsmasq processes
+2018-04-09 08:31:35,664 - DEBUG - Wiping the dnsmasq.leases file
+2018-04-09 08:31:35,664 - DEBUG - Initiating Subprocess: echo '' > /var/lib/dnsmasq/dnsmasq.leases
+2018-04-09 08:31:35,669 - DEBUG - Subprocess output: /bin/sh: /var/lib/dnsmasq/dnsmasq.leases: Permission denied
+
+2018-04-09 08:31:35,669 - DEBUG - Initiating Subprocess: /bin/firewall-cmd --remove-service=dhcp
+2018-04-09 08:31:36,171 - DEBUG - Subprocess output: [91mAuthorization failed.
+    Make sure polkit agent is running or run the application as superuser.[00m
+
+2018-04-09 08:31:36,172 - DEBUG - Initiating Subprocess: /bin/nmcli con reload eth0
+2018-04-09 08:31:36,206 - DEBUG - Subprocess output: Error: failed to reload connections: access denied.
+
+2018-04-09 08:31:36,206 - DEBUG - Initiating Subprocess: /bin/nmcli con up eth0
+2018-04-09 08:31:36,559 - DEBUG - Subprocess output: Error: Connection activation failed: Not authorized to control networking.
+
+2018-04-09 08:31:36,559 - CRITICAL - Abort complete. Please reboot all nodes and try again.

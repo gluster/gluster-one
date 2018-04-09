@@ -5,6 +5,7 @@
     ha_base_dir: "/var/run/gluster/shared_storage/nfs-ganesha"
     ha_name: "gluster-ganesha-ha"
 
+
   tasks:
     - name: Build mntpath variable
       set_fact:
@@ -92,6 +93,7 @@
 
     - name: Create arbiter partitions
       parted:
+        label: gpt
         state: present
         device: "{{ item[0] }}"
         number: 1
@@ -122,6 +124,9 @@
     - set_fact:
         part_incr: "{{ part_incr|int + 1 }}"
       when: arbiter == True
+   
+    - debug:
+        msg: "partition counter set to {{ part_incr }}"
 
     - name: Create cache partitions
       parted:
@@ -141,7 +146,8 @@
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p1"
+        #disks: "{{ item[0] }}p1"
+        disks: "{{ item[0] }}1"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -175,7 +181,8 @@
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        #disks: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        disks: "{{ item[0] }}{{ item[1]['id']|int + part_incr|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -190,7 +197,8 @@
       register: result
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
-    - shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + 2}}"
+    #- shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + 2}}"
+    - shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}{{ item[1]['id']|int + 2}}"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
@@ -202,7 +210,8 @@
         lv: "cpool{{ item[1]['id']|int + 1 }}"
         opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
         #FIXME: Hard-coded p again for NVMe
-        pvs: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        #pvs: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        pvs: "{{ item[0] }}{{ item[1]['id']|int + part_incr|int }}"
         size: "100%FREE"
       with_nested:
         - "{{ cache_devices }}"
