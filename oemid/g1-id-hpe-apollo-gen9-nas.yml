@@ -15,6 +15,7 @@ flavor:
         mgmt_interface: eno1
         storage_interface: bond0
         backend_devices:
+          #- /dev/sdb
           - /dev/sdc
         cache_devices:
           - /dev/nvme0n1

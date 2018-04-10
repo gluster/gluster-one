@@ -8,7 +8,9 @@ flavor:
     node:
         name: HPE Apollo Gen9
         needs_bootstrap: true
-        customization_file_name: flavors/hpe-apollo-gen9/customize-hpe-apollo-gen9-dm-repo.yml
+        flavor_path: flavors/hpe-apollo-gen9/   #relative to g1_path
+        flavor_module_file_name: hpe-apollo-gen9-dm-repo  #without the .py suffix
+        customization_file_name: customize-hpe-apollo-gen9-dm-repo.yml
         verify_file_name: verify-hpe-apollo-gen9-dm-repo.yml
         mgmt_interface: eno1
         storage_interface: bond0
@@ -39,10 +41,10 @@ flavor:
           - /dev/sdy
         cache_devices:
           - /dev/nvme0n1
-        disktype: JBOD
-        diskcount: 1
-        dalign: 256
-        tuned: rhgs-sequential-io
+        disktype: JBOD         #JBOD|RAID
+        diskcount: 1          #Number of data disks; for 12 disk RAID 6 this is 10; for {J,RAID}BOD it is 1
+        dalign: 256            #<integer in KB>
+        tuned: rhgs-sequential-io   #tuned profile name
         gluster_vol_set:
             server.event-threads: 4
             client.event-threads: 4
@@ -55,4 +57,5 @@ flavor:
             group: nl-cache
     volname: gluster1
     voltype: disperse          #replica|disperse
+    #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
     arbiter_size: None         #<integer in GB>|None
