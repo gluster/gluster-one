@@ -130,6 +130,7 @@
 
     - name: Create cache partitions
       parted:
+        label: gpt
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + part_incr|int }}"
