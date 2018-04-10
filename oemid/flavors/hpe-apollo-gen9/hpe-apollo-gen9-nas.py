@@ -22,6 +22,8 @@ def flavorVars(logger):
     global install_hpssacli
     enable_hpe_spp = yes_no('Do you wish to enable the remote repository? [Y/n] ', True)
 
+    logger.info("Enabling remote repository for hpssacli utility")
+
     print "\r\nNetwork interface bonding will be configured for your storage"
     print "network interfaces. Either LACP (aka mode 4, 802.3ad) or TLB"
     print "(aka mode 5, balance-tlb) is supported. Note that LACP requires"
@@ -40,5 +42,7 @@ def flavorVars(logger):
             logger.warning("Please enter either 'lacp' or 'tlb'")
             continue
         break
+
+    logger.info("Bonding mode '%s' selected" % bonding_mode)
 
     return 'enable_hpe_spp: %s, bonding_mode: %s' % (enable_hpe_spp, bonding_mode)
