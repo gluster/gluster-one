@@ -8,7 +8,7 @@ flavor:
     node:
         name: HPE Apollo Gen9
         needs_bootstrap: true
-        customization_file_name: customize-hpe-apollo-gen9-dm-repo.yml
+        customization_file_name: flavors/hpe-apollo-gen9/customize-hpe-apollo-gen9-dm-repo.yml
         verify_file_name: verify-hpe-apollo-gen9-dm-repo.yml
         mgmt_interface: eno1
         storage_interface: bond0
