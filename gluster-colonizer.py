@@ -368,34 +368,6 @@ def run_ansible_playbook(playbook, continue_on_fail=False, become=False, askConn
             return False
     return True
 
-def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
-
-    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key]
-
-    if become:
-        playbookCmdArgs.append("-b")
-
-    if askConnPass:
-        playbookCmdArgs.append("-k")
-
-    if askSudoPass:
-        playbookCmdArgs.append("-K")
-
-    playbookCmdArgs.append(playbook)
-
-    logger.debug("Running ansible playbook %s interactively with the following command %s", playbook, (' ').join(playbookCmdArgs))
-
-    returncode = os.spawnvpe(os.P_WAIT, "ansible-playbook", playbookCmdArgs, os.environ)
-
-    if returncode != 0:
-        logger.error("\n\nFailed to execute ansible playbook correctly!")
-        if not continue_on_fail:
-            abortSetup("Ansible playbook error")
-        else:
-            logger.warning(
-                "Continuing deployment; please see above output for failure details.")
-            return False
-    return True
 
 def killDnsmasq():
     # Function to stop any existing dnsmasq processes
@@ -1237,8 +1209,6 @@ try:
 
         run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
         run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
-#        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
-        #run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
@@ -1262,8 +1232,6 @@ try:
         print "\r\n"
         run_ansible_playbook(flavor_path +
                          oem_id['flavor']['node']['verify_file_name'] + ' --extra-vars="{' + flavor_extra_vars + '}"')
-        #run_ansible_playbook_interactively(g1_path + 'oemid/' +
-        #                 oem_id['flavor']['node']['verify_file_name'])
     else:
         run_ansible_playbook(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
@@ -1608,7 +1576,6 @@ try:
 
         logger.debug("Running customization playbook %s" % customizationFile)
 
-        #run_ansible_playbook_interactively(customizationFile)
         run_ansible_playbook(customizationFile + ' --extra-vars="{' + flavor_extra_vars + '}"')
 
     print "\r\n"
