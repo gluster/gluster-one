@@ -21,3 +21,5 @@ def flavorVars():
 
     global install_hpssacli
     enable_hpe_spp = yes_no('Do you wish to enable the remote repository? [Y/n] ', True)
+
+    return 'enable_hpe_spp: %s' % enable_hpe_spp

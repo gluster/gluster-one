@@ -3,8 +3,8 @@
 - hosts: gluster_nodes
   name: Verify nodes against HPE Apollo 4200 Gen9 profile for General-Purpose NAS
   become: yes
-  vars_prompt:
-
+#  vars_prompt:
+#
 #    - name: enable_hpe_spp
 #      prompt: |
 #           In this step the hpssacli utility is required. Do you want to add

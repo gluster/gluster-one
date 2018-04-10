@@ -216,6 +216,7 @@ def abortSetup(message=''):
     sys.exit(1)
 
 
+# NOTE: Moved below to g1modules.py
 #def user_input(msg):
 #    # Function to capture raw_input w/ key buffer flush
 #    tcflush(sys.stdin, TCIOFLUSH)
@@ -1256,9 +1257,10 @@ try:
         sys.path.insert(0, flavor_path)
         flavor_module = __import__(oem_id['flavor']['node']['flavor_module_file_name'])
         # Collect custom variables from module function
-        flavor_module.flavorVars()
+        global flavor_extra_vars
+        flavor_extra_vars = flavor_module.flavorVars()
         run_ansible_playbook(flavor_path +
-                         oem_id['flavor']['node']['verify_file_name'])
+                         oem_id['flavor']['node']['verify_file_name'] + ' --extra-vars="{' + flavor_extra_vars + '}"')
         #run_ansible_playbook_interactively(g1_path + 'oemid/' +
         #                 oem_id['flavor']['node']['verify_file_name'])
     else:
