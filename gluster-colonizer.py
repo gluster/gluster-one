@@ -1597,18 +1597,19 @@ try:
     # NOTE: Customize the nodes if required.
 
     if needsCustomization:
-        customizationFileName = flavor_path + oem_id['flavor']['node']['customization_file_name']
+        customizationFile = flavor_path + oem_id['flavor']['node']['customization_file_name']
 
-        if not os.path.isfile(customizationFileName):
-            abortSetup(("Customization file %s specified but not found." % customizationFileName))
+        if not os.path.isfile(customizationFile):
+            abortSetup(("Customization file %s specified but not found." % customizationFile))
 
         print "\r\n"
         logger.info("Nodes are getting prepared...")
         print "\r\n"
 
-        logger.debug("Running customization playbook %s" % customizationFileName)
+        logger.debug("Running customization playbook %s" % customizationFile)
 
-        run_ansible_playbook_interactively(customizationFileName)
+        #run_ansible_playbook_interactively(customizationFile)
+        run_ansible_playbook(customizationFile + ' --extra-vars="{' + flavor_extra_vars + '}"')
 
     print "\r\n"
 
