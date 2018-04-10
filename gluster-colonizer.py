@@ -1249,6 +1249,7 @@ try:
     needsCustomization = 'customization_file_name' in oem_id['flavor']['node']
 
     if needsCustomization:
+        logger.debug("Customization file is %s" % needsCustomization)
         run_ansible_playbook_interactively(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
     else:
