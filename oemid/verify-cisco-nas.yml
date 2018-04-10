@@ -44,11 +44,11 @@
     - assert:
         that:
           - yum_repolist_cmd | success
-          - "yum_repolist_cmd.stdout | search('(?<!-i)rhel-7-server-rpms/x86_64)"
-          - "yum_rep.list_cmd.stdout | search('rh-gluster-3-for-rhel-7-server-rpms/x86_64')"
-          - "yum_rep.list_cmd.stdout | search('rh-gluster-3-nfs-for-rhel-7-server-rpms/x86_64')"
-          - "yum_rep.list_cmd.stdout | search('rh-gluster-3-samba-for-rhel-7-server-rpms/x86_64')"
-          - "yum_rep.list_cmd.stdout | search('rhel-ha-for-rhel-7-server-rpms/86_64')"
+          - "yum_repolist_cmd.stdout | search('(?<!-i)rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rh-gluster-3-for-rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rh-gluster-3-nfs-for-rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rh-gluster-3-samba-for-rhel-7-server-rpms/x86_64')"
+          - "yum_repolist_cmd.stdout | search('rhel-ha-for-rhel-7-server-rpms/86_64')"
         msg: "System {{ ansible_host }} does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-server-rpms, rh-gluster-3-nfs-for-rhel-7-server-rpms, rh-gluster-3-samba-for-rhel-7-server-rpms and rhel-ha-for-rhel-7-server-rpms!"
 
     - name: search for gluster and gluster-colonizer packages
