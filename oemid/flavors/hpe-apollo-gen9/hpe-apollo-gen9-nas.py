@@ -10,16 +10,32 @@
 #                          for the model and flavor indicated.                 *
 #*******************************************************************************
 
-from g1modules import yes_no
+from g1modules import yes_no, user_input
 
 def flavorVars():
     print "\r\nIn order to bootstrap the block devices on your nodes, the"
     print "hpssacli utility is required. If this utility is not available"
     print "from a currently-configured yum repository on the nodes, it can"
     print "be automatically installed from the HPE ServicePack for Proliant"
-    print "repository via the Internet.\r\n"""
+    print "repository via the Internet.\r\n"
 
     global install_hpssacli
     enable_hpe_spp = yes_no('Do you wish to enable the remote repository? [Y/n] ', True)
 
-    return 'enable_hpe_spp: %s' % enable_hpe_spp
+    print "\r\nNetwork interface bonding will be configured for your storage"
+    print "network interfaces. Either LACP (aka mode 4, 802.3ad) or TLB"
+    print "(aka mode 5, balance-tlb) is supported. Note that LACP requires"
+    print "that the switch interface ports are already configured for this"
+    print "mode.\r\n"
+
+
+    global bonding_mode
+    while True:
+        input_string = user_input("Do you wish to use 'lacp' or 'tlb' bonding? [LACP/tlb] ")
+        bonding_mode = input_string.lower()
+        if bonding_mode is not 'lacp' or 'tlb':
+            logger.warning("Please enter either 'lacp' or 'tlb'")
+            continue
+        break
+
+    return 'enable_hpe_spp: %s, bonding_mode: %s' % (enable_hpe_spp, bonding_mode)
