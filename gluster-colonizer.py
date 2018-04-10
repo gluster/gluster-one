@@ -1603,7 +1603,7 @@ try:
             abortSetup(("Customization file %s specified but not found." % customizationFile))
 
         print "\r\n"
-        logger.info("Nodes are getting prepared...")
+        logger.info("Nodes are being prepared...")
         print "\r\n"
 
         logger.debug("Running customization playbook %s" % customizationFile)
