@@ -5,12 +5,12 @@
   become: yes
   vars_prompt:
 
-    - name: enable_hpe_spp
-      prompt: |
-           In this step the hpssacli utility is required. Do you want to add
-           the HPE ServicePack for Proliant Repository to the systems? (yes/no)
-      default: 'yes'
-      private: no
+#    - name: enable_hpe_spp
+#      prompt: |
+#           In this step the hpssacli utility is required. Do you want to add
+#           the HPE ServicePack for Proliant Repository to the systems? (yes/no)
+#      default: 'yes'
+#      private: no
 
   tasks:
     - assert:
@@ -76,10 +76,12 @@
         gpgcheck: no
         enabled: no
         state: present
-      when: enable_hpe_spp == 'yes'
+      #when: enable_hpe_spp == 'yes'
+      when: enable_hpe_spp == True
 
     - name: search for hpssacli package
-      shell: yum {{ (enable_hpe_spp == 'yes') | ternary('--enablerepo=hpe-spp', '') }} list all hpssacli
+      #shell: yum {{ (enable_hpe_spp == 'yes') | ternary('--enablerepo=hpe-spp', '') }} list all hpssacli
+      shell: yum {{ (enable_hpe_spp == True) | ternary('--enablerepo=hpe-spp', '') }} list all hpssacli
       args:
         warn: no
       register: yum_list_available_hpssacli_cmd
@@ -97,13 +99,15 @@
         name: hpssacli
         state: present
         enablerepo: hpe-spp
-      when: enable_hpe_spp == 'yes'
+      #when: enable_hpe_spp == 'yes'
+      when: enable_hpe_spp == True
 
     - name: install hpssacli from system configured repositories
       yum:
         name: hpssacli
         state: present
-      when: enable_hpe_spp != 'yes'
+      #when: enable_hpe_spp != 'yes'
+      when: enable_hpe_spp != True
 
     - name: enumerate raid controller using hpssacli
       shell: hpssacli controller all show

@@ -23,6 +23,7 @@
 #                                                                              *
 #*******************************************************************************
 
+from g1modules import *
 import argparse
 from argparse import RawTextHelpFormatter
 import json
@@ -42,7 +43,7 @@ import os
 import errno
 import shlex
 import signal
-from termios import tcflush, TCIOFLUSH
+#from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
 import pexpect
@@ -215,32 +216,32 @@ def abortSetup(message=''):
     sys.exit(1)
 
 
-def user_input(msg):
-    # Function to capture raw_input w/ key buffer flush
-    tcflush(sys.stdin, TCIOFLUSH)
-    keyin = raw_input(msg)
-    return keyin
+#def user_input(msg):
+#    # Function to capture raw_input w/ key buffer flush
+#    tcflush(sys.stdin, TCIOFLUSH)
+#    keyin = raw_input(msg)
+#    return keyin
 
 
-def yes_no(answer, do_return=False, default='yes'):
-    # Simple yes/no prompt function
-    yes = set(['yes', 'y', 'ye'])
-    no = set(['no', 'n'])
-    if default is 'no':
-        no.add('')
-    else:
-        yes.add('')
-    while True:
-        choice = user_input(answer).lower()
-        if choice in yes:
-            return True
-        elif choice in no:
-            if do_return:
-                return False
-            else:
-                abortSetup("Deployment cancelled by user.")
-        else:
-            print "Please enter either 'yes' or 'no'\r\n"
+#def yes_no(answer, do_return=False, default='yes'):
+#    # Simple yes/no prompt function
+#    yes = set(['yes', 'y', 'ye'])
+#    no = set(['no', 'n'])
+#    if default is 'no':
+#        no.add('')
+#    else:
+#        yes.add('')
+#    while True:
+#        choice = user_input(answer).lower()
+#        if choice in yes:
+#            return True
+#        elif choice in no:
+#            if do_return:
+#                return False
+#            else:
+#                abortSetup("Deployment cancelled by user.")
+#        else:
+#            print "Please enter either 'yes' or 'no'\r\n"
 
 def set_ha_node_count():
     ha_node_count = int(
@@ -1250,8 +1251,16 @@ try:
 
     if needsCustomization:
         logger.debug("Customization file is %s" % needsCustomization)
-        run_ansible_playbook_interactively(g1_path + 'oemid/' +
+        flavor_path = g1_path + 'oemid/' + oem_id['flavor']['node']['flavor_path']
+        # Add custom module path and import flavor module
+        sys.path.insert(0, flavor_path)
+        flavor_module = __import__(oem_id['flavor']['node']['flavor_module_file_name'])
+        # Collect custom variables from module function
+        flavor_module.flavorVars()
+        run_ansible_playbook(flavor_path +
                          oem_id['flavor']['node']['verify_file_name'])
+        #run_ansible_playbook_interactively(g1_path + 'oemid/' +
+        #                 oem_id['flavor']['node']['verify_file_name'])
     else:
         run_ansible_playbook(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
@@ -1585,7 +1594,7 @@ try:
     # NOTE: Customize the nodes if required.
 
     if needsCustomization:
-        customizationFileName = g1_path + 'oemid/' + oem_id['flavor']['node']['customization_file_name']
+        customizationFileName = flavor_path + oem_id['flavor']['node']['customization_file_name']
 
         if not os.path.isfile(customizationFileName):
             abortSetup(("Customization file %s specified but not found." % customizationFileName))

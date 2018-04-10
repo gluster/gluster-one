@@ -8,7 +8,9 @@ flavor:
     node:
         name: HPE Apollo Gen9
         needs_bootstrap: true
-        customization_file_name: flavors/hpe-apollo-gen9/customize-hpe-apollo-gen9-nas.yml
+        flavor_path: flavors/hpe-apollo-gen9/   #relative to g1_path
+        flavor_module_file_name: hpe-apollo-gen9-nas  #without the .py suffix
+        customization_file_name: customize-hpe-apollo-gen9-nas.yml
         verify_file_name: verify-hpe-apollo-gen9-nas.yml
         mgmt_interface: eno1
         storage_interface: bond0
