@@ -13,6 +13,8 @@
 #      private: no
 
   tasks:
+    - shell: /bin/bash -c 'echo "Checking system resources..." > {{ fifo }}'
+
     - assert:
         that:
           - ansible_processor_vcpus == 40
@@ -23,6 +25,8 @@
           - ansible_distribution == 'RedHat'
           - ansible_distribution_major_version == '7'
         msg: "System {{ ansible_host }} does not conform to the required hardware / operatign system requirements!"
+
+    - shell: /bin/bash -c 'echo "Checking subscriptions and repositories..." > {{ fifo }}'
 
     - name: get subscription status
       shell: subscription-manager status
@@ -52,6 +56,8 @@
           - "yum_repolist_cmd.stdout | search('rhel-ha-for-rhel-7-server-rpms/x86_64')"
         msg: "System {{ ansible_host }} does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-server-rpms, rh-gluster-3-nfs-for-rhel-7-server-rpms,  rh-gluster-3-samba-for-rhel-7-server-rpms and rhel-ha-for-rhel-7-server-rpms!"
 
+
+    - shell: /bin/bash -c 'echo "Checking RPM package requirements..." > {{ fifo }}'
 
     - name: search for gluster and gluster-colonizer packages
       shell: yum list all redhat-storage-server gluster-colonizer gluster-zeroconf-avahi
@@ -113,6 +119,8 @@
       shell: hpssacli controller all show
       register: hpssacli_controller_show_cmd
       changed_when: false
+
+    - shell: /bin/bash -c 'echo "Checking block devices with hpssacli..." > {{ fifo }}'
 
     - assert:
         that:
@@ -182,6 +190,8 @@
       with_items:
         - "{{ hpssacli_os_pd_show_cmd.results }}"
 
+    - shell: /bin/bash -c 'echo "Checking NVMe devices..." > {{ fifo }}'
+
     - name: enumerate physical NVMe devices
       shell: lsblk --output NAME /dev/nvme*
       changed_when: false
@@ -192,6 +202,8 @@
           - "{{ lsblk_nvme_cmd.stdout.find('nvme0n1') }}"
           - "{{ lsblk_nvme_cmd.stdout.find('nvme1n1') }}"
         msg: "System {{ ansible_host }} does not have the required NVMe devices present. Please make sure they show up as /dev/nvme0n1 and /dev/nvme1n1 in the system."
+
+    - shell: /bin/bash -c 'echo "Checking for iptables..." > {{ fifo }}'
 
     - name: search for iptables-services package
       shell: yum list installed iptables-services
@@ -205,6 +217,8 @@
         that:
           - "'iptables-services.x86_64' not in yum_list_installed_iptables_cmd.stdout"
         msg: "System {{ ansible_host }} has the iptables-services package installed. Please remove it in favor of firewalld!"
+
+    - shell: /bin/bash -c 'echo "Checking network interfaces..." > {{ fifo }}'
 
     - assert:
         that:
@@ -226,6 +240,8 @@
           - ansible_ens2f0.active == true
           - ansible_ens2f0.speed == 10000
         msg: "System {{ ansible_host }}'s network adapters ens1f0 and/or ens2f0 have either not negotiated the correct connection speed or are disconnected"
+
+    - shell: /bin/bash -c 'echo "Checking selinux..." > {{ fifo }}'
 
     # Depends on presence of package python-dnf
     - name: Install dependency for ansible selinux management
