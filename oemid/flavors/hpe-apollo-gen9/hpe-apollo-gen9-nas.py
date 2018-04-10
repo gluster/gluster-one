@@ -31,11 +31,12 @@ def flavorVars(logger):
 
     global bonding_mode
     while True:
+        valid_modes = ['lacp', 'tlb']
         input_string = user_input("Do you wish to use 'lacp' or 'tlb' bonding? [LACP/tlb] ")
-        bonding_mode = input_string.lower()
+        bonding_mode = str(input_string).lower()
         if bonding_mode is '':
             bonding_mode = 'lacp'
-        if bonding_mode is not 'lacp' or 'tlb':
+        if bonding_mode not in valid_modes:
             logger.warning("Please enter either 'lacp' or 'tlb'")
             continue
         break
