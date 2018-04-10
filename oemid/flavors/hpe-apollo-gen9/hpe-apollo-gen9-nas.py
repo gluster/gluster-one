@@ -12,7 +12,7 @@
 
 from g1modules import yes_no, user_input
 
-def flavorVars():
+def flavorVars(logger):
     print "\r\nIn order to bootstrap the block devices on your nodes, the"
     print "hpssacli utility is required. If this utility is not available"
     print "from a currently-configured yum repository on the nodes, it can"
