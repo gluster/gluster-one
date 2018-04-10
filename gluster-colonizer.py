@@ -23,6 +23,7 @@
 #                                                                              *
 #*******************************************************************************
 
+from g1modules import *
 import argparse
 from argparse import RawTextHelpFormatter
 import json
@@ -42,7 +43,7 @@ import os
 import errno
 import shlex
 import signal
-from termios import tcflush, TCIOFLUSH
+#from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
 import pexpect
@@ -215,32 +216,33 @@ def abortSetup(message=''):
     sys.exit(1)
 
 
-def user_input(msg):
-    # Function to capture raw_input w/ key buffer flush
-    tcflush(sys.stdin, TCIOFLUSH)
-    keyin = raw_input(msg)
-    return keyin
+# NOTE: Moved below to g1modules.py
+#def user_input(msg):
+#    # Function to capture raw_input w/ key buffer flush
+#    tcflush(sys.stdin, TCIOFLUSH)
+#    keyin = raw_input(msg)
+#    return keyin
 
 
-def yes_no(answer, do_return=False, default='yes'):
-    # Simple yes/no prompt function
-    yes = set(['yes', 'y', 'ye'])
-    no = set(['no', 'n'])
-    if default is 'no':
-        no.add('')
-    else:
-        yes.add('')
-    while True:
-        choice = user_input(answer).lower()
-        if choice in yes:
-            return True
-        elif choice in no:
-            if do_return:
-                return False
-            else:
-                abortSetup("Deployment cancelled by user.")
-        else:
-            print "Please enter either 'yes' or 'no'\r\n"
+#def yes_no(answer, do_return=False, default='yes'):
+#    # Simple yes/no prompt function
+#    yes = set(['yes', 'y', 'ye'])
+#    no = set(['no', 'n'])
+#    if default is 'no':
+#        no.add('')
+#    else:
+#        yes.add('')
+#    while True:
+#        choice = user_input(answer).lower()
+#        if choice in yes:
+#            return True
+#        elif choice in no:
+#            if do_return:
+#                return False
+#            else:
+#                abortSetup("Deployment cancelled by user.")
+#        else:
+#            print "Please enter either 'yes' or 'no'\r\n"
 
 def set_ha_node_count():
     ha_node_count = int(
@@ -366,34 +368,6 @@ def run_ansible_playbook(playbook, continue_on_fail=False, become=False, askConn
             return False
     return True
 
-def run_ansible_playbook_interactively(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
-
-    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key]
-
-    if become:
-        playbookCmdArgs.append("-b")
-
-    if askConnPass:
-        playbookCmdArgs.append("-k")
-
-    if askSudoPass:
-        playbookCmdArgs.append("-K")
-
-    playbookCmdArgs.append(playbook)
-
-    logger.debug("Running ansible playbook %s interactively with the following command %s", playbook, (' ').join(playbookCmdArgs))
-
-    returncode = os.spawnvpe(os.P_WAIT, "ansible-playbook", playbookCmdArgs, os.environ)
-
-    if returncode != 0:
-        logger.error("\n\nFailed to execute ansible playbook correctly!")
-        if not continue_on_fail:
-            abortSetup("Ansible playbook error")
-        else:
-            logger.warning(
-                "Continuing deployment; please see above output for failure details.")
-            return False
-    return True
 
 def killDnsmasq():
     # Function to stop any existing dnsmasq processes
@@ -1235,8 +1209,6 @@ try:
 
         run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
         run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
-#        logger.info("Node type requires bootstrapping. No auto-discovery is possible. In the next step you will be asked for the SSH and the SUDO password of the ansible user on the target machines.\r\n")
-        #run_ansible_playbook_interactively(playbook_path + '/g1-bootstrap.yml', False, True, True, True)
 
     # === PHASE 2 ===
     # NOTE: Validate all nodes against the OEMID file
@@ -1249,8 +1221,17 @@ try:
     needsCustomization = 'customization_file_name' in oem_id['flavor']['node']
 
     if needsCustomization:
-        run_ansible_playbook_interactively(g1_path + 'oemid/' +
-                         oem_id['flavor']['node']['verify_file_name'])
+        logger.debug("Customization file is %s" % needsCustomization)
+        flavor_path = g1_path + 'oemid/' + oem_id['flavor']['node']['flavor_path']
+        # Add custom module path and import flavor module
+        sys.path.insert(0, flavor_path)
+        flavor_module = __import__(oem_id['flavor']['node']['flavor_module_file_name'])
+        # Collect custom variables from module function
+        global flavor_extra_vars
+        flavor_extra_vars = flavor_module.flavorVars(logger)
+        print "\r\n"
+        run_ansible_playbook(flavor_path +
+                         oem_id['flavor']['node']['verify_file_name'] + ' --extra-vars="{' + flavor_extra_vars + '}"')
     else:
         run_ansible_playbook(g1_path + 'oemid/' +
                          oem_id['flavor']['node']['verify_file_name'])
@@ -1584,18 +1565,18 @@ try:
     # NOTE: Customize the nodes if required.
 
     if needsCustomization:
-        customizationFileName = g1_path + 'oemid/' + oem_id['flavor']['node']['customization_file_name']
+        customizationFile = flavor_path + oem_id['flavor']['node']['customization_file_name']
 
-        if not os.path.isfile(customizationFileName):
-            abortSetup(("Customization file %s specified but not found." % customizationFileName))
+        if not os.path.isfile(customizationFile):
+            abortSetup(("Customization file %s specified but not found." % customizationFile))
 
         print "\r\n"
-        logger.info("Nodes are getting prepared...")
+        logger.info("Nodes are being prepared...")
         print "\r\n"
 
-        logger.debug("Running customization playbook %s" % customizationFileName)
+        logger.debug("Running customization playbook %s" % customizationFile)
 
-        run_ansible_playbook_interactively(customizationFileName)
+        run_ansible_playbook(customizationFile + ' --extra-vars="{' + flavor_extra_vars + '}"')
 
     print "\r\n"
 
