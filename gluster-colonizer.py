@@ -1122,7 +1122,7 @@ try:
             while True:
                 try:
                     host_command('/bin/systemctl start NetworkManager')
-                    p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
+                    p1 = Popen(shlex.split('/bin/nmcli d show %s' % nm_mgmt_interface), stdout=PIPE)
                     p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
                     p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
                     p1.stdout.close()
