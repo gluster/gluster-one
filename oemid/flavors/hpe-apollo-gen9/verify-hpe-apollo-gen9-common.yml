@@ -68,11 +68,9 @@
     gpgcheck: no
     enabled: no
     state: present
-  #when: enable_hpe_spp == 'yes'
   when: enable_hpe_spp == True
 
 - name: search for hpssacli package
-  #shell: yum {{ (enable_hpe_spp == 'yes') | ternary('--enablerepo=hpe-spp', '') }} list all hpssacli
   shell: yum {{ (enable_hpe_spp == True) | ternary('--enablerepo=hpe-spp', '') }} list all hpssacli
   args:
     warn: no
@@ -91,14 +89,12 @@
     name: hpssacli
     state: present
     enablerepo: hpe-spp
-  #when: enable_hpe_spp == 'yes'
   when: enable_hpe_spp == True
 
 - name: install hpssacli from system configured repositories
   yum:
     name: hpssacli
     state: present
-  #when: enable_hpe_spp != 'yes'
   when: enable_hpe_spp != True
 
 - name: enumerate raid controller using hpssacli
