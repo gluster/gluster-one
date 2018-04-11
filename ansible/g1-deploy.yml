@@ -17,6 +17,16 @@
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
+    #NOTE: We assume all backend_devices are the same size and just check the first one
+    - name: Get backend device size in GB
+      set_fact:
+        backend_dev_size: #TODO
+
+    #NOTE: The additonal .009765625 factor keeps the result in base 2
+    - name: Calculate arbiter brick size
+      set_fact:
+        arbiter_size: "{{ (backend_dev_size|int * arbiter_size_factor|int * .009765625) }}"
+
     - name: Set PV data alignment for RAID
       set_fact:
         pv_dalign: "{{ diskcount|int * dalign|int }}"

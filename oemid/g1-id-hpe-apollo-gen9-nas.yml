@@ -42,3 +42,6 @@ flavor:
     voltype: replica           #replica|disperse
     #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
     arbiter_size: 9            #<integer in GB>|None
+    #WIP
+    #Size in percent for the arbiter brick relative to the data brick
+    arbiter_size_factor: 0.1  #<float in %>|None

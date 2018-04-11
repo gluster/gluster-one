@@ -1463,7 +1463,9 @@ try:
             'device':
             str(device),
             'arbiter_size':
-            str(oem_id['flavor']['arbiter_size'])
+            str(oem_id['flavor']['arbiter_size']),
+            'arbiter_size_factor':
+            str(oem_id['flavor']['arbiter_size_factor'])
         }]
         brickcount += 1
     logger.debug("Backend config" + str(backend_configuration))
