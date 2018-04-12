@@ -30,9 +30,9 @@
       set_fact:
         backend_dev_units: "{{ ansible_devices[backend_dev]['size'].split(' ')[1] }}"
 
-   - name: Set conversion factor for GB
-     set_fact:
-       gb_conversion:  "{{ 1048576 if backend_dev_units == 'PB' else 1024 if backend_dev_units == 'TB' else 1 if backend_dev_units == 'GB' else 0.000976562 if backend_dev_units == 'MB'  }}"
+    - name: Set conversion factor for GB
+      set_fact:
+        gb_conversion:  "{{ 1048576 if backend_dev_units == 'PB' else 1024 if backend_dev_units == 'TB' else 1 if backend_dev_units == 'GB' else 0.000976562 if backend_dev_units == 'MB'  }}"
 
     #NOTE: The additonal .009765625 factor keeps the result in base 2
     - name: Calculate arbiter brick size in GB
