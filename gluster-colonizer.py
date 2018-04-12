@@ -261,7 +261,7 @@ def ipValidator(user_message,
             return ''
         try:
             ip = IPAddress(input_string)
-        except netaddr.core.AddrFormatError:
+        except:
             logger.warning("The IP address entered is invalid")
             continue
         if ip not in storage_subnet[1:-1] and check_subnet:
