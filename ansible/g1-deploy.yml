@@ -17,10 +17,10 @@
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
-    #NOTE: We assume all backend_devices are the same size and just check the first one
+     #NOTE: We assume all backend_devices are the same size and just check the first one
     - name: Set backend device name
       set_fact:
-        backend_dev: "{{ backend_configuration[0].split('/')[2] }}"
+        backend_dev: "{{ backend_configuration[0]['device'].split('/')[2] }}"
 
     - name: Get backend device size
       set_fact:
