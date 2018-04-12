@@ -37,7 +37,7 @@
     #NOTE: The additonal .009765625 factor keeps the result in base 2
     - name: Calculate arbiter brick size in GB
       set_fact:
-        arbiter_size: "{{ (backend_dev_size|float * backend_configurationr[0]['arbiter_size_factor']|float * gb_conversion|float * 0.009765625) }}"
+        arbiter_size: "{{ (backend_dev_size|float * backend_configuration[0]['arbiter_size_factor']|float * gb_conversion|float * 0.009765625) }}"
 
     - name: Set PV data alignment for RAID
       set_fact:
