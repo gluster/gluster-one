@@ -779,7 +779,8 @@ try:
             nodes_min = 4
             nodes_multiple = 2
             replica = 'yes'
-            if str(oem_id['flavor']['arbiter_size']) == "None":
+            #if str(oem_id['flavor']['arbiter_size']) == "None":
+            if str(oem_id['flavor']['arbiter_size_factor']) == "None":
                 replica_count = str('\'2\'')
                 arbiter_count = str('\'0\'')
             else:
@@ -1462,8 +1463,8 @@ try:
             'VG' + str(brickcount),
             'device':
             str(device),
-            'arbiter_size':
-            str(oem_id['flavor']['arbiter_size']),
+            #'arbiter_size':
+            #str(oem_id['flavor']['arbiter_size']),
             'arbiter_size_factor':
             str(oem_id['flavor']['arbiter_size_factor'])
         }]
@@ -1507,7 +1508,8 @@ try:
                 peer_set_num += 1
 
         # Add the arbiter bricks if the arbiter_size is defined in the OEMID file
-        if str(oem_id['flavor']['arbiter_size']) != "None":
+        #if str(oem_id['flavor']['arbiter_size']) != "None":
+        if str(oem_id['flavor']['arbiter_size_factor']) != "None":
             logger.debug("Adding arbiter bricks to replica peer sets...")
             peer_set_num = 0
             for count, device in enumerate(
@@ -1558,7 +1560,8 @@ try:
 
     logger.info("Ensuring clean state...")
 
-    playbook_args = playbook_path + '/g1-reset.yml --user ansible --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration ) + '}"'
+    #playbook_args = playbook_path + '/g1-reset.yml --user ansible --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration ) + '}"'
+    playbook_args = playbook_path + '/g1-reset.yml --user ansible --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size_factor']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration ) + '}"'
 
     # Run the g1-reset ansible playbook
     run_ansible_playbook(playbook_args)
@@ -1652,7 +1655,8 @@ try:
         playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
 
     global arbiter
-    if str(oem_id['flavor']['arbiter_size']) != "None":
+    #if str(oem_id['flavor']['arbiter_size']) != "None":
+    if str(oem_id['flavor']['arbiter_size_factor']) != "None":
         arbiter = True
     else:
         arbiter = False
