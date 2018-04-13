@@ -144,20 +144,20 @@
       set_fact:
         cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices|int }}"
 
-    - name: Define partition incrementer
+    - name: Define starting number for cache partitions
       set_fact:
-        part_incr: 1
+        cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
-    - set_fact:
-        part_incr: "{{ part_incr|int + numdevices|int }}"
-      when: arbiter == True
+    #- set_fact:
+    #    part_incr: "{{ part_incr|int + numdevices|int }}"
+    #  when: arbiter == True
 
     - name: Create cache partitions
       parted:
         state: present
         device: "{{ item[0] }}"
-        number: "{{ item[1]['id']|int + part_incr|int }}"
-        name: "p{{ item[1]['id']|int + part_incr|int }}"
+        number: "{{ item[1]['id']|int + cache_part_start|int }}"
+        name: "p{{ item[1]['id']|int + cache_part_start|int }}"
         flags: [ lvm ]
         part_start: "{{ (arbiter_end|default(50)|int + (item[1]['id']|int * cache_part_size|int)) + 1|int }}s"
         part_end: "{{ (arbiter_end|default(50)|int + ((item[1]['id']|int + 1) * cache_part_size|int))|int }}s"
@@ -210,7 +210,7 @@
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        disks: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -237,7 +237,7 @@
         lv: "cpool{{ item[1]['id']|int + 1 }}"
         opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
         #FIXME: Hard-coded p again for NVMe
-        pvs: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        pvs: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
         size: "100%FREE"
       with_nested:
         - "{{ cache_devices }}"
