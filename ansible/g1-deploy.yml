@@ -134,6 +134,7 @@
       when: arbiter == True
       register: result
 
+      #TODO: This doesn't work with multiple arbiter partitions
     - name: Get end point of arbiter partition
       set_fact:
         arbiter_end: "{{ result['results'][0]['partitions'][0]['end']|int }}"
@@ -141,14 +142,14 @@
 
     - name: Calculate cache partition sizes
       set_fact:
-        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices }}"
+        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices|int }}"
 
     - name: Define partition incrementer
       set_fact:
         part_incr: 1
 
     - set_fact:
-        part_incr: "{{ part_incr|int + 1 }}"
+        part_incr: "{{ part_incr|int + numdevices|int }}"
       when: arbiter == True
 
     - name: Create cache partitions
