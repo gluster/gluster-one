@@ -166,11 +166,14 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+      #TODO: The create action may not work correctly in a loop like this. The disks
+      #      value might need to include all disks in one entry, so we might need to
+      #      define that in a play before this.
     - name: Create fast volume groups, initially only with arbiter PVs
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p1"
+        disks: "{{ item[0] }}p{{ item[1]['id']|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
