@@ -176,7 +176,7 @@
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p{{ item[1]['id']|int }}"
+        disks: "{{ item[0] }}p{{ (item[1]['id']|int + 1) }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
