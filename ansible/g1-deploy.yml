@@ -117,14 +117,20 @@
     - name: Create arbiter partitions
       parted:
         state: present
-        device: "{{ item }}"
-        number: 1
-        name: p1
+        device: "{{ item[0] }}"
+        #number: 1
+        #name: p1
+        number: "{{ item[1]['id']|int + 1 }}"
+        name: "p{{ item[1]['id']|int + 1 }}"
         flags: [ lvm ]
-        part_start: 0%
-        part_end: "{{ arbiter_size }}MiB"
+        #part_start: 0%
+        #part_end: "{{ arbiter_size }}MiB"
+        part_start: "{{ item[1]['id']|int * arbiter_size|int + 1 }}MiB"
+        part_end: "{{ (item[1]['id']|int + 1) * arbiter_size|int }}MiB"
         unit: s
-      with_items: "{{ cache_devices }}"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
       when: arbiter == True
       register: result
 
