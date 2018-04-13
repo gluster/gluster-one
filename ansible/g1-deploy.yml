@@ -169,6 +169,9 @@
       #TODO: The create action may not work correctly in a loop like this. The disks
       #      value might need to include all disks in one entry, so we might need to
       #      define that in a play before this.
+      #NOTE: If we use the result of the create arbiter partitions play above, we can
+      #      probably create the disks list using the dictionary there, which would be
+      #      more accurate and would get rid of the hard-coded p here.
     - name: Create fast volume groups, initially only with arbiter PVs
       vg:
         action: create
