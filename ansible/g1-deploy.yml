@@ -122,7 +122,6 @@
         name: p1
         flags: [ lvm ]
         part_start: 0%
-        #part_end: "{{ item[1]['arbiter_size'] }}GiB"
         part_end: "{{ arbiter_size }}MiB"
         unit: s
       with_nested:
@@ -280,7 +279,6 @@
         poolname: "arbiter-{{ item.tp }}"
         vgname: "{{ item.vg }}"
         lvname: "arbiter-{{ item.thinLV }}"
-        #virtualsize: "{{ item['arbiter_size'] }}G"
         virtualsize: "{{ arbiter_size }}M"
       with_items: "{{ backend_configuration }}"
       when: arbiter == True

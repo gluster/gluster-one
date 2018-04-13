@@ -43,4 +43,3 @@ flavor:
     #Arbiter size should be roughly 0.1% or <brick_size>/1024 for the NAS flavor
     #Size in percent for the arbiter brick relative to the data brick
     arbiter_size_factor: 0.1  #<float in %>|None
-    #arbiter_size: 9            #<integer in GB>|None
