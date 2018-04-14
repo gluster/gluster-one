@@ -118,13 +118,9 @@
       parted:
         state: present
         device: "{{ item[0] }}"
-        #number: 1
-        #name: p1
         number: "{{ item[1]['id']|int + 1 }}"
         name: "p{{ item[1]['id']|int + 1 }}"
         flags: [ lvm ]
-        #part_start: 0%
-        #part_end: "{{ arbiter_size }}MiB"
         part_start: "{{ item[1]['id']|int * arbiter_size|int + 1 }}MiB"
         part_end: "{{ (item[1]['id']|int + 1) * arbiter_size|int }}MiB"
         unit: s
@@ -153,10 +149,6 @@
       set_fact:
         cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
-    #- set_fact:
-    #    part_incr: "{{ part_incr|int + numdevices|int }}"
-    #  when: arbiter == True
-
     - name: Create cache partitions
       parted:
         state: present
@@ -171,9 +163,6 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
-      #TODO: The create action may not work correctly in a loop like this. The disks
-      #      value might need to include all disks in one entry, so we might need to
-      #      define that in a play before this.
       #NOTE: If we use the result of the create arbiter partitions play above, we can
       #      probably create the disks list using the dictionary there, which would be
       #      more accurate and would get rid of the hard-coded p here.
@@ -523,12 +512,6 @@
 
     - include: g1-smb-ctdb.yml
       when: use_smb == True
-
-      #- shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
-      #when: config_ad == True
-
-      #- include: g1-smb-ad.yml
-      #when: config_ad == True
 
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 
