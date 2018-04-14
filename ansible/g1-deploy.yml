@@ -134,10 +134,15 @@
       when: arbiter == True
       register: result
 
-      #TODO: This doesn't work with multiple arbiter partitions
+    - set_fact:
+        last_result: "{{ result['results']|last }}"
+
+    - set_fact:
+        last_part: "{{ last_result['partitions']|last }}"
+
     - name: Get end point of arbiter partition
       set_fact:
-        arbiter_end: "{{ result['results'][0]['partitions'][0]['end']|int }}"
+        arbiter_end: "{{ last_part['end']|int }}"
       when: arbiter == True
 
     - name: Calculate cache partition sizes
