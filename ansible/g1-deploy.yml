@@ -230,7 +230,8 @@
       register: result
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
-    - shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + 2}}"
+    - name: Add cache partitions to fast VGs
+      shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
