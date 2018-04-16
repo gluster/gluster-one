@@ -39,6 +39,7 @@ flavor:
           - /dev/sdw
           - /dev/sdx
           - /dev/sdy
+        #Note: Only one cache device is currenly supported
         cache_devices:
           - /dev/nvme0n1
         disktype: JBOD         #JBOD|RAID

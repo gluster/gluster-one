@@ -15,8 +15,9 @@ flavor:
         mgmt_interface: eno1
         storage_interface: bond0
         backend_devices:
-          #- /dev/sdb
+          - /dev/sdb
           - /dev/sdc
+        #Note: Only one cache device is currenly supported
         cache_devices:
           - /dev/nvme0n1
         disktype: RAID         #JBOD|RAID
