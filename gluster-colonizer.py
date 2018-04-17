@@ -1030,9 +1030,7 @@ try:
 
         logger.debug("Node config indicates bootstrapping is needed.")
 
-        print "\r\nThis node type will require manual discovery.\r\n"
-
-        print "Please enter the IPs / FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
+        print "\r\nPlease enter the IPs / FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
         print "network. These servers will be boostrapped using the user"
         print "\033[31m%s\033[0m - this account needs" % os.environ['USER']
         print "to be present on all systems and needs to have \033[31msudo\033[0m privileges.\r\n"
