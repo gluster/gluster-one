@@ -27,7 +27,7 @@ from g1modules import *
 import argparse
 from argparse import RawTextHelpFormatter
 import json
-import logging
+#import logging
 import netaddr
 import pprint
 import re

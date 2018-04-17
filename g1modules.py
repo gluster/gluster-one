@@ -1,4 +1,5 @@
 from termios import tcflush, TCIOFLUSH
+import logging
 import sys
 import readline
 
