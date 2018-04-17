@@ -1040,8 +1040,8 @@ try:
         for idx in range(int(desiredNumOfNodes)):
             nodeNum = str(idx + 1)
             mgmtNodeIP = str(ipValidator("   Node %i: " % int(nodeNum), check_subnet = False, hint=entryHint))
-            g1Hosts.append(mgmtNodeIp)
-            threeOctet = mgmtNodeIp.split('.')
+            g1Hosts.append(mgmtNodeIP)
+            threeOctet = mgmtNodeIP.split('.')
             entryHint = str('.'.join(threeOctet[0:3])) + '.'
 
 ####
