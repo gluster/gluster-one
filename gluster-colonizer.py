@@ -262,10 +262,11 @@ def natural_sort(string):
 def ipValidator(user_message,
                 null_valid=False,
                 check_dupes=True,
-                check_subnet=True):
+                check_subnet=True,
+                hint=''):
     # Function for input and validation of storage network IP addresses
     while True:
-        input_string = user_input(user_message)
+        input_string = user_input(user_message, hint)
         if null_valid and not input_string:
             return ''
         try:
@@ -1030,31 +1031,42 @@ try:
 
         logger.debug("Node config indicates bootstrapping is needed.")
 
-        print "\r\nPlease enter the IPs/FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
-        print "network. These servers will be boostrapped using the user \033[31m%s\033[0m" % os.environ['USER']
+        print "\r\nPlease enter the IP addresses of the %i nodes on the management" % int(desiredNumOfNodes)
+        print "network. These nodes will be boostrapped using the user \033[31m%s\033[0m" % os.environ['USER']
         print "This account must be present on all systems and must have \033[31msudo\033[0m privileges.\r\n"
 
-        while True:
-            input_string = user_input("   Servers (comma-separated): ")
+#WORKING
+        entryHint = ''
+        for idx in range(int(desiredNumOfNodes)):
+            nodeNum = str(idx + 1)
+            mgmtNodeIP = str(ipValidator("   Node %i: " % int(nodeNum), check_subnet = False, hint=entryHint))
+            g1Hosts.append(mgmtNodeIp)
+            threeOctet = mgmtNodeIp.split('.')
+            entryHint = str('.'.join(threeOctet[0:3])) + '.'
 
-            g1Hosts = [item.strip() for item in input_string.lower().split(",")]
-
-            # Check that the user entered values for exactly the
-            # number of hosts requested early in the deployment
-            if len(g1Hosts) is not desiredNumOfNodes:
-                logger.warning("Please enter the FQDNs or IPs for exactly %i nodes." % int(desiredNumOfNodes))
-                continue
-
-            # Validate that entries are either IPs or FQDNs
-            for entry in g1Hosts:
-                isvalid = fqdn_or_ip_check.match(entry)
-
-                if isvalid is None:
-                    logger.warning("At least one of the entries is neither a valid FQDN or IPv4 address.")
-                    break
-            else:
-                break # executed if foor loop ended normally (no break)
-            continue # executed if there was a break statement in the for loop
+####
+#        while True:
+#            input_string = user_input("   Servers (comma-separated): ")
+#
+#            g1Hosts = [item.strip() for item in input_string.lower().split(",")]
+#
+#            # Check that the user entered values for exactly the
+#            # number of hosts requested early in the deployment
+#            if len(g1Hosts) is not desiredNumOfNodes:
+#                logger.warning("Please enter the FQDNs or IPs for exactly %i nodes." % int(desiredNumOfNodes))
+#                continue
+#
+#            # Validate that entries are either IPs or FQDNs
+#            for entry in g1Hosts:
+#                isvalid = fqdn_or_ip_check.match(entry)
+#
+#                if isvalid is None:
+#                    logger.warning("At least one of the entries is neither a valid FQDN or IPv4 address.")
+#                    break
+#            else:
+#                break # executed if foor loop ended normally (no break)
+#            continue # executed if there was a break statement in the for loop
+####
 
         logger.info("Manual node entries validated.\r\n")
     else:
