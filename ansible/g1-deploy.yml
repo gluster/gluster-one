@@ -17,6 +17,30 @@
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
+     #NOTE: We assume all backend_devices are the same size and just check the first one
+    - name: Set backend device name
+      set_fact:
+        backend_dev: "{{ backend_configuration[0]['device'].split('/')[2] }}"
+
+    - name: Get backend device size
+      set_fact:
+        backend_dev_size: "{{ ansible_devices[backend_dev]['size'].split(' ')[0] }}"
+
+    #Unfortunately it seems impossible to control the units output by ansible
+    #facts, so we have to determine those units here and act accordingly
+    - name: Get backend device size units
+      set_fact:
+        backend_dev_units: "{{ ansible_devices[backend_dev]['size'].split(' ')[1] }}"
+
+    - name: Set conversion factor for MB
+      set_fact:
+        mb_conversion:  "{{ 1024|pow(3) if backend_dev_units == 'PB' else 1024|pow(2) if backend_dev_units == 'TB' else 1024 if backend_dev_units == 'GB' else 1 if backend_dev_units == 'MB' else (1/1024) if backend_dev_units == 'KB' }}"
+
+    #NOTE: The additonal .009765625 factor keeps the result in base 2
+    - name: Calculate arbiter brick size in MB
+      set_fact:
+        arbiter_size: "{{ (backend_dev_size|float * backend_configuration[0]['arbiter_size_factor']|float * mb_conversion|float * 0.009765625) }}"
+
     - name: Set PV data alignment for RAID
       set_fact:
         pv_dalign: "{{ diskcount|int * dalign|int }}"
@@ -94,11 +118,11 @@
       parted:
         state: present
         device: "{{ item[0] }}"
-        number: 1
-        name: p1
+        number: "{{ item[1]['id']|int + 1 }}"
+        name: "p{{ item[1]['id']|int + 1 }}"
         flags: [ lvm ]
-        part_start: 0%
-        part_end: "{{ item[1]['arbiter_size'] }}GiB"
+        part_start: "{{ item[1]['id']|int * arbiter_size|int + 1 }}MiB"
+        part_end: "{{ (item[1]['id']|int + 1) * arbiter_size|int }}MiB"
         unit: s
       with_nested:
         - "{{ cache_devices }}"
@@ -106,29 +130,31 @@
       when: arbiter == True
       register: result
 
+    - set_fact:
+        last_result: "{{ result['results']|last }}"
+
+    - set_fact:
+        last_part: "{{ last_result['partitions']|last }}"
+
     - name: Get end point of arbiter partition
       set_fact:
-        arbiter_end: "{{ result['results'][0]['partitions'][0]['end']|int }}"
+        arbiter_end: "{{ last_part['end']|int }}"
       when: arbiter == True
 
     - name: Calculate cache partition sizes
       set_fact:
-        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices }}"
+        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices|int }}"
 
-    - name: Define partition incrementer
+    - name: Define starting number for cache partitions
       set_fact:
-        part_incr: 1
-
-    - set_fact:
-        part_incr: "{{ part_incr|int + 1 }}"
-      when: arbiter == True
+        cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
     - name: Create cache partitions
       parted:
         state: present
         device: "{{ item[0] }}"
-        number: "{{ item[1]['id']|int + part_incr|int }}"
-        name: "p{{ item[1]['id']|int + part_incr|int }}"
+        number: "{{ item[1]['id']|int + cache_part_start|int }}"
+        name: "p{{ item[1]['id']|int + cache_part_start|int }}"
         flags: [ lvm ]
         part_start: "{{ (arbiter_end|default(50)|int + (item[1]['id']|int * cache_part_size|int)) + 1|int }}s"
         part_end: "{{ (arbiter_end|default(50)|int + ((item[1]['id']|int + 1) * cache_part_size|int))|int }}s"
@@ -137,11 +163,14 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+      #NOTE: If we use the result of the create arbiter partitions play above, we can
+      #      probably create the disks list using the dictionary there, which would be
+      #      more accurate and would get rid of the hard-coded p here.
     - name: Create fast volume groups, initially only with arbiter PVs
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p1"
+        disks: "{{ item[0] }}p{{ (item[1]['id']|int + 1) }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -175,7 +204,7 @@
       vg:
         action: create
         #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        disks: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -190,7 +219,8 @@
       register: result
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
-    - shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + 2}}"
+    - name: Add cache partitions to fast VGs
+      shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
@@ -202,7 +232,7 @@
         lv: "cpool{{ item[1]['id']|int + 1 }}"
         opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
         #FIXME: Hard-coded p again for NVMe
-        pvs: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        pvs: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
         size: "100%FREE"
       with_nested:
         - "{{ cache_devices }}"
@@ -255,7 +285,7 @@
         poolname: "arbiter-{{ item.tp }}"
         vgname: "{{ item.vg }}"
         lvname: "arbiter-{{ item.thinLV }}"
-        virtualsize: "{{ item['arbiter_size'] }}G"
+        virtualsize: "{{ arbiter_size }}M"
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
@@ -482,12 +512,6 @@
 
     - include: g1-smb-ctdb.yml
       when: use_smb == True
-
-      #- shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
-      #when: config_ad == True
-
-      #- include: g1-smb-ad.yml
-      #when: config_ad == True
 
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 

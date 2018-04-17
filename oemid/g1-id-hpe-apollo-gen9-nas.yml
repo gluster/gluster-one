@@ -15,8 +15,9 @@ flavor:
         mgmt_interface: eno1
         storage_interface: bond0
         backend_devices:
-          #- /dev/sdb
+          - /dev/sdb
           - /dev/sdc
+        #Note: Only one cache device is currenly supported
         cache_devices:
           - /dev/nvme0n1
         disktype: RAID         #JBOD|RAID
@@ -40,5 +41,6 @@ flavor:
             group: nl-cache
     volname: gluster1
     voltype: replica           #replica|disperse
-    #Arbiter size should be roughly <brick_size>/1024 for the NAS flavor
-    arbiter_size: 9            #<integer in GB>|None
+    #Arbiter size should be roughly 0.1% or <brick_size>/1024 for the NAS flavor
+    #Size in percent for the arbiter brick relative to the data brick
+    arbiter_size_factor: 0.1  #<float in %>|None
