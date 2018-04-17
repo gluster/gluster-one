@@ -179,7 +179,7 @@ if nm_storage_interface.startswith("bond-") or nm_storage_interface.startswith("
 else:
     storage_interface = nm_storage_interface
 
-setupLogging()
+setupLogging(args)
 
 # NOTE: Moved below to g1modules.py
 ## Init logging to log to console screen and file

@@ -3,7 +3,7 @@ import logging
 import sys
 import readline
 
-def setupLogging():
+def setupLogging(args):
     # Init logging to log to console screen and file
     # Create logger
     logger = logging.getLogger()
