@@ -524,9 +524,8 @@ def collectDeploymentInformation():
         break
 
     print "\r\nNTP will be configured for time synchronization. You may enter"
-    print "up to four NTP servers below. If you would prefer to use the RHEL"
-    print "public NTP servers, simply press Enter at the first prompt and the"
-    print "default servers will be applied.\r\n"
+    print "up to four NTP servers below. If you would prefer to use the default"
+    print "public NTP servers, simply press Enter at the first prompt.\r\n"
 
     print "NOTE: Using the default public NTP servers requires that all of the"
     print "      %s nodes have access to the Internet.\r\n" % brand_short
