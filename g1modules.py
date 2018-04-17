@@ -1,9 +1,14 @@
 from termios import tcflush, TCIOFLUSH
+import logging
 import sys
+import readline
+from subprocess import *
+import shlex
 
-def user_input(msg):
+def user_input(msg, initial=''):
     # Function to capture raw_input w/ key buffer flush
     tcflush(sys.stdin, TCIOFLUSH)
+    readline.set_startup_hook(lambda: readline.insert_text(initial))
     keyin = raw_input(msg)
     return keyin
 

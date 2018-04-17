@@ -29,20 +29,25 @@ def flavorVars(logger):
     print "(aka mode 5, balance-tlb) is supported. Note that LACP requires"
     print "that the switch interface ports are already configured for this"
     print "mode.\r\n"
+    print "   1. LACP"
+    print "   2. TLB\r\n"
 
 
+    #NOTE: The bonding_mode should be set based on the ansible nmcli module
+    #      allowed values
     global bonding_mode
     while True:
-        valid_modes = ['lacp', 'tlb']
-        input_string = user_input("Do you wish to use 'lacp' or 'tlb' bonding? [LACP/tlb] ")
-        bonding_mode = str(input_string).lower()
-        if bonding_mode is '':
-            bonding_mode = 'lacp'
-        if bonding_mode not in valid_modes:
-            logger.warning("Please enter either 'lacp' or 'tlb'")
+        input_string = user_input("Bonding mode? [1] ") or "1"
+        if str(input_string) is "1":
+            logger.info("LACP bonding mode selected")
+            bonding_mode = "802.3ad"
+            break
+        elif str(input_string) is "2":
+            logger.info("TLB bonding mode selected")
+            bonding_mode = "balance-tlb"
+            break
+        else:
+            logger.warning("Please select from the list.\r\n")
             continue
-        break
-
-    logger.info("Bonding mode '%s' selected" % bonding_mode)
 
     return 'enable_hpe_spp: %s, bonding_mode: %s' % (enable_hpe_spp, bonding_mode)

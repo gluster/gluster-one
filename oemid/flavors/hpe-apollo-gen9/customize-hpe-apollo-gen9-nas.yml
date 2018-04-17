@@ -100,7 +100,7 @@
       nmcli:
         type: bond
         conn_name: bond0
-        mode: "{{ (bonding_mode == 'lacp') | ternary('802.3ad', 'balance-tlb') }}"
+        mode: "{{ bonding_mode }}"
         state: present
       changed_when: false
 
