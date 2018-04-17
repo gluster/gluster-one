@@ -2,6 +2,27 @@ from termios import tcflush, TCIOFLUSH
 import sys
 import readline
 
+def setupLogging():
+    # Init logging to log to console screen and file
+    # Create logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    # Create console formatter & handler for logs
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setLevel(int(args.loglevel))
+    consoleFormatter = logging.Formatter('%(message)s')
+    consoleHandler.setFormatter(consoleFormatter)
+    # Create log file formatter & handler for logs
+    logfile = 'gluster-colonizer.log'
+    logfileHandler = logging.FileHandler(logfile)
+    logfileHandler.setLevel(logging.DEBUG)
+    logfileFormatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s')
+    logfileHandler.setFormatter(logfileFormatter)
+    # Add handlers to logger
+    logger.addHandler(consoleHandler)
+    logger.addHandler(logfileHandler)
+
 def abortSetup(message=''):
     # This may be called at any time during the setup process to abort
     print "\r\n"
