@@ -494,6 +494,7 @@ def collectDeploymentInformation():
     #NOTE: We could probably do better here than just stripping the
     #      last octet -- something more specific to the subnet as
     #      entered by the user.
+    global storageIpHint
     storageIpHint = str(storage_subnet).split('.')
     storageIpHint = str('.'.join(storageIpHint[0:3])) + '.'
 
@@ -598,7 +599,7 @@ def collectNodeInformation():
             nodeInfo[nodeNum]['hostname'] = str(hostname)
             break
 
-        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", storageIpHint)
+        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", hint=storageIpHint)
 
         host_interface_information[node + "-" + nm_mgmt_interface] = {
             "ifname":
@@ -649,7 +650,7 @@ def collectNodeInformation():
             storage_subnet)
         for i in range(int(ha_node_count)):
             vipNum = str(i + 1)
-            vip = ipValidator("   VIP address %s: " % str(vipNum))
+            vip = ipValidator("   VIP address %s: " % str(vipNum), hint=storageIpHint)
             vips.append(str(vip))
             vip_list.append("VIP_%s.%s=\"%s\"" %
                             (str(nodeInfo[str(i + 1)]['hostname']),
