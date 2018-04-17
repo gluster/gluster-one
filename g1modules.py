@@ -6,6 +6,7 @@ import readline
 def setupLogging(args):
     # Init logging to log to console screen and file
     # Create logger
+    global logger
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     # Create console formatter & handler for logs
