@@ -33,16 +33,18 @@ def flavorVars(logger):
     print "   2. TLB\r\n"
 
 
+    #NOTE: The bonding_mode should be set based on the ansible nmcli module
+    #      allowed values
     global bonding_mode
     while True:
         input_string = user_input("Bonding mode? [1] ") or "1"
         if str(input_string) is "1":
             logger.info("LACP bonding mode selected")
-            bonding_mode = "lacp"
+            bonding_mode = "802.3ad"
             break
         elif str(input_string) is "2":
             logger.info("TLB bonding mode selected")
-            bonding_mode = "tlb"
+            bonding_mode = "balance-tlb"
             break
         else:
             logger.warning("Please select from the list.\r\n")
