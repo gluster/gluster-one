@@ -31,10 +31,3 @@ def yes_no(answer, do_return=False, default='yes'):
                 abortSetup("Deployment cancelled by user.")
         else:
             print "Please enter either 'yes' or 'no'\r\n"
-
-def stopDhcpService():
-    # Function to stop specialized DHCP server
-    killDnsmasq()
-    host_command('/bin/firewall-cmd --remove-service=dhcp')
-    host_command('/bin/nmcli con reload %s' % nm_mgmt_interface)
-    host_command('/bin/nmcli con up %s' % nm_mgmt_interface)
