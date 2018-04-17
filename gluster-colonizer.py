@@ -200,23 +200,23 @@ logger.addHandler(consoleHandler)
 logger.addHandler(logfileHandler)
 
 
-def abortSetup(message=''):
-    # This may be called at any time during the setup process to abort
-    print "\r\n"
-    logger.critical(
-        "Something went wrong and the deployment is being aborted.")
-    if message != '':
-        print "\r\n"
-        logger.critical(message)
-    print "\r\nPlease wait while services are shut down..."
-    stopDhcpService()
-    print "\r\n"
-    logger.critical("Abort complete. Please reboot all nodes and try again.")
-    print "\r\n"
-    sys.exit(1)
-
 
 # NOTE: Moved below to g1modules.py
+#def abortSetup(message=''):
+#    # This may be called at any time during the setup process to abort
+#    print "\r\n"
+#    logger.critical(
+#        "Something went wrong and the deployment is being aborted.")
+#    if message != '':
+#        print "\r\n"
+#        logger.critical(message)
+#    print "\r\nPlease wait while services are shut down..."
+#    stopDhcpService()
+#    print "\r\n"
+#    logger.critical("Abort complete. Please reboot all nodes and try again.")
+#    print "\r\n"
+#    sys.exit(1)
+
 #def user_input(msg):
 #    # Function to capture raw_input w/ key buffer flush
 #    tcflush(sys.stdin, TCIOFLUSH)
