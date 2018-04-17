@@ -1068,7 +1068,9 @@ try:
 #            continue # executed if there was a break statement in the for loop
 ####
 
-        logger.info("Manual node entries validated.\r\n")
+        print "\r\n"
+        logger.info("Manual node entries validated.")
+        print "\r\n"
     else:
         # === PHASE 1b ===
         # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
