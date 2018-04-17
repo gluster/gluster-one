@@ -493,6 +493,13 @@ def collectDeploymentInformation():
 
     logger.debug("Storage network is %s" % str(storage_subnet))
 
+    # Define hint to use for storage subnet IP inputs
+    #NOTE: We could probably do better here than just stripping the
+    #      last octet -- something more specific to the subnet as
+    #      entered by the user.
+    storageIpHint = storage_subnet.split('.')
+    storageIpHint = str('.'.join(storageIpHint[0:3])) + '.'
+
     if not config_ad:
         print "\r\nGateway and DNS fields may be left blank for now, if you prefer.\r\n"
 
@@ -594,11 +601,6 @@ def collectNodeInformation():
             nodeInfo[nodeNum]['hostname'] = str(hostname)
             break
 
-        #NOTE: We could probably do better here than just stripping the
-        #      last octet -- something more specific to the subnet as
-        #      entered by the user.
-        storageIpHint = storage_subnet.split('.')
-        storageIpHint = str('.'.join(storageIpHint[0:3])) + '.'
         nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", StorageIpHint)
 
         host_interface_information[node + "-" + nm_mgmt_interface] = {
