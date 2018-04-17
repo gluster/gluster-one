@@ -593,7 +593,12 @@ def collectNodeInformation():
             nodeInfo[nodeNum]['hostname'] = str(hostname)
             break
 
-        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ")
+        #NOTE: We could probably do better here than just stripping the
+        #      last octet -- something more specific to the subnet as
+        #      entered by the user.
+        ipHint = mgmt_subnet.split('.')
+        ipHint = str('.'.join(ipHint[0:3])) + '.'
+        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", ipHint)
 
         host_interface_information[node + "-" + nm_mgmt_interface] = {
             "ifname":
