@@ -1030,10 +1030,9 @@ try:
 
         logger.debug("Node config indicates bootstrapping is needed.")
 
-        print "\r\nPlease enter the IPs / FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
-        print "network. These servers will be boostrapped using the user"
-        print "\033[31m%s\033[0m - this account needs" % os.environ['USER']
-        print "to be present on all systems and needs to have \033[31msudo\033[0m privileges.\r\n"
+        print "\r\nPlease enter the IPs/FQDNs of the %i servers on the management" % int(desiredNumOfNodes)
+        print "network. These servers will be boostrapped using the user \033[31m%s\033[0m" % os.environ['USER']
+        print "This account must be present on all systems and must have \033[31msudo\033[0m privileges.\r\n"
 
         while True:
             input_string = user_input("   Servers (comma-separated): ")
