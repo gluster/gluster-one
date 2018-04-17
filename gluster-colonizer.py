@@ -424,6 +424,13 @@ def startDhcpService():
         logger.warning(
             "The entered netwrok is too small to assign each node an IP")
 
+    # Define hint to use for management subnet IP inputs
+    #NOTE: We could probably do better here than just stripping the
+    #      last octet -- something more specific to the subnet as
+    #      entered by the user.
+    mgmtIpHint = str(mgmt_subnet).split('.')
+    mgmtIpHint = str('.'.join(mgmtIpHint[0:3])) + '.'
+
     print "\r\n"
     logger.info("Configuring management network interface...")
     # TODO Will need a better way to identify the management network NIC
@@ -497,7 +504,7 @@ def collectDeploymentInformation():
     #NOTE: We could probably do better here than just stripping the
     #      last octet -- something more specific to the subnet as
     #      entered by the user.
-    storageIpHint = storage_subnet.split('.')
+    storageIpHint = str(storage_subnet).split('.')
     storageIpHint = str('.'.join(storageIpHint[0:3])) + '.'
 
     if not config_ad:
@@ -506,7 +513,7 @@ def collectDeploymentInformation():
     global gatewayAddress
 
     while True:
-        gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True)
+        gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True, hint=storageIpHint)
         if gatewayAddress is '' and config_ad:
             logger.warning("Gateway address is required for Active Directory connection")
             continue
