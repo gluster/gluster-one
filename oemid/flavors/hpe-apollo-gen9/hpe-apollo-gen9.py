@@ -48,6 +48,4 @@ def flavorVars(logger):
             logger.warning("Please select from the list.\r\n")
             continue
 
-    logger.info("Bonding mode '%s' selected" % bonding_mode)
-
     return 'enable_hpe_spp: %s, bonding_mode: %s' % (enable_hpe_spp, bonding_mode)
