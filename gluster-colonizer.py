@@ -1482,7 +1482,7 @@ try:
     # TODO: I suspect there is a more pythonic way to handle the below with fewer lines
     # Build replica peer sets if the voltype is replica
     if str(oem_id['flavor']['voltype']) == "replica":
-        logging.debug("Building replica peer sets...")
+        logger.debug("Building replica peer sets...")
         bricks_per_node = len(oem_id['flavor']['node']['backend_devices'])
         replica_peers = []
         for i in range(bricks_per_node):
