@@ -1205,7 +1205,7 @@ try:
 
         yes_no("Do you wish to proceed? [Y/n] ")
 
-        print "\r\n"
+        print "\r\nFor the ansible user:"
 
         run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
         run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
