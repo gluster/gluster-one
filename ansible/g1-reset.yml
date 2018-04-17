@@ -199,6 +199,16 @@
       register: result
       failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
 
+    - name: Get cache device information
+      shell: "lsblk -lp | grep part | egrep '{{ cache_devices|join('|') }}' | awk '{print $1}'"
+      register: lsblk_out
+
+    - name: Cleanup cache and arbiter partitions
+      shell: "wipefs -af {{ item }}"
+      with_items: "{{ lsblk_out.stdout_lines }}"
+      register: result
+      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
+
     - name: Cleanup cache devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
       with_items: "{{ cache_devices }}"
