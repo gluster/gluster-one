@@ -1317,7 +1317,7 @@ try:
 
     print "\r\n"
 
-    print "Please confirm your deployment details:"
+    print "\033[31mPlease confirm your deployment details:\033[0m"
 
     print "\r\n"
 
