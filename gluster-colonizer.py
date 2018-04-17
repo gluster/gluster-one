@@ -601,7 +601,7 @@ def collectNodeInformation():
             nodeInfo[nodeNum]['hostname'] = str(hostname)
             break
 
-        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", StorageIpHint)
+        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", storageIpHint)
 
         host_interface_information[node + "-" + nm_mgmt_interface] = {
             "ifname":
