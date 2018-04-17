@@ -294,8 +294,6 @@ def host_command(command, shell=False):
     return proc_output
 
 
-
-
 def set_ha_node_count():
     ha_node_count = int(
         math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
@@ -306,10 +304,12 @@ def set_ha_node_count():
     logger.debug("HA node count is %i" % int(ha_node_count))
     return ha_node_count
 
+
 def natural_sort(string):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(string, key = alphanum_key)
+
 
 def ipValidator(user_message,
                 null_valid=False,
