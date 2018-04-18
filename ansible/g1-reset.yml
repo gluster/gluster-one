@@ -15,6 +15,16 @@
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
+    - name: Get cache device partition naming convention
+      shell: "lsblk -l | grep part | grep -m 1 {{ item }} | awk '{print $1}'"
+      register: result
+      with_items: "{{ cache_devices }}"
+
+      #NOTE: Assuming only one cache device; this will break with multiple cache devices
+    - name: Isolate any partition prefix characters
+      set_fact:
+        part_prefix: '{{ result.results.0.stdout.split(cache_devices.0)[1] | regex_replace("[0-9]+$", "") }}'
+
     - shell: /bin/bash -c 'echo "Cleaning up any existing Gluster configurations..." > {{ fifo }}'
 
     - name: Stop glusterd service
@@ -186,7 +196,8 @@
     - name: Remove cache PV
       #FIXME: The 'p' is needed below for nvme drives, but should not be
       #       there for devices with normal /dev/sdX disk paths.
-      shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      #shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      shell: /bin/bash -c 'pvremove --force {{ item.0 }}{{ part_prefix }}{{ item.1["id"]|int + 1 }}'
       register: result
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_nested:
