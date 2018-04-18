@@ -789,7 +789,7 @@ try:
             #colonizer will then bail out with the except below, telling us that no voltype has been detected
             try:
                 arbiter_size_factor
-            except:
+            except NameError:
                 abortSetup("Error: No arbiter_size_factor detected in OEMID file")
             if str(oem_id['flavor']['arbiter_size_factor']) == "None":
                 replica_count = str('\'2\'')
