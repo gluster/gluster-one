@@ -173,16 +173,23 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+    - name: Get cache device partition naming convention
+      shell: "lsblk -lp | grep part | grep -m 1 {{ item }} | awk '{print $1}'"
+      register: result
+      with_items: "{{ cache_devices }}"
+
+      #NOTE: Assuming only one cache device; this will break with multiple cache devices
+    - name: Isolate any partition prefix characters
+      set_fact:
+        part_prefix: '{{ result.results.0.stdout.split(cache_devices.0)[1] | default("") | regex_replace("[0-9]+$", "") }}'
+
       #NOTE: If we use the result of the create arbiter partitions play above, we can
       #      probably create the disks list using the dictionary there, which would be
       #      more accurate and would get rid of the hard-coded p here.
     - name: Create fast volume groups, initially only with arbiter PVs
       vg:
         action: create
-        #FIXME: Hard-coded the p again for NVMe devices
-        #removed the p since this is Cisco!
-        #disks: "{{ item[0] }}p{{ (item[1]['id']|int + 1) }}"
-        disks: "{{ item[0] }}{{ (item[1]['id']|int + 1) }}"
+        disks: "{{ item[0] }}{{ part_prefix }}{{ (item[1]['id']|int + 1) }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -215,10 +222,7 @@
     - name: Add cache partitions to fast VGs
       vg:
         action: create
-        #FIXME: Hard-coded the p again for NVMe devices
-        #again, Cisco
-        #disks: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
-        disks: "{{ item[0] }}{{ item[1]['id']|int + cache_part_start|int }}"
+        disks: "{{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -234,9 +238,7 @@
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
     - name: Add cache partitions to fast VGs
-      #FIXME: another hard-coded p for NVMe devices
-      #shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
-      shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}{{ item[1]['id']|int + cache_part_start|int }}"
+      shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
@@ -247,10 +249,7 @@
         vg: "FAST{{ item[1]['vg'] }}"
         lv: "cpool{{ item[1]['id']|int + 1 }}"
         opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
-        #FIXME: Hard-coded p again for NVMe
-        #Cisco specific
-        #pvs: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
-        pvs: "{{ item[0] }}{{ item[1]['id']|int + cache_part_start|int }}"
+        pvs: "{{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
         size: "100%FREE"
       with_nested:
         - "{{ cache_devices }}"
