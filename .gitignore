@@ -1,3 +1,5 @@
 .ropeproject
 .DS_Store
 *.retry
+*.log
+*.pyc

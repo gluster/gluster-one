@@ -22,11 +22,11 @@
 
   become: true
 
-  vars_prompt:
-    - name: bonding_mode
-      prompt: "\n\nThis playbook will configure a network bond of interface ens1f0 and ens2f0. Please type 'lacp' for 802.3ad or 'tlb' or balance-tlb as the bonding mode."
-      default: 'lacp'
-      private: no
+#  vars_prompt:
+#    - name: bonding_mode
+#      prompt: "\n\nThis playbook will configure a network bond of interface ens1f0 and ens2f0. Please type 'lacp' for 802.3ad or 'tlb' or balance-tlb as the bonding mode."
+#      default: 'lacp'
+#      private: no
 
   vars:
     current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
@@ -55,10 +55,12 @@
 
   tasks:
 
-    - assert:
-        that:
-          - bonding_mode == 'lacp' or bonding_mode == 'tlb'
-        msg: "Incorrect network bonding mode defined: {{ bonding_mode }}"
+#    - assert:
+#        that:
+#          - bonding_mode == 'lacp' or bonding_mode == 'tlb'
+#        msg: "Incorrect network bonding mode defined: {{ bonding_mode }}"
+
+    - shell: /bin/bash -c 'echo "Configuring storage network interface bonding..." > {{ fifo }}'
 
     - name: retrieve NetworkManager connection names for onboard nics
       shell: nmcli -f UUID,DEVICE -t connection show | grep {{ item }}
@@ -98,7 +100,7 @@
       nmcli:
         type: bond
         conn_name: bond0
-        mode: "{{ (bonding_mode == 'lacp') | ternary('802.3ad', 'balance-tlb') }}"
+        mode: "{{ bonding_mode }}"
         state: present
       changed_when: false
 
@@ -121,6 +123,8 @@
       retries: 5
       delay: 5
       changed_when: false
+
+    - shell: /bin/bash -c 'echo "Configuring system block devices..." > {{ fifo }}'
 
     - name: enumerate raid controller using hpssacli
       shell: hpssacli controller all show
@@ -162,6 +166,8 @@
 
     - name: re-gather facts
       setup:
+
+    - shell: /bin/bash -c 'echo "Verifying block devices..." > {{ fifo }}'
 
     - name: check if disk sizes and naming is as expected
       with_items: "{{ disks.keys() }}"
