@@ -16,7 +16,7 @@
       when: arbiter == True
 
     - name: Get cache device partition naming convention
-      shell: "lsblk -l | grep part | grep -m 1 {{ item }} | awk '{print $1}'"
+      shell: "lsblk -lp | grep part | grep -m 1 {{ item }} | awk '{print $1}'"
       register: result
       with_items: "{{ cache_devices }}"
 
