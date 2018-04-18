@@ -218,7 +218,7 @@
         #FIXME: Hard-coded the p again for NVMe devices
         #again, Cisco
         #disks: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
-        disks: "{{ item[0] }}{{ item[1]['id']|int + part_incr|int }}"
+        disks: "{{ item[0] }}{{ item[1]['id']|int + cache_part_start|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
