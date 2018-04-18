@@ -22,25 +22,30 @@
     - name: Set backend device name
       set_fact:
         backend_dev: "{{ backend_configuration[0]['device'].split('/')[2] }}"
+      when: arbiter == True
 
     - name: Get backend device size
       set_fact:
         backend_dev_size: "{{ ansible_devices[backend_dev]['size'].split(' ')[0] }}"
+      when: arbiter == True
 
     #Unfortunately it seems impossible to control the units output by ansible
     #facts, so we have to determine those units here and act accordingly
     - name: Get backend device size units
       set_fact:
         backend_dev_units: "{{ ansible_devices[backend_dev]['size'].split(' ')[1] }}"
+      when: arbiter == True
 
     - name: Set conversion factor for MB
       set_fact:
         mb_conversion:  "{{ 1024|pow(3) if backend_dev_units == 'PB' else 1024|pow(2) if backend_dev_units == 'TB' else 1024 if backend_dev_units == 'GB' else 1 if backend_dev_units == 'MB' else (1/1024) if backend_dev_units == 'KB' }}"
+      when: arbiter == True
 
     #NOTE: The additonal .009765625 factor keeps the result in base 2
     - name: Calculate arbiter brick size in MB
       set_fact:
         arbiter_size: "{{ (backend_dev_size|float * backend_configuration[0]['arbiter_size_factor']|float * mb_conversion|float * 0.009765625) }}"
+      when: arbiter == True
 
     - name: Set PV data alignment for RAID
       set_fact:
@@ -134,9 +139,11 @@
 
     - set_fact:
         last_result: "{{ result['results']|last }}"
+      when: arbiter == True
 
     - set_fact:
         last_part: "{{ last_result['partitions']|last }}"
+      when: arbiter == True
 
     - name: Get end point of arbiter partition
       set_fact:
