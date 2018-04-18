@@ -785,6 +785,12 @@ try:
             nodes_min = 4
             nodes_multiple = 2
             replica = 'yes'
+            #FIXME: The error message is incorrect if arbiter_size_factor is undefined
+            #colonizer will then bail out with the except below, telling us that no voltype has been detected
+            try:
+                arbiter_size_factor
+            except NameError:
+                abortSetup("Error: No arbiter_size_factor detected in OEMID file")
             if str(oem_id['flavor']['arbiter_size_factor']) == "None":
                 replica_count = str('\'2\'')
                 arbiter_count = str('\'0\'')
@@ -1089,7 +1095,7 @@ try:
             while True:
                 try:
                     host_command('/bin/systemctl start NetworkManager')
-                    p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
+                    p1 = Popen(shlex.split('/bin/nmcli d show %s' % nm_mgmt_interface), stdout=PIPE)
                     p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
                     p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
                     p1.stdout.close()

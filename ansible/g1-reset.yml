@@ -177,16 +177,22 @@
 
     - shell: /bin/bash -c 'echo "Wiping cache devices and backend disks..." > {{ fifo }}'
 
+    - name: Check for actual PVs on the backend disks
+      shell: /bin/bash -c "pvs | grep {{ item.device }} | awk '{print $1}'"
+      with_items: "{{ backend_configuration }}"
+      register: data_pvs
+
     - name: Remove PV
-      shell: /bin/bash -c 'pvremove --force {{ item.device }}'
+      shell: /bin/bash -c 'pvremove --force {{ item }}'
       register: result
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_items: "{{ backend_configuration }}"
+      with_items: "{{ data_pvs }}"
 
     - name: Remove cache PV
       #FIXME: The 'p' is needed below for nvme drives, but should not be
       #       there for devices with normal /dev/sdX disk paths.
-      shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      #shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
+      shell: /bin/bash -c 'pvremove --force {{ item.0 }}{{ item.1["id"]|int + 1 }}'
       register: result
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_nested:
@@ -211,6 +217,9 @@
 
     - name: Cleanup cache devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items: "{{ cache_devices }}"
+      with_items:
+        - "{{ cache_devices }}"
       register: result
       failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
+        
+
