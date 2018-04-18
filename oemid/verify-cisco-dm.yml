@@ -3,76 +3,80 @@
 - hosts: all
   become: yes
   vars:
-	ignore_disk_names: ["vda", "sda", "sdf", "sr0", "sr1", "dm-0", "dm-1", "dm-2", "dm-3", "dm-4"]
+    ignore_disk_names: ["vda", "sda", "sdf", "sr0", "sr1", "dm-0", "dm-1", "dm-2", "dm-3", "dm-4"]
   tasks:
-	- assert:
-		that:
-		  - ansible_processor_vcpus == 12
-		  - ansible_memtotal_mb >= 64000
-		  - ansible_architecture == 'x86_64'
-		  - ansible_system_vendor == 'Cisco Systems Inc'
-		  - ansible_distribution == 'RedHat'
-		  - ansible_distribution_major_version == '7'
-		msg: "System  ansible_host  does not conform to the required hardware / operating system requirements!"
+    - assert:
+	that:
+	  - ansible_processor_vcpus == 12
+	  - ansible_memtotal_mb >= 64000
+	  - ansible_architecture == 'x86_64'
+	  - ansible_system_vendor == 'Cisco Systems Inc'
+	  - ansible_distribution == 'RedHat'
+	  - ansible_distribution_major_version == '7'
+	msg: "System  ansible_host  does not conform to the required hardware / operating system requirements!"
 
-	- name: get subscription status
-	  shell: subscription-manager status
-	  register: sm_status_cmd
-	  changed_when: false
+    - name: get subscription status
+      shell: subscription-manager status
+      register: sm_status_cmd
+      changed_when: false
 
-	- assert:
-		that:
-		  - sm_status_cmd | success
-		  - "'Overall Status: Current' in sm_status_cmd.stdout"
-		msg: "System [[ ansible_host }} is not subscribed!"
+    - assert:
+	that:
+	  - sm_status_cmd | success
+	  - "'Overall Status: Current' in sm_status_cmd.stdout"
+	msg: "System [[ ansible_host }} is not subscribed!"
 
-	- name: get enabled repositories
-	  shell: yum repolist enabled
-	  args:
-		warn: no
-	  register: yum_repolist_cmd
-	  changed_when: false
+    - name: get enabled repositories
+      shell: yum repolist enabled
+      args:
+	warn: no
+      register: yum_repolist_cmd
+      changed_when: false
 
-	- assert:
-		that:
-		  - yum_repolist_cmd | success
-		  - "yum_repolist_cmd.stdout | search('rhel-7-server-rpms/7Server/x86_64')"
-		  - "yum_repolist_cmd.stdout | search('rh-gluster-3-for-rhel-7-server-rpms/7Server/x86_64')"
-		  - "yum_repolist_cmd.stdout | search('rh-gluster-3-nfs-for-rhel-7-server-rpms/7Server/x86_64')"
-		  - "yum_repolist_cmd.stdout | search('rh-gluster-3-samba-for-rhel-7-server-rpms/7Server/x86_64')"
-		  - "yum_repolist_cmd.stdout | search('rhel-ha-for-rhel-7-server-rpms/7Server/x86_64')"
-		msg: "System  ansible_host  does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-s
+    - assert:
+	that:
+	  - yum_repolist_cmd | success
+	  - "yum_repolist_cmd.stdout | search('rhel-7-server-rpms/7Server/x86_64')"
+	  - "yum_repolist_cmd.stdout | search('rh-gluster-3-for-rhel-7-server-rpms/7Server/x86_64')"
+	  - "yum_repolist_cmd.stdout | search('rh-gluster-3-nfs-for-rhel-7-server-rpms/7Server/x86_64')"
+	  - "yum_repolist_cmd.stdout | search('rh-gluster-3-samba-for-rhel-7-server-rpms/7Server/x86_64')"
+	  - "yum_repolist_cmd.stdout | search('rhel-ha-for-rhel-7-server-rpms/7Server/x86_64')"
+	msg: "System  ansible_host  does not have the required repositories enabled. Please enable rhel-7-server-rpms, rh-gluster-3-for-rhel-7-s
 erver-rpms, rh-gluster-3-nfs-for-rhel-7-server-rpms, rh-gluster-3-samba-for-rhel-7-server-rpms and rhel-ha-for-rhel-7-server-rpms!"
 
-	- name: search for gluster and gluster-colonizer packages
-	  shell: yum list all redhat-storage-server gluster-colonizer gluster-zeroconf-avahi
-	  args:
-		warn: no
-	  register: yum_list_gluster_pkgs_cmd
-	  changed_when: false
+   - name: search for gluster and gluster-colonizer packages
+     shell: yum list all redhat-storage-server gluster-colonizer gluster-zeroconf-avahi
+     args:
+	warn: no
+     register: yum_list_gluster_pkgs_cmd
+     changed_when: false
 
-	- assert:
-		that:
-		  - yum_list_gluster_pkgs_cmd | success
-		  - "yum_list_gluster_pkgs_cmd.stdout | search('redhat-storage-server.noarch')"
-		  - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-colonizer.noarch')"
-		  - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-zeroconf-avahi.noarch')"
-		msg: "System  ansible_host  does not have the redhat-storage-server, gluster-colonizer and / or gluster-zeroconf-avahi packages availabl
+   - assert:
+       that:
+         - yum_list_gluster_pkgs_cmd | success
+         - "yum_list_gluster_pkgs_cmd.stdout | search('redhat-storage-server.noarch')"
+         - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-colonizer.noarch')"
+	 - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-zeroconf-avahi.noarch')"
+       msg: "System  ansible_host  does not have the redhat-storage-server, gluster-colonizer and / or gluster-zeroconf-avahi packages availabl
 e!"
 
-	- name: search for iptables-services package
-	  shell: yum list installed iptables-services
-	  args:
-		warn: no
-	  register: yum_list_installed_iptables_cmd
-	  failed_when: false
+    - name: search for iptables-services package
+      shell: yum list installed iptables-services
+      args:
+	warn: no
+      register: yum_list_installed_iptables_cmd
+      failed_when: false
 
-	- assert:
-		that:
-		  - "'iptables-services.x86_64' not in yum_list_installed_iptables_cmd.stdout"
-		msg: "System  ansible_host  has the iptables-services package installed. Please remove it in favor of firewalld!"
+    - assert:
+ 	that:
+	  - "'iptables-services.x86_64' not in yum_list_installed_iptables_cmd.stdout"
+	msg: "System  ansible_host  has the iptables-services package installed. Please remove it in favor of firewalld!"
 
-	# Depends on presence of package python-dnf
-	- name: Install dependency for ansible selinux management
-	  package:
-		name: libselinux-python.x86_64
+    # Depends on presence of package python-dnf
+    - name: Install dependency for ansible selinux management
+      package:
+ 	name: libselinux-python.x86_64
+
+    - selinux:
+        policy: targeted
+        state: enforcing
