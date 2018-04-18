@@ -178,7 +178,7 @@
       #NOTE: Assuming only one cache device; this will break with multiple cache devices
     - name: Isolate any partition prefix characters
       set_fact:
-        part_prefix: '{{ result.results.0.stdout.split(cache_devices.0)[1] | regex_replace("[0-9]+$", "") }}'
+        part_prefix: '{{ result.results.0.stdout.split(cache_devices.0)[1] | default("") | regex_replace("[0-9]+$", "") }}'
 
       #NOTE: If we use the result of the create arbiter partitions play above, we can
       #      probably create the disks list using the dictionary there, which would be
