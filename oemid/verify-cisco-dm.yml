@@ -6,7 +6,7 @@
     ignore_disk_names: ["vda", "sda", "sdf", "sr0", "sr1", "dm-0", "dm-1", "dm-2", "dm-3", "dm-4"]
   tasks:
     - assert:
-	that:
+        that:
 	  - ansible_processor_vcpus == 12
 	  - ansible_memtotal_mb >= 64000
 	  - ansible_architecture == 'x86_64'
