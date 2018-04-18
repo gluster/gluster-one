@@ -189,8 +189,6 @@
     - name: Create fast volume groups, initially only with arbiter PVs
       vg:
         action: create
-        #FIXME: Hard-coded the p again for NVMe devices
-        #disks: "{{ item[0] }}p{{ (item[1]['id']|int + 1) }}"
         disks: "{{ item[0] }}{{ part_prefix }}{{ (item[1]['id']|int + 1) }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
@@ -224,8 +222,6 @@
     - name: Add cache partitions to fast VGs
       vg:
         action: create
-        #FIXME: Hard-coded the p again for NVMe devices
-        #disks: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
         disks: "{{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
@@ -242,7 +238,6 @@
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
     - name: Add cache partitions to fast VGs
-      #shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
       shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
       with_nested:
         - "{{ cache_devices }}"
@@ -254,8 +249,6 @@
         vg: "FAST{{ item[1]['vg'] }}"
         lv: "cpool{{ item[1]['id']|int + 1 }}"
         opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
-        #FIXME: Hard-coded p again for NVMe
-        #pvs: "{{ item[0] }}p{{ item[1]['id']|int + cache_part_start|int }}"
         pvs: "{{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
         size: "100%FREE"
       with_nested:
