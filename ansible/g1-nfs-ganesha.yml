@@ -155,35 +155,54 @@
 
 - shell: /bin/bash -c 'echo "  Enabling NFS-Ganesha services..." > {{ fifo}}'
 
+  #NOTE: It is important that this runs on a node that is
+  #      configured to host one of the VIPs
 - name: Enable nfs-ganesha
-  delegate_to: 127.0.0.1
+  delegate_to: "{{ vip_hosts[0] }}"
   run_once: true
-  shell: gluster nfs-ganesha enable --mode=script
+  shell: |
+    gluster nfs-ganesha disable --mode=script
+    gluster nfs-ganesha enable --mode=script
+    sleep 30
+    /usr/libexec/ganesha/ganesha-ha.sh --status "{{ ha_base_dir }}"
   register: result
   failed_when:
-    - "'is already enabled' not in result.stderr"
-    - "'success' not in result.stderr"
-    - "'success' not in result.stdout"
-  ignore_errors: yes
+    - "'HEALTHY' not in result.stdout"
+  retries: 3
+  ignore_errors: true
 
-- name: Pause for 30 seconds (takes a while to enable NFS Ganesha)
-  pause: seconds=30
+- shell: /bin/bash -c 'echo"  WARNING: NFS-Ganesha did not start successfully..." > {{ fifo }}'
+  when: "'HEALTHY' not in result.stdout"
 
-- name: Check NFS Ganesha status
-  delegate_to: 127.0.0.1
-  run_once: true
-  shell: /usr/libexec/ganesha/ganesha-ha.sh --status "{{ ha_base_dir}}" | \
-         grep 'Cluster HA Status'
-  register: result
-  ignore_errors: yes
-
-- name: Report NFS Ganesha status
-  debug: msg={{ result.stdout }} verbosity=0
-  when: result.stderr == ""
-
-- name: Report NFS Ganesha status (If any errors)
-  debug: msg={{ result.stderr }} verbosity=0
-  when: result.stderr != ""
+#- name: Enable nfs-ganesha
+#  delegate_to: 127.0.0.1
+#  run_once: true
+#  shell: gluster nfs-ganesha enable --mode=script
+#  register: result
+#  failed_when:
+#    - "'is already enabled' not in result.stderr"
+#    - "'success' not in result.stderr"
+#    - "'success' not in result.stdout"
+#  ignore_errors: yes
+#
+#- name: Pause for 30 seconds (takes a while to enable NFS Ganesha)
+#  pause: seconds=30
+#
+#- name: Check NFS Ganesha status
+#  delegate_to: 127.0.0.1
+#  run_once: true
+#  shell: /usr/libexec/ganesha/ganesha-ha.sh --status "{{ ha_base_dir}}" | \
+#         grep 'Cluster HA Status'
+#  register: result
+#  ignore_errors: yes
+#
+#- name: Report NFS Ganesha status
+#  debug: msg={{ result.stdout }} verbosity=0
+#  when: result.stderr == ""
+#
+#- name: Report NFS Ganesha status (If any errors)
+#  debug: msg={{ result.stderr }} verbosity=0
+#  when: result.stderr != ""
 
 #-- Below two plays are a hack to temporarily address bz1546748
 

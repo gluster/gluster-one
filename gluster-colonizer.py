@@ -639,8 +639,10 @@ def collectNodeInformation():
 
     global vip_list
     global vips
+    global vip_hosts
     vip_list = []
     vips = []
+    vip_hosts = []
 
     # Enumerate the list of VIPs if we are using the NFS client
     if use_nfs or use_smb:
@@ -655,6 +657,7 @@ def collectNodeInformation():
             vip_list.append("VIP_%s.%s=\"%s\"" %
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name), str(vip)))
+            vip_hosts.append(str(nodeInfo[str(i + 1)]['ip']))
         vip_list = natural_sort(vip_list)
 
     return host_interface_information
@@ -725,8 +728,10 @@ def autoNodeInformation():
 
     global vip_list
     global vips
+    global vip_hosts
     vip_list = []
     vips = []
+    vip_hosts = []
 
     # Enumerate the list of VIPs if we are using the NFS client
     if use_nfs or use_smb:
@@ -743,6 +748,7 @@ def autoNodeInformation():
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name),
                              str(storage_subnet[storageIPCounter])))
+            vip_hosts.append(str(nodeInfo[str(i + 1)]['ip']))
         logger.debug("VIP list is: %s" % str(vip_list))
 
     return host_interface_information
@@ -1617,7 +1623,7 @@ try:
         redundancy_count
         ) + ',use_nfs: ' + str(use_nfs) + ',use_smb: ' + str(use_smb) + ',config_ad: ' + str(config_ad) + ',vip_list: ' + str(
         vip_list
-    ) + ',ha_cluster_nodes: \'' + str(
+        ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
     ) + '\'' + ',hacluster_password: \'' + str(
         hacluster_password) + '\'' + ',default_volname: ' + str(
@@ -1636,7 +1642,7 @@ try:
                     mount_protocol) + ',mount_host: ' + str(
                         mount_host) + ',mount_opts: \'' + str(
                             mount_opts
-                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
+                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',vip_hosts: ' + str(vip_hosts) + ',nodes_min: ' + str(
                             nodes_min) + ',nodes_deployed: ' + str(
                                 desiredNumOfNodes) + ',tuned_profile: ' + str(
                                     oem_id['flavor']['node']['tuned']
