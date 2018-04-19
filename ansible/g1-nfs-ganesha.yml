@@ -173,7 +173,7 @@
   retries: 3
   ignore_errors: true
 
-- shell: /bin/bash -c 'echo"  WARNING: NFS-Ganesha did not start successfully..." > {{ fifo }}'
+- shell: /bin/bash -c 'echo"  WARNING - NFS-Ganesha did not start successfully..." > {{ fifo }}'
   when: "'HEALTHY' not in result.stdout"
 
 #-- Below two plays are a hack to temporarily address bz1546748
