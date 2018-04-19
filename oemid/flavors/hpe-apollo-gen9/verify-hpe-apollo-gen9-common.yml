@@ -189,7 +189,7 @@
   failed_when: false
   register: hpssacli_os_ld_show_cmd
 
-- asert:
+- assert:
     that:
       - item | regex_search('Fault\ Tolerance\:\ 1$')
       - item | regex_search('physicaldrive') | length == 2
