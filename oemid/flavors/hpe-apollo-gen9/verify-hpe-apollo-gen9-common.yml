@@ -113,11 +113,11 @@
 
 - assert:
     that:
-      - hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | length <= 1
+      - "hpssacli_controller_show_cmd.stdout | regex_findall('Smart Array .* in Slot ([0-9])', '\\1') | length <= 1"
     msg: "System {{ ansible_host}} has more than one SmartArray RAID controller in the system. This is not supported."
 
 - set_fact:
-    array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
+    array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_findall('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
 
 - name: enumerate physical drives using hpssacli
   #shell: hpssacli controller slot={{ array_controller_slot }} pd {{ item }} show
@@ -191,11 +191,10 @@
 
 - assert:
     that:
-      - item | regex_search('Fault\ Tolerance\:\ 1$')
-      - item | regex_search('physicaldrive') | length == 2
-      - item | regex_search('Disk\ Name\:\ \/dev\/sda$')
+      - hpssacli_os_ld_show_cmd.stdout | regex_search('(Fault\ Tolerance\:\ 1)')
+      - hpssacli_os_ld_show_cmd.stdout | regex_findall('(physicaldrive)') | length == 2
+      - hpssacli_os_ld_show_cmd.stdout | regex_search('(Disk\ Name\:\ \/dev\/sda)')
     msg: "System {{ ansible_host }} does not have boot disks properly configured as the first device in RAID 1!"
-  with_items: "{{ hpssacli_os_ld_show_cmd.stdout_lines }}"
 
 #FIXME: This check is problematic since it doesn't allow for non-NVMe cache devices
 #- shell: /bin/bash -c 'echo "Checking NVMe devices..." > {{ fifo }}'
