@@ -9,11 +9,11 @@
 
 - name: Stop network manager service
   service: name=NetworkManager state=stopped
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Disable network manager service
   service: name=NetworkManager enabled=no
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Start network service
   service: name=network state=started
@@ -46,16 +46,18 @@
   service:
     name: nfs-config
     state: restarted
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Restart rpc-statd service
   service:
     name: rpc-statd
     state: restarted
-  ignore_errors: yes
+  ignore_errors: true
 
 - shell: /bin/bash -c 'echo "  Enabling shared storage volume..." > {{ fifo}}'
 
+  #FIXME: We shouldn't ignore the errors, here. A failure enabling the shared
+  #       storage volume will break remaining NFS-Ganesha plays
 - name: Enable Gluster shared storage volume
   delegate_to: 127.0.0.1
   run_once: true
@@ -173,36 +175,6 @@
 
 - shell: /bin/bash -c 'echo"  WARNING: NFS-Ganesha did not start successfully..." > {{ fifo }}'
   when: "'HEALTHY' not in result.stdout"
-
-#- name: Enable nfs-ganesha
-#  delegate_to: 127.0.0.1
-#  run_once: true
-#  shell: gluster nfs-ganesha enable --mode=script
-#  register: result
-#  failed_when:
-#    - "'is already enabled' not in result.stderr"
-#    - "'success' not in result.stderr"
-#    - "'success' not in result.stdout"
-#  ignore_errors: yes
-#
-#- name: Pause for 30 seconds (takes a while to enable NFS Ganesha)
-#  pause: seconds=30
-#
-#- name: Check NFS Ganesha status
-#  delegate_to: 127.0.0.1
-#  run_once: true
-#  shell: /usr/libexec/ganesha/ganesha-ha.sh --status "{{ ha_base_dir}}" | \
-#         grep 'Cluster HA Status'
-#  register: result
-#  ignore_errors: yes
-#
-#- name: Report NFS Ganesha status
-#  debug: msg={{ result.stdout }} verbosity=0
-#  when: result.stderr == ""
-#
-#- name: Report NFS Ganesha status (If any errors)
-#  debug: msg={{ result.stderr }} verbosity=0
-#  when: result.stderr != ""
 
 #-- Below two plays are a hack to temporarily address bz1546748
 
