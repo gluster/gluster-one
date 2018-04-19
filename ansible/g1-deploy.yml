@@ -122,7 +122,9 @@
 
     - name: Create arbiter partitions
       parted:
-        label: gpt
+        # label: gpt
+        # Test to see if an empty label doesn't override the existing label on the disk
+        label: ""
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + 1 }}"
@@ -160,7 +162,9 @@
 
     - name: Create cache partitions
       parted:
-        label: gpt
+        #label: gpt
+        # Test to see if an empty label doesn't override the existing label on the disk
+        label: ""
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + cache_part_start|int }}"
