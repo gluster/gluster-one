@@ -1647,7 +1647,7 @@ try:
                                 desiredNumOfNodes) + ',tuned_profile: ' + str(
                                     oem_id['flavor']['node']['tuned']
                                 ) + ',gluster_vol_set: ' + str(
-                                    oem_id['flavor']['node']['gluster_vol_set']
+                                    oem_id['flavor']['gluster_vol_set']
                                 )
 
     if 'peer_set' in globals():
@@ -1657,7 +1657,7 @@ try:
         #TODO: Add try/except to catch missing parameters
         playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
         playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
-        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
+        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['gluster_vol_set_smb'])
 
     global arbiter
     if str(oem_id['flavor']['arbiter_size_factor']) != "None":
