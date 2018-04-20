@@ -253,7 +253,7 @@
       shell: 'pvremove --force {{ item }}'
       register: result
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_items: our_pvs
+      with_items: "{{ our_pvs }}"
 
 #    - name: Cleanup data devices
 #      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
