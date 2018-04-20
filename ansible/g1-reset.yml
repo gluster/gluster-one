@@ -281,6 +281,8 @@
 
     - name: Cleanup devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items: "{{ our_pvs }}"
+      with_items:
+        - "{{ our_pvs }}"
+        - "{{ cache_devices }}"
       register: result
       failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
