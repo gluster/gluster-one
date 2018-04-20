@@ -3,3 +3,4 @@
 *.retry
 *.log
 *.pyc
+*.swp

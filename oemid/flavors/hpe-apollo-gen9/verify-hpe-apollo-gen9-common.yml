@@ -4,7 +4,7 @@
 
 - assert:
     that:
-      - ansible_processor_vcpus == 40
+      - ansible_processor_vcpus >= 32
       - ansible_product_name == "ProLiant XL420 Gen9"
       - ansible_memtotal_mb >= 64000
       - ansible_architecture == 'x86_64'
@@ -24,7 +24,7 @@
     that:
       - sm_status_cmd | success
       - "'Overall Status: Current' in sm_status_cmd.stdout"
-    msg: "System {{ ansible_host }} is not subscribed!"
+    msg: "System {{ ansible_host }} is not properly subscribed to repos!"
 
 - name: get enabled repositories
   shell: yum repolist enabled
@@ -45,8 +45,10 @@
 
 - shell: /bin/bash -c 'echo "Checking RPM package requirements..." > {{ fifo }}'
 
+  #NOTE: We shouldn't need zeroconf for this type of deployment without auto-discovery
 - name: search for gluster and gluster-colonizer packages
-  shell: yum list all redhat-storage-server gluster-colonizer gluster-zeroconf-avahi
+  #shell: yum list all redhat-storage-server gluster-colonizer gluster-zeroconf-avahi
+  shell: yum list all redhat-storage-server gluster-colonizer
   args:
     warn: no
   register: yum_list_gluster_pkgs_cmd
@@ -57,8 +59,9 @@
       - yum_list_gluster_pkgs_cmd | success
       - "yum_list_gluster_pkgs_cmd.stdout | search('redhat-storage-server.noarch')"
       - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-colonizer.noarch')"
-      - "yum_list_gluster_pkgs_cmd.stdout | search('gluster-zeroconf-avahi.noarch')"
-    msg: "System {{ ansible_host }} does not have the redhat-storage-server, gluster-colonizer and/or gluster-zeroconf-avahi packages available!"
+     #- "yum_list_gluster_pkgs_cmd.stdout | search('gluster-zeroconf-avahi.noarch')"
+     #msg: "System {{ ansible_host }} does not have the redhat-storage-server, gluster-colonizer and/or gluster-zeroconf-avahi packages available!"
+    msg: "System {{ ansible_host }} does not have the redhat-storage-server or the gluster-colonizer packages available!"
 
 - name: add HPE ServicePack for ProLiant, disable by default
   yum_repository:
@@ -111,81 +114,57 @@
 
 - assert:
     that:
-      - hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | length <= 1
-    msg: "System {{ ansible_host}} does have more than one SmartArray RAID controller in the system. This is not supported."
+      - "hpssacli_controller_show_cmd.stdout | regex_findall('Smart Array .* in Slot ([0-9])', '\\1') | length <= 1"
+    msg: "System {{ ansible_host}} has more than one SmartArray RAID controller in the system. This is not supported."
 
 - set_fact:
-    array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
+    array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_findall('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
 
 - name: enumerate physical drives using hpssacli
-  shell: hpssacli controller slot={{ array_controller_slot }} pd {{ item }} show
+  shell: hpssacli controller slot={{ array_controller_slot }} pd all show | grep physicaldrive
   changed_when: false
   failed_when: false
   register: hpssacli_pd_show_cmd
-  with_items:
-    - 1I:1:13
-    - 1I:1:14
-    - 1I:1:15
-    - 1I:1:16
-    - 1I:1:17
-    - 1I:1:18
-    - 1I:1:19
-    - 1I:1:20
-    - 1I:1:21
-    - 1I:1:22
-    - 1I:1:49
-    - 1I:1:50
-    - 2I:1:1
-    - 2I:1:2
-    - 2I:1:3
-    - 2I:1:4
-    - 2I:1:5
-    - 2I:1:6
-    - 2I:1:7
-    - 2I:1:8
-    - 2I:1:9
-    - 2I:1:10
-    - 2I:1:11
-    - 2I:1:12
+
+  #FIXME: Don't hard-code expected disk number here
+- assert:
+    that:
+      - hpssacli_pd_show_cmd.stdout_lines | length == 26
+    msg: "26 disks expected, but {{ hpssacli_pd_show_cmd.stdout_lines | length }} found on system {{ ansible_host }}!"
 
 - assert:
     that:
-      - "{{ item | success }}"
-    msg: "System {{ ansible_host }} does not have all 24 drives available"
-  with_items:
-    - "{{ hpssacli_pd_show_cmd.results }}"
+      - "'Fail' not in hpssacli_pd_show_cmd.stdout"
+    msg: "System {{ ansible_host }} reports at least one disk in a failing state!"
 
-- name: enumerate physical OS drives using hpssacli
-  shell: hpssacli controller slot={{ array_controller_slot }} pd {{ item }} show
+- name: confirm configuration of OS logical drive
+  shell: hpssacli controller slot={{ array_controller_slot }} ld 1 show
   changed_when: false
   failed_when: false
-  register: hpssacli_os_pd_show_cmd
-  with_items:
-    - 1I:1:51
-    - 1I:1:52
+  register: hpssacli_os_ld_show_cmd
 
 - assert:
     that:
-      - "{{ item | success }}"
-      - "{{ item.stdout | search('array A(.*)\n\n(.*)physicaldrive') }}"
-    msg: "System {{ ansible_host }} does not have the OS disks configured as RAID0. Ensure that disk 1I:1:51 and 1I:1:52 are configured as the first logical volume in the system"
-  with_items:
-    - "{{ hpssacli_os_pd_show_cmd.results }}"
+      - hpssacli_os_ld_show_cmd.stdout | regex_search('(Fault\ Tolerance\:\ 1)')
+      - hpssacli_os_ld_show_cmd.stdout | regex_findall('(physicaldrive)') | length == 2
+      - hpssacli_os_ld_show_cmd.stdout | regex_search('(Disk\ Name\:\ \/dev\/sda)')
+    msg: "System {{ ansible_host }} does not have boot disks properly configured as the first device in RAID 1!"
 
-- shell: /bin/bash -c 'echo "Checking NVMe devices..." > {{ fifo }}'
+#FIXME: This check is problematic since it doesn't allow for non-NVMe cache devices
+#- shell: /bin/bash -c 'echo "Checking NVMe devices..." > {{ fifo }}'
+#
+#- name: enumerate physical NVMe devices
+#  shell: lsblk --output NAME /dev/nvme*
+#  changed_when: false
+#  register: lsblk_nvme_cmd
+#
+#- assert:
+#    that:
+#      - "{{ lsblk_nvme_cmd.stdout.find('nvme0n1') }}"
+#      - "{{ lsblk_nvme_cmd.stdout.find('nvme1n1') }}"
+#    msg: "System {{ ansible_host }} does not have the required NVMe devices present. Please make sure they show up as /dev/nvme0n1 and /dev/nvme1n1 in the system."
 
-- name: enumerate physical NVMe devices
-  shell: lsblk --output NAME /dev/nvme*
-  changed_when: false
-  register: lsblk_nvme_cmd
-
-- assert:
-    that:
-      - "{{ lsblk_nvme_cmd.stdout.find('nvme0n1') }}"
-      - "{{ lsblk_nvme_cmd.stdout.find('nvme1n1') }}"
-    msg: "System {{ ansible_host }} does not have the required NVMe devices present. Please make sure they show up as /dev/nvme0n1 and /dev/nvme1n1 in the system."
-
-- shell: /bin/bash -c 'echo "Checking for iptables..." > {{ fifo }}'
+- shell: /bin/bash -c 'echo "Checking for iptables (unsupported)..." > {{ fifo }}'
 
 - name: search for iptables-services package
   shell: yum list installed iptables-services
@@ -200,6 +179,8 @@
       - "'iptables-services.x86_64' not in yum_list_installed_iptables_cmd.stdout"
     msg: "System {{ ansible_host }} has the iptables-services package installed. Please remove it in favor of firewalld!"
 
+#FIXME: This is problematic because network interface are hard-coded instead
+#       of using the interfaces defined in the OEMID file.
 - shell: /bin/bash -c 'echo "Checking network interfaces..." > {{ fifo }}'
 
 - assert:

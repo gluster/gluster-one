@@ -639,8 +639,10 @@ def collectNodeInformation():
 
     global vip_list
     global vips
+    global vip_hosts
     vip_list = []
     vips = []
+    vip_hosts = []
 
     # Enumerate the list of VIPs if we are using the NFS client
     if use_nfs or use_smb:
@@ -655,6 +657,7 @@ def collectNodeInformation():
             vip_list.append("VIP_%s.%s=\"%s\"" %
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name), str(vip)))
+            vip_hosts.append(str(nodeInfo[str(i + 1)]['ip']))
         vip_list = natural_sort(vip_list)
 
     return host_interface_information
@@ -725,8 +728,10 @@ def autoNodeInformation():
 
     global vip_list
     global vips
+    global vip_hosts
     vip_list = []
     vips = []
+    vip_hosts = []
 
     # Enumerate the list of VIPs if we are using the NFS client
     if use_nfs or use_smb:
@@ -743,6 +748,7 @@ def autoNodeInformation():
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name),
                              str(storage_subnet[storageIPCounter])))
+            vip_hosts.append(str(nodeInfo[str(i + 1)]['ip']))
         logger.debug("VIP list is: %s" % str(vip_list))
 
     return host_interface_information
@@ -785,10 +791,8 @@ try:
             nodes_min = 4
             nodes_multiple = 2
             replica = 'yes'
-            #FIXME: The error message is incorrect if arbiter_size_factor is undefined
-            #colonizer will then bail out with the except below, telling us that no voltype has been detected
             try:
-                arbiter_size_factor
+                str(oem_id['flavor']['arbiter_size_factor'])
             except NameError:
                 abortSetup("Error: No arbiter_size_factor detected in OEMID file")
             if str(oem_id['flavor']['arbiter_size_factor']) == "None":
@@ -1619,7 +1623,7 @@ try:
         redundancy_count
         ) + ',use_nfs: ' + str(use_nfs) + ',use_smb: ' + str(use_smb) + ',config_ad: ' + str(config_ad) + ',vip_list: ' + str(
         vip_list
-    ) + ',ha_cluster_nodes: \'' + str(
+        ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
     ) + '\'' + ',hacluster_password: \'' + str(
         hacluster_password) + '\'' + ',default_volname: ' + str(
@@ -1638,12 +1642,12 @@ try:
                     mount_protocol) + ',mount_host: ' + str(
                         mount_host) + ',mount_opts: \'' + str(
                             mount_opts
-                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
+                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',vip_hosts: ' + str(vip_hosts) + ',nodes_min: ' + str(
                             nodes_min) + ',nodes_deployed: ' + str(
                                 desiredNumOfNodes) + ',tuned_profile: ' + str(
                                     oem_id['flavor']['node']['tuned']
                                 ) + ',gluster_vol_set: ' + str(
-                                    oem_id['flavor']['node']['gluster_vol_set']
+                                    oem_id['flavor']['gluster_vol_set']
                                 )
 
     if 'peer_set' in globals():
@@ -1653,7 +1657,7 @@ try:
         #TODO: Add try/except to catch missing parameters
         playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
         playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
-        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
+        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['gluster_vol_set_smb'])
 
     global arbiter
     if str(oem_id['flavor']['arbiter_size_factor']) != "None":

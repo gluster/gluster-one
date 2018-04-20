@@ -158,9 +158,14 @@
       set_fact:
         cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
+      #FIXME: We have a problem here between ansible versions.
+      #About 2.3.2.0, it is important that label is either omitted or empty.
+      #About ??(Cisco lab), it is important that label is gpt
+      #...need to test the latter for having label empty (rather than omitted)
     - name: Create cache partitions
       parted:
-        label: gpt
+        #label: gpt
+        label: ''
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + cache_part_start|int }}"

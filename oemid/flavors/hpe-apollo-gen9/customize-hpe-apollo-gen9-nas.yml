@@ -1,36 +1,11 @@
 ---
-
-#- hosts: localhost
-#  name: "Generate SSH keypairs locally"
-#
-#  vars:
-#    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-#    # current_user: "ansible"
-#
-#  tasks:
-#
-#    - name: generate ssh key for current user {{ current_user }}
-#      user:
-#        name: "{{ current_user }}"
-#        generate_ssh_key: yes
-#        ssh_key_bits: 4096
-#        ssh_key_type: rsa
-#        state: present
-
 - hosts: gluster_nodes
   name: "Bootstrap HPE Apollo 4200 nodes for RHS One - General-purpose NAS flavor"
 
   become: true
 
-#  vars_prompt:
-#    - name: bonding_mode
-#      prompt: "\n\nThis playbook will configure a network bond of interface ens1f0 and ens2f0. Please type 'lacp' for 802.3ad or 'tlb' or balance-tlb as the bonding mode."
-#      default: 'lacp'
-#      private: no
-
   vars:
     current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-    #current_user: "ansible"
     disks:
       sdb:
         host: "RAID bus controller: Hewlett-Packard Company Smart Array Gen9 Controllers (rev 01)"
@@ -52,131 +27,12 @@
         model: "MT0800KEXUU"
         vendor: null
         size: "745.21 GB"
+    raid_template: customize-hpe-apollo-gen9-nas-raid.j2
 
   tasks:
+    # First check common requirements for this platform
+    - include: customize-hpe-apollo-gen9-common.yml
 
-#    - assert:
-#        that:
-#          - bonding_mode == 'lacp' or bonding_mode == 'tlb'
-#        msg: "Incorrect network bonding mode defined: {{ bonding_mode }}"
-
-    - shell: /bin/bash -c 'echo "Configuring storage network interface bonding..." > {{ fifo }}'
-
-    - name: retrieve NetworkManager connection names for onboard nics
-      shell: nmcli -f UUID,DEVICE -t connection show | grep {{ item }}
-      changed_when: false
-      register: nmcli_conn_show_loms_cmd
-      with_items:
-        - eno1
-
-    - name: rename NetworkManager connection name for onboard nics
-      shell: nmcli connection modify {{ item.stdout.split(':')[0] }} connection.id {{ item.stdout.split(':')[1] }}
-      with_items:
-        - "{{ nmcli_conn_show_loms_cmd.results }}"
-
-    - name: delete any existing bonding connection
-      shell: nmcli connection delete {{ item }}
-      ignore_errors: true
-      failed_when: false
-      changed_when: false
-      with_items:
-        - bond0
-        - bond0-ens1f0
-        - bond0-ens2f0
-        - ens1f0
-        - ens2f0
-
-    - name: delete any existing bonding device
-      shell: nmcli device delete {{ item }}
-      ignore_errors: true
-      failed_when: false
-      changed_when: false
-      with_items:
-        - bond0
-        - bond0-ens1f0
-        - bond0-ens2f0
-
-    - name: create network team for gluster data traffic
-      nmcli:
-        type: bond
-        conn_name: bond0
-        mode: "{{ bonding_mode }}"
-        state: present
-      changed_when: false
-
-    - name: add network nics on ens1f0 and ens2f0 to the network team
-      nmcli:
-        type: bond-slave
-        master: bond0
-        conn_name: "bond0-{{ item }}"
-        ifname: "{{ item }}"
-        state: present
-      with_items:
-        - ens1f0
-        - ens2f0
-      changed_when: false
-
-    - name: verify bond connection state
-      shell: cat /sys/class/net/bond0/bonding/mii_status
-      register: bonding_state_cmd
-      until: bonding_state_cmd.stdout == 'up'
-      retries: 5
-      delay: 5
-      changed_when: false
-
-    - shell: /bin/bash -c 'echo "Configuring system block devices..." > {{ fifo }}'
-
-    - name: enumerate raid controller using hpssacli
-      shell: hpssacli controller all show
-      register: hpssacli_controller_show_cmd
-      changed_when: false
-
-    - set_fact:
-        array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
-
-    - name: looking for logical drives except OS RAID
-      shell: hpssacli controller slot={{ array_controller_slot }} ld all show
-      changed_when: false
-      register: hpssacli_pd_show_cmd
-
-    - set_fact:
-        additional_logical_drives: "{{ hpssacli_pd_show_cmd.stdout | regex_findall('array ([B-Z])', '\\1') | sort(true) }}"
-
-    - name: delete all logical drives except OS RAID
-      shell: hpssacli controller slot={{ array_controller_slot }} array {{ item | upper }} delete forced
-      changed_when: false
-      with_items: "{{ additional_logical_drives }}"
-
-    - name: wait for udev to settle
-      shell: udevadm settle --timeout=60
-      changed_when: false
-
-    - name: create RAID configuration template
-      template:
-        src: customize-hpe-apollo-gen9-nas-raid.j2
-        dest: /tmp/ssainput.ini
-
-    - name: apply RAID configuration from template
-      shell: hpssascripting -i /tmp/ssainput.ini
-      changed_when: false
-
-    - name: wait for udev to settle
-      shell: udevadm settle --timeout=60
-      changed_when: false
-
-    - name: re-gather facts
-      setup:
-
-    - shell: /bin/bash -c 'echo "Verifying block devices..." > {{ fifo }}'
-
-    - name: check if disk sizes and naming is as expected
-      with_items: "{{ disks.keys() }}"
-      assert:
-        that:
-          - ansible_devices[item]['host'] == disks[item]['host']
-          - ansible_devices[item]['model'] == disks[item]['model']
-          - ansible_devices[item]['vendor'] == disks[item]['vendor']
-          - ansible_devices[item]['size'] == disks[item]['size']
-        msg: "The system does not have the required disk layout."
+    # Any checks specific to the GP-NAS flavor go here
 
 ...
