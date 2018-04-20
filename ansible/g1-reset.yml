@@ -93,7 +93,7 @@
       register: pvs_out
 
     - set_fact:
-        our_pvs: pvs_out.stdout_lines
+        our_pvs: "{{ pvs_out.stdout_lines }}"
 
     - name: Unmount gluster bricks
       mount:
