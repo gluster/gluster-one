@@ -78,6 +78,10 @@
       when: "'bricks' in item.mount"
       with_items: "{{ ansible_mounts }}"
 
+    - name: Prime variable in case search is empty
+      set_fact:
+        our_vgs: []
+
     - name: Get any of our VGs
       set_fact:
         our_vgs: "{{ our_vgs|default([]) + [item.key] }}"
