@@ -1469,7 +1469,7 @@ try:
             'tp':
             'TP' + str(brickcount),
             'vg':
-            'VG' + str(brickcount),
+            'GLVG' + str(brickcount),
             'device':
             str(device),
             'arbiter_size_factor':

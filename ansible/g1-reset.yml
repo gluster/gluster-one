@@ -174,7 +174,7 @@
     - name: search for all remaining device mapper entries that belong to us
       set_fact:
         dm_entries: |
-            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:VG|FASTVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
+            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:GLVG|FASTGLVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
 
     - name: Remove any residual device mapper entries
       shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
