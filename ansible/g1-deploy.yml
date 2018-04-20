@@ -122,7 +122,8 @@
 
     - name: Create arbiter partitions
       parted:
-        label: gpt
+        #label: gpt
+        label: ''
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + 1 }}"
