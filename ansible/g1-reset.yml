@@ -251,6 +251,7 @@
 
     - name: Remove our physical volumes
       shell: 'pvremove --force {{ item }}'
+      register: result
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_items: our_pvs
 
