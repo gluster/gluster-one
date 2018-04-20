@@ -91,9 +91,10 @@
     - name: Get any of our PVs
       shell: "pvs 2>/dev/null | egrep '{{ our_vgs | join('|') }}' | awk '{print $1}'"
       register: pvs_out
+      when: our_vgs is defined and (our_vgs|length>0)
 
     - set_fact:
-        our_pvs: "{{ pvs_out.stdout_lines }}"
+        our_pvs: "{{ pvs_out.stdout_lines | default([]) }}"
 
     - name: Unmount gluster bricks
       mount:
