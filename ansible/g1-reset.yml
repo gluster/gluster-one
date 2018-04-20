@@ -68,7 +68,7 @@
 
     - shell: /bin/bash -c 'echo "Cleaning up any existing LVM configurations..." > {{ fifo }}'
 
-    - name: Get our gluster mounts
+    - name: Get any of our gluster mounts
       set_fact:
         mounts: "{{ mounts|default([]) + [item.mount] }}"
       when: "'bricks' in item.mount"
