@@ -70,16 +70,29 @@
 
     - name: Get any of our gluster mounts
       set_fact:
-        mounts: "{{ mounts|default([]) + [item.mount] }}"
+        our_mounts: "{{ our_mounts|default([]) + [item.mount] }}"
       when: "'bricks' in item.mount"
       with_items: "{{ ansible_mounts }}"
+
+    - name: Get any of our VGs
+      set_fact:
+        our_vgs: "{{ our_vgs|default([]) + [item.key] }}"
+      when: "'GLVG' in item.key"
+      with_dict: "{{ ansible_lvm.vgs }}"
+
+    - name: Get any of our PVs
+      shell: "pvs 2>/dev/null | egrep '{{ our_vgs | join('|') }}' | awk '{print $1}'"
+      register: pvs_out
+
+    - set_fact:
+        our_pvs: pvs_out.stdout_lines
 
     - name: Unmount gluster bricks
       mount:
         name: "{{ item.0 }}"
         state: "{{ item.1 }}"
       with_nested:
-        - "{{ mounts }}"
+        - "{{ our_mounts }}"
         - ['absent', 'unmounted']
 
 #    - name: Unmount data bricks
@@ -106,73 +119,81 @@
       #failed_when: "result.rc != 0 and 'not found' not in result.stderr"
 
     # we have to try to delete all LVM volumes in reverse order in which they potentially were created before since a simple vgremove --force is not enough since the lvg module is not robust enough - some existing thinpools or VGs still survive this
-    - name: Delete data logical volumes
-      lvol:
-        vg: "{{ item.vg }}"
-        lv: "{{ item.thinLV }}"
-        state: absent
-        force: yes
-      with_items: "{{ backend_configuration }}"
-      ignore_errors: true
+#    - name: Delete data logical volumes
+#      lvol:
+#        vg: "{{ item.vg }}"
+#        lv: "{{ item.thinLV }}"
+#        state: absent
+#        force: yes
+#      with_items: "{{ backend_configuration }}"
+#      ignore_errors: true
+#
+#    - name: Delete arbiter logical volumes
+#      lvol:
+#        vg: "{{ item.vg }}"
+#        lv: "arbiter-{{ item.thinLV }}"
+#        force: yes
+#      with_items: "{{ backend_configuration }}"
+#      when: arbiter == True
+#      ignore_errors: true
+#
+#    - name: wait for udev to settle
+#      shell: udevadm settle --timeout=60
+#      changed_when: false
+#
+#    - name: Clear cache volume
+#      lvol:
+#        vg: "FAST{{ item.vg }}"
+#        lv: "cpool{{ item.id|int + 1 }}"
+#        state: "absent"
+#        force: yes
+#      with_items:
+#        - "{{ backend_configuration }}"
+#      ignore_errors: true
+#
+#    - name: wait for udev to settle
+#      shell: udevadm settle --timeout=60
+#      changed_when: false
+#
+#    - name: Clear cache volume group
+#      lvg:
+#        vg: "FAST{{ item.vg }}"
+#        state: absent
+#        force: yes
+#      with_items: "{{ backend_configuration }}"
+#      ignore_errors: true
+#
+#    - name: wait for udev to settle
+#      shell: udevadm settle --timeout=60
+#      changed_when: false
+#
+#    - name: Remove data thin pools
+#      lvol:
+#        vg: "{{ item.vg }}"
+#        lv: "{{ item.tp }}"
+#        force: yes
+#        state: absent
+#      with_items: "{{ backend_configuration }}"
+#      ignore_errors: true
+#
+#    - name: wait for udev to settle
+#      shell: udevadm settle --timeout=60
+#      changed_when: false
+#
+#    - name: Clear data volume groups
+#      lvg:
+#        vg: "{{ item.vg }}"
+#        state: absent
+#        force: yes
+#      with_items: "{{ backend_configuration }}"
+#      ignore_errors: true
 
-    - name: Delete arbiter logical volumes
-      lvol:
-        vg: "{{ item.vg }}"
-        lv: "arbiter-{{ item.thinLV }}"
-        force: yes
-      with_items: "{{ backend_configuration }}"
-      when: arbiter == True
-      ignore_errors: true
-
-    - name: wait for udev to settle
-      shell: udevadm settle --timeout=60
-      changed_when: false
-
-    - name: Clear cache volume
-      lvol:
-        vg: "FAST{{ item.vg }}"
-        lv: "cpool{{ item.id|int + 1 }}"
-        state: "absent"
-        force: yes
-      with_items:
-        - "{{ backend_configuration }}"
-      ignore_errors: true
-
-    - name: wait for udev to settle
-      shell: udevadm settle --timeout=60
-      changed_when: false
-
-    - name: Clear cache volume group
+    - name: Clear our volume groups
       lvg:
-        vg: "FAST{{ item.vg }}"
+        vg: "{{ item }}"
         state: absent
         force: yes
-      with_items: "{{ backend_configuration }}"
-      ignore_errors: true
-
-    - name: wait for udev to settle
-      shell: udevadm settle --timeout=60
-      changed_when: false
-
-    - name: Remove data thin pools
-      lvol:
-        vg: "{{ item.vg }}"
-        lv: "{{ item.tp }}"
-        force: yes
-        state: absent
-      with_items: "{{ backend_configuration }}"
-      ignore_errors: true
-
-    - name: wait for udev to settle
-      shell: udevadm settle --timeout=60
-      changed_when: false
-
-    - name: Clear data volume groups
-      lvg:
-        vg: "{{ item.vg }}"
-        state: absent
-        force: yes
-      with_items: "{{ backend_configuration }}"
+      with_items: "{{ our_vgs }}"
       ignore_errors: true
 
     - name: wait for udev to settle
@@ -201,44 +222,55 @@
 
     - shell: /bin/bash -c 'echo "Wiping cache devices and backend disks..." > {{ fifo }}'
 
-    - name: Check for actual PVs on the backend disks
-      shell: /bin/bash -c "pvs | grep {{ item.device }} | awk '{print $1}'"
-      with_items: "{{ backend_configuration }}"
-      register: data_pvs
+#    - name: Check for actual PVs on the backend disks
+#      shell: /bin/bash -c "pvs | grep {{ item.device }} | awk '{print $1}'"
+#      with_items: "{{ backend_configuration }}"
+#      register: data_pvs
+#
+#    - name: Remove PV
+#      shell: /bin/bash -c 'pvremove --force {{ item }}'
+#      register: result
+#      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+#      with_items: "{{ data_pvs }}"
+#
+#    - name: Remove cache PV
+#      shell: /bin/bash -c 'pvremove --force {{ item.0 }}{{ part_prefix }}{{ item.1["id"]|int + 1 }}'
+#      register: result
+#      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
+#      with_nested:
+#        - "{{ cache_devices }}"
+#        - "{{ backend_configuration }}"
 
-    - name: Remove PV
-      shell: /bin/bash -c 'pvremove --force {{ item }}'
-      register: result
+    - name: Remove our physical volumes
+      shell: 'pvremove --force {{ item }}'
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_items: "{{ data_pvs }}"
+      with_items: our_pvs
 
-    - name: Remove cache PV
-      shell: /bin/bash -c 'pvremove --force {{ item.0 }}{{ part_prefix }}{{ item.1["id"]|int + 1 }}'
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_nested:
-        - "{{ cache_devices }}"
-        - "{{ backend_configuration }}"
-
-    - name: Cleanup data devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
-      with_items: "{{ backend_configuration }}"
-      register: result
-      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
+#    - name: Cleanup data devices
+#      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
+#      with_items: "{{ backend_configuration }}"
+#      register: result
+#      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
 
     - name: Get cache device information
       shell: "lsblk -lp | grep part | egrep '{{ cache_devices|join('|') }}' | awk '{print $1}'"
       register: lsblk_out
 
-    - name: Cleanup cache and arbiter partitions
+    - name: Cleanup fast device partitions
       shell: "wipefs -af {{ item }}"
       with_items: "{{ lsblk_out.stdout_lines }}"
       register: result
       failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
 
-    - name: Cleanup cache devices
+#    - name: Cleanup cache devices
+#      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
+#      with_items:
+#        - "{{ cache_devices }}"
+#      register: result
+#      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
+
+    - name: Cleanup devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items:
-        - "{{ cache_devices }}"
+      with_items: "{{ our_pvs }}"
       register: result
       failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
