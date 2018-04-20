@@ -256,12 +256,6 @@
       failed_when: "result.rc != 0 and 'not found' not in result.stderr"
       with_items: "{{ our_pvs }}"
 
-#    - name: Cleanup data devices
-#      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
-#      with_items: "{{ backend_configuration }}"
-#      register: result
-#      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
-
     - name: Get cache device information
       shell: "lsblk -lp | grep part | egrep '{{ cache_devices|join('|') }}' | awk '{print $1}'"
       register: lsblk_out
@@ -279,7 +273,13 @@
 #      register: result
 #      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
 
-    - name: Cleanup devices
+    - name: Cleanup data devices
+      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
+      with_items: "{{ backend_configuration }}"
+      register: result
+      failed_when: "result.rc != 0 and 'No such file or directory' not in result.stderr"
+
+    - name: Cleanup remaining devices
       shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
       with_items:
         - "{{ our_pvs }}"
