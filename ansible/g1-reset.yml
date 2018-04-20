@@ -68,6 +68,10 @@
 
     - shell: /bin/bash -c 'echo "Cleaning up any existing LVM configurations..." > {{ fifo }}'
 
+    - name: Prime variable in case search is empty
+      set_fact:
+        our_mounts: []
+
     - name: Get any of our gluster mounts
       set_fact:
         our_mounts: "{{ our_mounts|default([]) + [item.mount] }}"
