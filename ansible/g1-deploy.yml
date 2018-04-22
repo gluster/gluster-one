@@ -158,6 +158,12 @@
       set_fact:
         cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
+    - name: Clean up residual LVM metadata from all cache partition offsets
+      shell: /bin/bash -c "/sbin/wipefs -af -o {{ ((arbiter_end|default(50)|int + (item[1]['id']|int * cache_part_size|int)) + 1|int) * 512 }} {{item[\"device\"] }}"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
+
     - name: Create cache partitions
       parted:
         label: gpt
