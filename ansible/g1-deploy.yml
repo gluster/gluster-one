@@ -164,6 +164,10 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+    - name: sleep for 5 minutes 
+      wait_for: timeout=300
+      delegate_to: localhost
+
     # We use the offsets for each cache partition to do a wipefs there. This is the only way to be sure there's no old lvm metadata anymore which would cause
     # duplicate PVs etc. 
     - name: Clean up residual LVM metadata from all cache partition offsets
