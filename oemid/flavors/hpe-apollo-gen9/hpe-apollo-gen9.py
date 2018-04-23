@@ -54,11 +54,10 @@ def flavorVars(logger):
     #
     #return 'enable_hpe_spp: %s, bonding_mode: %s' % (enable_hpe_spp, bonding_mode)
 
-    print "\r\nYour storage network interfaces are expected on all nodes as"
-    print "device %s. If this is a bond or team device, it must be configured" % oem_id['flavor']['node']['storage_interface']
-    print "on all nodes before proceeding. A helper playbook is available at"
-    print "resources/helper-playbooks/g1-helper-bonding.yml to assist with the"
-    print "automated configuration of bonding via Ansible."
+    print "\r\nNOTE: If your storage network interface is a bond or team device, it must"
+    print "be configured on all nodes before proceeding. A helper playbook is available"
+    print "at resources/helper-playbooks/g1-helper-bonding.yml to assist with the"
+    print "automated configuration of bonding via Ansible.\r\n"
 
     yes_no('Do you wish to continue? [Y/n] ')
 
