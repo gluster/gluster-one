@@ -29,7 +29,7 @@
       changed_when: false
       with_nested:
         - [ connection, device ]
-        - "['', {{ bond_master}}-]"
+        - ['', "{{ bond_master}}-"]
         - "{{ bond_slaves }}"
 
     - name: Create network bond for gluster data traffic
@@ -49,7 +49,7 @@
         state: present
       changed_when: false
       with_items:
-        - "{{ bond_slaves }"
+        - "{{ bond_slaves }}"
 
     - name: Verify bond connection state
       shell: cat /sys/class/net/{{ bond_master }}/bonding/mii_status
