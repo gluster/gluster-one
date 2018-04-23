@@ -7,6 +7,12 @@
 - name: Disable kernel NFS
   service: name=nfs-server enabled=no
 
+- name: Start network service
+  service: name=network state=started
+
+- name: Enable network service
+  service: name=network enabled=yes
+
 - name: Stop network manager service
   service: name=NetworkManager state=stopped
   ignore_errors: true
@@ -14,12 +20,6 @@
 - name: Disable network manager service
   service: name=NetworkManager enabled=no
   ignore_errors: true
-
-- name: Start network service
-  service: name=network state=started
-
-- name: Enable network service
-  service: name=network enabled=yes
 
 - name: Start pcsd service
   service: name=pcsd state=started
