@@ -172,7 +172,7 @@
     # duplicate PVs etc. 
     - name: Clean up residual LVM metadata from all cache partition offsets
       #shell: /bin/bash -c "/sbin/wipefs -f -o {{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int))) + 1|int)) }} {{ item[0] }}"
-      shell: /bin/bash -c "/usr/bin/dd if=/dev/zero of={{ item[0] }} bs=512 obs=512 count=8192 seek={{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int))) + 1|int) }} oflag=sync"
+      shell: /bin/bash -c "/usr/bin/dd if=/dev/zero of={{ item[0] }} bs=512 obs=512 count=8192 seek={{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int))) + 1|int) }} oflag=seek_bytes,sync"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
