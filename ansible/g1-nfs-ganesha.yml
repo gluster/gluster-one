@@ -134,6 +134,13 @@
     path: "{{ ha_base_dir }}"
     state: directory
 
+- name: Check for existing ganesha config file
+  delegate_to: 127.0.0.1
+  run_once: true
+  stat:
+    path: "{{ ha_base_dir }}/ganesha.conf"
+  register: check_ganesha_conf
+
 - name: Copy ganesha config file to directory on shared volume
   delegate_to: 127.0.0.1
   run_once: true
@@ -142,6 +149,7 @@
     src: /etc/ganesha/ganesha.conf
     dest: "{{ ha_base_dir }}/ganesha.conf"
     force: no
+  when: check_ganesha_conf.stat.exists == false
 
 - name: Create VIP entries variable for ganesha-ha.conf
   delegate_to: 127.0.0.1
