@@ -185,24 +185,23 @@
 
 - assert:
     that:
-      - ansible_eno1 is defined
-      - ansible_ens1f0 is defined
-      - ansible_ens2f0 is defined
-    msg: "System {{ ansible_host }} does not have the expected NICs available, is using a different driver or has the NICs in the wrong PCIe slots. Please ensure that minimally eno1, ens1f0 and ens2f0 are available."
+      - "ansible_{{ item }} is defined"
+    msg: "System {{ ansible_host }} does not have the expected NICs available, is using a different driver or has the NICs in the wrong PCIe slots."
+  with_items:
+    - "{{ mgmt_interface }}"
+    - "{{ storage_interface }}"
 
 - assert:
     that:
-      - ansible_eno1.active == true
-      - ansible_eno1.device == ansible_default_ipv4.alias
-    msg: "System {{ ansible_host }} does not use eno1 as it's management network."
+      - "ansible_{{ mgmt_interface }}.active == true"
+      - "ansible_{{ mgmt_interface }}.device == ansible_default_ipv4.alias"
+    msg: "System {{ ansible_host }} does not use {{ mgmt_interface }} as it's management network."
 
 - assert:
     that:
-      - ansible_ens1f0.active == true
-      - ansible_ens1f0.speed == 10000
-      - ansible_ens2f0.active == true
-      - ansible_ens2f0.speed == 10000
-    msg: "System {{ ansible_host }}'s network adapters ens1f0 and/or ens2f0 have either not negotiated the correct connection speed or are disconnected"
+      - "ansible_{{ storage_interface }}.active == true"
+      - "ansible_{{ storage_interface }}.speed >= 10000"
+    msg: "System {{ ansible_host }}'s {{ storage_interface }} has either not negotiated the correct connection speed or is disconnected."
 
 - shell: /bin/bash -c 'echo "Checking selinux..." > {{ fifo }}'
 
