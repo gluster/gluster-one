@@ -1,0 +1,60 @@
+- hosts: all
+  become: yes
+  gather_facts: no
+
+  vars:
+    bond_master: bond0
+    bond_slaves:
+      - ens1f0
+      - ens2f0
+    # Bonding mode should be formatted as accepted
+    # by the nmcli command
+    bonding_mode: 802.3ad
+    #bonding_mode: balance-tlb
+
+  tasks:
+    - name: Delete any existing bonding masters
+      shell: nmcli {{ item.0 }} delete {{ item.1 }}
+      ignore_errors: true
+      failed_when: false
+      changed_when: false
+      with_nested:
+        - [ connection, device ]
+        - "{{ bond_master}}"
+
+    - name: Delete any existing bonding slaves
+      shell: nmcli {{ item.0 }} delete {{ item.1 }}{{ item.2 }}
+      ignore_errors: true
+      failed_when: false
+      changed_when: false
+      with_nested:
+        - [ connection, device ]
+        - "['', {{ bond_master}}-]"
+        - "{{ bond_slaves }}"
+
+    - name: Create network bond for gluster data traffic
+      nmcli:
+        type: bond
+        conn_name: "{{ bond_master }}"
+        mode: "{{ bonding_mode }}"
+        state: present
+      changed_when: false
+
+    - name: Add slave interface to the bond
+      nmcli:
+        type: bond-slave
+        master: "{{ bond_master }}"
+        conn_name: "bond0-{{ item }}"
+        ifname: "{{ item }}"
+        state: present
+      changed_when: false
+      with_items:
+        - "{{ bond_slaves }"
+
+    - name: Verify bond connection state
+      shell: cat /sys/class/net/{{ bond_master }}/bonding/mii_status
+      register: bonding_state_cmd
+      until: bonding_state_cmd.stdout == 'up'
+      retries: 5
+      delay: 5
+      changed_when: false
