@@ -62,4 +62,4 @@ def flavorVars(logger):
 
     yes_no('Do you wish to continue? [Y/n] ')
 
-    return 'enable_hpe_spp: %s' % enable_hpe_spp)
+    return 'enable_hpe_spp: %s' % enable_hpe_spp
