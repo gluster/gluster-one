@@ -158,8 +158,10 @@
       set_fact:
         cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
+    # We use the offsets for each cache partition to do a wipefs there. This is the only way to be sure there's no old lvm metadata anymore which would cause
+    # duplicate PVs etc. 
     - name: Clean up residual LVM metadata from all cache partition offsets
-      shell: /bin/bash -c "/sbin/wipefs -af -o {{ ((arbiter_end|default(50)|int + (item[1]['id']|int * cache_part_size|int)) + 1|int) * 512 }} {{item[\"device\"] }}"
+      shell: /bin/bash -c "/sbin/wipefs -f -o {{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int)) + 1|int)) }} {{ item[0] }}"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
