@@ -1,3 +1,8 @@
+# This playbook can be used to configure bond interfaces across your
+# Gluster nodes. The 'vars' section should be adjusted approrpriately
+# for your environment and needs. The plays below rely on the nmcli
+# command, and therefore the NetworkManager service must be running.
+
 - hosts: all
   become: yes
   gather_facts: no
@@ -7,12 +12,16 @@
     bond_slaves:
       - ens1f0
       - ens2f0
-    # Bonding mode should be formatted as accepted
-    # by the nmcli command
+    # Bonding mode should be formatted as accepted by the nmcli command
     bonding_mode: 802.3ad
     #bonding_mode: balance-tlb
 
   tasks:
+    - name: Start NetworkManager service
+      service:
+        name: NetworkManager
+        state: restarted
+
     - name: Delete any existing bonding masters
       shell: nmcli {{ item.0 }} delete {{ item.1 }}
       ignore_errors: true
