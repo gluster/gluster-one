@@ -27,10 +27,6 @@
 
     - shell: /bin/bash -c 'echo "Resetting NetworkManager service..." > {{ fifo }}'
 
-    - name: Stop network service
-      service: name=network state=stopped
-      ignore_errors: true
-
     - name: Disable network service
       service: name=network enabled=no
       ignore_errors: true
