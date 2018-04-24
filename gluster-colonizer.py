@@ -1215,7 +1215,7 @@ try:
 
         yes_no("Do you wish to proceed? [Y/n] ")
 
-        print "\r\nFor the ansible user:"
+        print "\r\nFor the ansible user --"
 
         run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
         run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
@@ -1239,6 +1239,7 @@ try:
         # Collect custom variables from module function
         global flavor_extra_vars
         flavor_extra_vars = flavor_module.flavorVars(logger)
+        flavor_extra_vars += ",mgmt_interface: " + mgmt_interface + ",storage_interface: " + storage_interface
         print "\r\n"
         run_ansible_playbook(flavor_path +
                          oem_id['flavor']['node']['verify_file_name'] + ' --extra-vars="{' + flavor_extra_vars + '}"')
@@ -1469,7 +1470,7 @@ try:
             'tp':
             'TP' + str(brickcount),
             'vg':
-            'VG' + str(brickcount),
+            'GLVG' + str(brickcount),
             'device':
             str(device),
             'arbiter_size_factor':

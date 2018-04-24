@@ -7,6 +7,12 @@
 - name: Disable kernel NFS
   service: name=nfs-server enabled=no
 
+- name: Start network service
+  service: name=network state=started
+
+- name: Enable network service
+  service: name=network enabled=yes
+
 - name: Stop network manager service
   service: name=NetworkManager state=stopped
   ignore_errors: true
@@ -14,12 +20,6 @@
 - name: Disable network manager service
   service: name=NetworkManager enabled=no
   ignore_errors: true
-
-- name: Start network service
-  service: name=network state=started
-
-- name: Enable network service
-  service: name=network enabled=yes
 
 - name: Start pcsd service
   service: name=pcsd state=started
@@ -134,10 +134,46 @@
     path: "{{ ha_base_dir }}"
     state: directory
 
-- name: Copy ganesha.conf to config directory on shared volume
+#- name: Check for existing ganesha config file
+#  delegate_to: 127.0.0.1
+#  run_once: true
+#  stat:
+#    path: "{{ ha_base_dir }}/ganesha.conf"
+#  register: check_ganesha_conf
+
+- name: Create copy of local ganesha config file
+  copy:
+    remote_src: yes
+    src: /etc/ganesha/ganesha.conf
+    dest: /etc/ganesha/ganesha.conf.orig
+  ignore_errors: true
+
+- name: Copy ganesha config file to directory on shared volume
   delegate_to: 127.0.0.1
   run_once: true
-  shell: 'cp -rf /etc/ganesha/* "{{ ha_base_dir }}"'
+  copy:
+    remote_src: yes
+    src: /etc/ganesha/ganesha.conf.orig
+    dest: "{{ ha_base_dir }}/ganesha.conf"
+    force: no
+
+#-- Below two plays are a hack to temporarily address bz1546748
+
+- name: Remove default NFS Ganesha config file
+  file:
+    path: /etc/ganesha/ganesha.conf
+    state: absent
+
+- name: Link NFS Ganesha config file to shared storage
+  file:
+    src: '{{ ha_base_dir }}/ganesha.conf'
+    path: /etc/ganesha/ganesha.conf
+    state: link
+  register: result
+  until: result.state == 'link'
+  retries: 5
+
+#--
 
 - name: Create VIP entries variable for ganesha-ha.conf
   delegate_to: 127.0.0.1
@@ -173,23 +209,8 @@
   retries: 3
   ignore_errors: true
 
-- shell: /bin/bash -c 'echo"  WARNING - NFS-Ganesha did not start successfully..." > {{ fifo }}'
+- shell: /bin/bash -c 'echo "  WARNING - NFS-Ganesha did not start successfully..." > {{ fifo }}'
   when: "'HEALTHY' not in result.stdout"
-
-#-- Below two plays are a hack to temporarily address bz1546748
-
-- name: Remove default NFS Ganesha config file
-  file:
-    path: /etc/ganesha/ganesha.conf
-    state: absent
-
-- name: Link NFS Ganesha config file to shared storage
-  file:
-    src: '{{ ha_base_dir }}/ganesha.conf'
-    path: /etc/ganesha/ganesha.conf
-    state: link
-
-#--
 
 - name: Start nfs-ganesha service
   service: name=nfs-ganesha state=started
