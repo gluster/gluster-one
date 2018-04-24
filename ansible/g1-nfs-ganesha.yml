@@ -156,7 +156,6 @@
     src: /etc/ganesha/ganesha.conf.orig
     dest: "{{ ha_base_dir }}/ganesha.conf"
     force: no
-  when: check_ganesha_conf.stat.exists == false
 
 #-- Below two plays are a hack to temporarily address bz1546748
 
