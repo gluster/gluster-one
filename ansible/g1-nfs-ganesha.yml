@@ -169,6 +169,9 @@
     src: '{{ ha_base_dir }}/ganesha.conf'
     path: /etc/ganesha/ganesha.conf
     state: link
+  register: result
+  until: result.state == 'link'
+  retries: 5
 
 #--
 
