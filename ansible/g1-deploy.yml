@@ -122,7 +122,8 @@
 
     - name: Create arbiter partitions
       parted:
-        label: gpt
+        #label: gpt
+        label: ''
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + 1 }}"
@@ -158,12 +159,6 @@
       set_fact:
         cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
-    - debug:
-        msg: "Offsets for the partitions on {{ item[0] }} : {{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int)) + 1|int)) }}"
-      with_nested:
-        - "{{ cache_devices }}"
-        - "{{ backend_configuration }}"
-
     # We use the offsets for each cache partition to write 4MB of zeroes there. This is the only way to be sure there's no old lvm metadata anymore which would cause
     # duplicate PVs etc. 
     - name: Clean up residual LVM metadata from all cache partition offsets
@@ -172,9 +167,14 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+      #FIXME: We have a problem here between ansible versions.
+      #About 2.3.2.0, it is important that label is either omitted or empty.
+      #About ??(Cisco lab), it is important that label is gpt
+      #...need to test the latter for having label empty (rather than omitted)
     - name: Create cache partitions
       parted:
-        label: gpt
+        #label: gpt
+        label: ''
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + cache_part_start|int }}"

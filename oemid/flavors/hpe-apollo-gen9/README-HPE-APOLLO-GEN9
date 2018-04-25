@@ -12,8 +12,7 @@ flavor files:
 - Network:
   - Device eno1 connected to management network
   - Devices ens1f0 and ens2f0 connected
-    to storage network (These devices will be
-    bonded together by the Gluster Colonizer)
+    to storage network
 
 Additional software packages:
   - hpssacli for command-line RAID management

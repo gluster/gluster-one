@@ -16,21 +16,21 @@ flavor:
         diskcount: 10          #Number of data disks; for 12 disk RAID 6 this is 10
         dalign: 128            #<integer in KB>
         tuned: rhgs-random-io  #tuned profile name
-        gluster_vol_set:
-            server.event-threads: 4
-            client.event-threads: 4
-            cluster.lookup-optimize: on
-            features.cache-invalidation: on
-            performance.cache-invalidation: on
-            performance.stat-prefetch: on
-            group: metadata-cache
-        gluster_vol_set_smb:
-            server.allow-insecure: on
-            performance.cache-samba-metadata: on
-            storage.batch-fsync-delay-usec: 0
-            performance.readdir-ahead: on
-            performance.parallel-readdir: on
-            group: nl-cache
+    gluster_vol_set:
+        server.event-threads: 4
+        client.event-threads: 4
+        cluster.lookup-optimize: on
+        features.cache-invalidation: on
+        performance.cache-invalidation: on
+        performance.stat-prefetch: on
+        group: metadata-cache
+    gluster_vol_set_smb:
+        server.allow-insecure: on
+        performance.cache-samba-metadata: on
+        storage.batch-fsync-delay-usec: 0
+        performance.readdir-ahead: on
+        performance.parallel-readdir: on
+        group: nl-cache
     volname: gluster1
     voltype: replica           #replica|disperse
     #Arbiter size should be roughly 0.1% or <brick_size>/1024 for the NAS flavor

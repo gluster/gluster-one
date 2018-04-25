@@ -1,4 +1,4 @@
-# Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment for NAS
+# Colonizer verify ID file for HPE Apollo 4200 Gen9 deployment for GP-NAS
 #
 - hosts: gluster_nodes
   name: Verify nodes against HPE Apollo 4200 Gen9 profile for General-Purpose NAS
@@ -8,4 +8,4 @@
     # First check common requirements for this platform
     - include: verify-hpe-apollo-gen9-common.yml
 
-    # Any checks specific to the NAS flavor go here
+    # Any checks specific to the GP-NAS flavor go here
