@@ -122,8 +122,8 @@
 
     - name: Create arbiter partitions
       parted:
-        #label: gpt
-        label: ''
+        label: gpt
+        #label: ''
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + 1 }}"
@@ -173,8 +173,8 @@
       #...need to test the latter for having label empty (rather than omitted)
     - name: Create cache partitions
       parted:
-        #label: gpt
-        label: ''
+        label: gpt
+        #label: ''
         state: present
         device: "{{ item[0] }}"
         number: "{{ item[1]['id']|int + cache_part_start|int }}"
