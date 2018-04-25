@@ -766,7 +766,7 @@ try:
     print "all %s nodes are connected to the management" % brand_short
     print "network infrastructure and are booted.\r\n"
 
-    yes_no('Do you wish to continue? [Y/n] ')
+    yes_no('Do you wish to continue? [Y/n] ', abortSetup)
 
     logger.debug("** Begin %s %s**" % (brand_parent, brand_project))
 
@@ -884,7 +884,7 @@ try:
         print "Active Directory username and password for an account with rights"
         print "to add systems to the domain.\r\n"
 
-        config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, True)
+        config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, do_return=True)
 
         if config_ad:
             logger.info("Proceeding with Active Directory configuration")
@@ -913,7 +913,7 @@ try:
 
     print "\r\n"
 
-    yes_no('Do you wish to continue? [Y/n] ')
+    yes_no('Do you wish to continue? [Y/n] ', abortSetup)
 
 
     if use_smb:
@@ -1110,7 +1110,7 @@ try:
                 except:
                     logger.warning("Unable to detect management network")
                     logger.warning("Please ensure the DHCP service is available")
-                    yes_no('Do you wish to attempt detection again? [Y/n] ')
+                    yes_no('Do you wish to attempt detection again? [Y/n] ', abortSetup)
                     print "\r\n"
                     continue
             logger.info("Management subnet is %s" % mgmt_subnet)
@@ -1124,7 +1124,7 @@ try:
 
         print "\r\n"
 
-        yes_no("We will now begin node discovery. Do you wish to continue? [Y/n] ")
+        yes_no("We will now begin node discovery. Do you wish to continue? [Y/n] ", abortSetup)
 
         print "\r\n"
 
@@ -1213,7 +1213,7 @@ try:
         print "The users and passwords must already be configured on all nodes"
         print "in order to continue.\r\n" 
 
-        yes_no("Do you wish to proceed? [Y/n] ")
+        yes_no("Do you wish to proceed? [Y/n] ", abortSetup)
 
         print "\r\nFor the ansible user --"
 
@@ -1382,7 +1382,7 @@ try:
 
     print "\r\n"
 
-    yes_no("Do you wish to continue with this configuration? [Y/n] ")
+    yes_no("Do you wish to continue with this configuration? [Y/n] ", abortSetup)
 
     print "\r\n"
 
@@ -1415,7 +1415,7 @@ try:
         print "that we replace these keys now with a newly-generated set.\r\n"
         new_ssh_keys = yes_no(
             'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
-            True)
+            do_return=True)
 
         print "\r\n"
 
@@ -1561,7 +1561,7 @@ try:
     print "         other than the system drive."
     print "\r"
     print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
-    yes_no('Are you sure you want to continue? [Y/n] ')
+    yes_no('Are you sure you want to continue? [Y/n] ', abortSetup)
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
 
@@ -1591,7 +1591,7 @@ try:
 
     print "\r\n"
 
-    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
+    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ', abortSetup)
 
     print("\r\nPlease be patient; these steps may take a while...\r\n")
 
@@ -1769,7 +1769,7 @@ try:
     print "\r"
 
     run_perf_tests = yes_no(
-        'Would you like to start the performance tests now? [Y/n] ', True)
+        'Would you like to start the performance tests now? [Y/n] ', do_return=True)
 
     print "\r\n"
 
