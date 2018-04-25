@@ -20,7 +20,7 @@ def flavorVars(logger):
     print "repository via the Internet.\r\n"
 
     global install_hpssacli
-    enable_hpe_spp = yes_no('Do you wish to enable the remote repository? [Y/n] ', True)
+    enable_hpe_spp = yes_no('Do you wish to enable the remote repository? [Y/n] ', do_return=True)
 
     logger.info("Enabling remote repository for hpssacli utility")
 
@@ -59,6 +59,6 @@ def flavorVars(logger):
     print "at resources/helper-playbooks/g1-helper-bonding.yml to assist with the"
     print "automated configuration of bonding via Ansible.\r\n"
 
-    yes_no('Do you wish to continue? [Y/n] ')
+    yes_no('Do you wish to continue? [Y/n] ', abortSetup)
 
     return 'enable_hpe_spp: %s' % enable_hpe_spp

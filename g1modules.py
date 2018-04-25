@@ -1,5 +1,4 @@
 from termios import tcflush, TCIOFLUSH
-import logging
 import sys
 import readline
 from subprocess import *
@@ -12,7 +11,7 @@ def user_input(msg, initial=''):
     keyin = raw_input(msg)
     return keyin
 
-def yes_no(answer, do_return=False, default='yes'):
+def yes_no(answer, abortSetup='', do_return=False, default='yes'):
     # Simple yes/no prompt function
     yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
