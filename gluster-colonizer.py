@@ -1238,7 +1238,7 @@ try:
         flavor_module = __import__(oem_id['flavor']['node']['flavor_module_file_name'])
         # Collect custom variables from module function
         global flavor_extra_vars
-        flavor_extra_vars = flavor_module.flavorVars(logger)
+        flavor_extra_vars = flavor_module.flavorVars(logger, abortSetup)
         flavor_extra_vars += ",mgmt_interface: " + mgmt_interface + ",storage_interface: " + storage_interface
         print "\r\n"
         run_ansible_playbook(flavor_path +
