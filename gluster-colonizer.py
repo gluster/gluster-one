@@ -1149,7 +1149,7 @@ try:
     print "the deployment tool can assign them for you automatically from"
     print "the %s network." % str(storage_subnet)
     print "\r"
-    print "\033[31mNOTE: These hostnames and IP adresses are expected to remain"
+    print "\033[31mNOTE: These hostnames and IP addresses are expected to remain"
     print "      static, so please choose your values carefully. If you"
     print "      choose automatic assignment, the deployment tool assumes"
     print "      that there are no other devices on the storage network"
