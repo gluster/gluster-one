@@ -43,7 +43,6 @@ import os
 import errno
 import shlex
 import signal
-#from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
 import pexpect
@@ -215,32 +214,6 @@ def abortSetup(message=''):
     print "\r\n"
     sys.exit(1)
 
-# NOTE: Moved below to g1modules.py
-#def user_input(msg):
-#    # Function to capture raw_input w/ key buffer flush
-#    tcflush(sys.stdin, TCIOFLUSH)
-#    keyin = raw_input(msg)
-#    return keyin
-#
-#def yes_no(answer, do_return=False, default='yes'):
-#    # Simple yes/no prompt function
-#    yes = set(['yes', 'y', 'ye'])
-#    no = set(['no', 'n'])
-#    if default is 'no':
-#        no.add('')
-#    else:
-#        yes.add('')
-#    while True:
-#        choice = user_input(answer).lower()
-#        if choice in yes:
-#            return True
-#        elif choice in no:
-#            if do_return:
-#                return False
-#            else:
-#                abortSetup("Deployment cancelled by user.")
-#        else:
-#            print "Please enter either 'yes' or 'no'\r\n"
 
 def stopDhcpService():
     # Function to stop specialized DHCP server
@@ -350,7 +323,6 @@ def run_ansible_playbook(playbook, continue_on_fail=False, become=False, askConn
             abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
 
-    #playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
     playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key, "--extra-vars=\"{fifo: " + FIFO + "}\""]
     
     if become:

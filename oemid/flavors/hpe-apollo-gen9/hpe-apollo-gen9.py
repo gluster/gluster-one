@@ -24,36 +24,6 @@ def flavorVars(logger, abortSetup):
 
     logger.info("Enabling remote repository for hpssacli utility")
 
-    # NOTE: Disabling inline bonding configuration in favor of pre-configuration.
-    # A helper playbook has been added at resources/helper-playbooks/g1-helper-bonding.yml
-    #print "\r\nNetwork interface bonding will be configured for your storage"
-    #print "network interfaces. Either LACP (aka mode 4, 802.3ad) or TLB"
-    #print "(aka mode 5, balance-tlb) is supported. Note that LACP requires"
-    #print "that the switch interface ports are already configured for this"
-    #print "mode.\r\n"
-    #print "   1. LACP"
-    #print "   2. TLB\r\n"
-    #
-    #
-    ##NOTE: The bonding_mode should be set based on the ansible nmcli module
-    ##      allowed values
-    #global bonding_mode
-    #while True:
-    #    input_string = user_input("Bonding mode? [1] ") or "1"
-    #    if str(input_string) is "1":
-    #        logger.info("LACP bonding mode selected")
-    #        bonding_mode = "802.3ad"
-    #        break
-    #    elif str(input_string) is "2":
-    #        logger.info("TLB bonding mode selected")
-    #        bonding_mode = "balance-tlb"
-    #        break
-    #    else:
-    #        logger.warning("Please select from the list.\r\n")
-    #        continue
-    #
-    #return 'enable_hpe_spp: %s, bonding_mode: %s' % (enable_hpe_spp, bonding_mode)
-
     print "\r\nNOTE: If your storage network interface is a bond or team device, it must"
     print "be configured on all nodes before proceeding. A helper playbook is available"
     print "at resources/helper-playbooks/g1-helper-bonding.yml to assist with the"

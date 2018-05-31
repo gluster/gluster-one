@@ -134,13 +134,6 @@
     path: "{{ ha_base_dir }}"
     state: directory
 
-#- name: Check for existing ganesha config file
-#  delegate_to: 127.0.0.1
-#  run_once: true
-#  stat:
-#    path: "{{ ha_base_dir }}/ganesha.conf"
-#  register: check_ganesha_conf
-
 - name: Create copy of local ganesha config file
   copy:
     remote_src: yes
