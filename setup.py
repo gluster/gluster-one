@@ -25,5 +25,6 @@ setup(
     install_requires=[
         'python-zeroconf',
         'python-xmltodict',
+        'ansible>=2.5.2',
     ],
 )
