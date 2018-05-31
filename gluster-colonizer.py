@@ -16,6 +16,8 @@
 #                         https://github.com/dustinblack                       *
 #                       Daniel Messer                                          *
 #                         https://github.com/dmesser                           *
+#                       Marko Karg                                             *
+#                         https://github.com/mkarg75                           *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
 #                                                                              *
