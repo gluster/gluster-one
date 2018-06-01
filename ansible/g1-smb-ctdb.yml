@@ -39,6 +39,7 @@
 #      - S30samba-stop.sh
 #
 #== DISABLED DUE TO SMALL FILE PERFORMANCE PROBLEMS
+
 - name: Start default volume
   delegate_to: "{{ play_hosts[0] }}"
   run_once: true
@@ -50,6 +51,7 @@
     - "{{ default_volname }}"
   register: result
   failed_when: "result.rc != 0 and ('already started' not in result.msg)"
+
 #== DISABLED DUE TO SMALL FILE PERFORMANCE PROBLEMS
 #
 #- shell: /bin/bash -c 'echo "Mounting default volume locally..." > {{ fifo }}'

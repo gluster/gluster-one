@@ -2,6 +2,11 @@
 # Gluster nodes. The 'vars' section should be adjusted approrpriately
 # for your environment and needs. The plays below rely on the nmcli
 # command, and therefore the NetworkManager service must be running.
+#
+# Example command:
+# ansible-playbook -i peer_inventory_file --ssh-common-args \
+# '-o StrictHostKeyChecking=no' --user ansible --private-key \
+# /home/ansible/.ssh/id_rsa g1-helper-bonding.yml
 
 - hosts: all
   become: yes

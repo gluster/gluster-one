@@ -223,19 +223,35 @@
 
     - shell: /bin/bash -c 'echo "Cleaning up any conflicting device mapper entries..." > {{ fifo }}'
 
-    - name: gather all device mapper entries
-      shell: dmsetup ls
-      register: dmsetup_ls_cmd
+    - name: Gather device mapper entries for data devices
+      shell: lsblk {{ item.device }} -lno NAME | grep -v {{ item.device.split('/')[-1] }}
+      register: lsblk_data
+      with_items: "{{ backend_configuration }}"
+      ignore_errors: true
 
-    - name: search for all remaining device mapper entries that belong to us
-      set_fact:
-        dm_entries: |
-            {{ dmsetup_ls_cmd.stdout_lines | map('regex_findall', '^(?:GLVG|FASTGLVG)[0-9]*-\S+', '\\1') | map('join') | list  }}
+    - set_fact:
+        dm_data: "{{ lsblk_data['results'][0]['stdout_lines'] | default([]) }}"
+
+    - name: Gather device mapper entries for cache devices
+      shell: lsblk {{ item }} -lno NAME | grep -v {{ item.split('/')[-1] }}
+      register: lsblk_cache
+      with_items: "{{ cache_devices }}"
+      ignore_errors: true
+
+    - set_fact:
+        dm_cache: "{{ lsblk_cache['results'][0]['stdout_lines'] | default([]) }}"
+
+    - set_fact:
+        dm_devices: "{{ dm_data }} + {{ dm_cache }}"
 
     - name: Remove any residual device mapper entries
-      shell: /bin/bash -c 'dmsetup remove --force {{ item }}'
+      shell: dmsetup remove {{ item }}
       when: item != ''
-      with_items: "{{ dm_entries }}"
+      with_items: "{{ dm_devices }}"
+      ignore_errors: true
+      register: result
+      retries: 5
+      delay: 2
 
     - name: wait for udev to settle
       shell: udevadm settle --timeout=60

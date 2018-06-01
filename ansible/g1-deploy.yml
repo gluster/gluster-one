@@ -96,6 +96,8 @@
     # NOTE: The GPT partition table is not being created correctly when
     #       included in the 'Create cache partitions' play below (bug?).
     #       The below two plays are a hack to work around this problem.
+    #       This was relevant w/ ansible 2.3, but may no longer be an
+    #       issue with 2.5.
     - name: Set cache disk labels
       parted:
         label: gpt
@@ -120,6 +122,9 @@
         number: 1
       with_items: "{{ cache_devices }}"
 
+    #FIXME: We have a problem here between ansible versions.
+    #About 2.3.2.0, it is important that label is either omitted or empty.
+    #About 2.4-ish+, it is important that label is gpt
     - name: Create arbiter partitions
       parted:
         label: gpt
@@ -159,18 +164,15 @@
       set_fact:
         cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
 
-    # We use the offsets for each cache partition to write 4MB of zeroes there. This is the only way to be sure there's no old lvm metadata anymore which would cause
-    # duplicate PVs etc. 
+    # We use the offsets for each cache partition to write 4MB of zeroes 
+    # there. This is the only way to be sure there's no old lvm metadata 
+    # anymore which would cause duplicate PVs etc. 
     - name: Clean up residual LVM metadata from all cache partition offsets
       shell: /bin/bash -c "/usr/bin/dd if=/dev/zero of={{ item[0] }} bs=512 obs=512 count=8192 seek={{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int))) + 1|int) }} oflag=seek_bytes,sync"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
-      #FIXME: We have a problem here between ansible versions.
-      #About 2.3.2.0, it is important that label is either omitted or empty.
-      #About ??(Cisco lab), it is important that label is gpt
-      #...need to test the latter for having label empty (rather than omitted)
     - name: Create cache partitions
       parted:
         label: gpt
@@ -441,10 +443,10 @@
     - shell: /bin/bash -c 'echo "Testing storage network..." > {{ fifo }}'
 
     # This is actually necessary to kick-start the interface after bonding
-    # The net_ping module apparently isn't in the RH ansible build :-/
     - name: Test reachability of host for peer probing
       delegate_to: 127.0.0.1
       run_once: true
+    # The net_ping module apparently isn't in the RH ansible build :-/
     #  net_ping:
     #    dest: "{{ hostnames[0] }}"
     #    count: 5

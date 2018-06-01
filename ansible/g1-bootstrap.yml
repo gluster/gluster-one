@@ -1,67 +1,9 @@
-#- hosts: localhost
-#  name: "Generate SSH keypairs locally"
-#  become: yes
-#
-#  vars:
-#    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-#
-#  tasks:
-#
-#    - name: generate ssh key for current user if required
-#      user:
-#        name: "{{ current_user }}"
-#        generate_ssh_key: yes
-#        ssh_key_bits: 4096
-#        ssh_key_type: rsa
-#        state: present
-#
 - hosts: gluster_nodes
   name: "Bootstrapping nodes."
   become: yes
   any_errors_fatal: True
 
-#  vars:
-#    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
-
   tasks:
-
-#    - name: add local ssh key to hosts
-#      authorized_key:
-#        user: "{{ current_user }}"
-#        state: present
-#        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-
-#    - name: add sudoers configuration for the current user
-#      lineinfile:
-#        path: /etc/sudoers.d/{{ current_user }}
-#        line: "{{ current_user }}        ALL=(ALL)       NOPASSWD: ALL"
-#        create: yes
-#        state: present
-
-## moved to g1-key-dist.yml
-##    - name: add sudoers configuration for the ansible user
-##      lineinfile:
-##        path: /etc/sudoers.d/ansible
-##        line: "ansible        ALL=(ALL)       NOPASSWD: ALL"
-##        create: yes
-##        state: present
-##
-##    - name: allow non-interactive sudo access
-##      lineinfile:
-##        path: /etc/sudoers
-##        line: "#Defaults requiretty"
-##        regexp: "^Defaults(.*?)requiretty"
-##        backrefs: yes
-##        state: present
-##
-##    - name: disable DNS lookup in sshd
-##      lineinfile:
-##        path: /etc/ssh/sshd_config
-##        line: "UseDNS no"
-##        state: present
-##      notify:
-##        - reload sshd
-
     - shell: /bin/bash -c 'echo "Installing package dependencies..." > {{ fifo }}'
 
     - name: install gluster and colonizer dependencies
@@ -91,22 +33,6 @@
         - gdeploy
         - fio
 
-    # - name: install colonizer
-    #   yum: name={{ item }} state=present
-    #   with_items:
-    #     - gluster-colonizer
-    #     - gluster-zeroconf-avahi
-    #   notify:
-    #     - enable zeroconf
-    #     - allow zeroconf
-    #
-    # - name: configure avahi daemon to only allow {{ ansible_default_ipv4.alias }}
-    #   lineinfile:
-    #     line: "allow-interfaces={{ ansible_default_ipv4.alias }}"
-    #     path: /etc/avahi/avahi-daemon.conf
-    #     insertafter: "\\[server\\]"
-    #     state: present
-
     - shell: /bin/bash -c 'echo "Configuring system settings..." > {{ fifo }}'
 
     - name: configure system panic settings
@@ -124,20 +50,3 @@
 
     - name: enable networkmanager
       service: name=NetworkManager state=started enabled=yes
-
-## moved to g1-key-dist.yml
-##  handlers:
-##
-##      - name: reload sshd
-##        service: name=sshd state=reloaded
-
-      # - name: enable avahi socket
-      #   systemd: unit=avahi-daemon.socket state=started enabled=yes
-      #   listen: enable zeroconf
-      #
-      # - name: enable avahi service
-      #   systemd: unit=avahi-daemon.service state=started enabled=yes
-      #   listen: enable zeroconf
-      #
-      # - name: allow zeroconf
-      #   firewalld: service=mdns state=enabled permanent=true immediate=true
