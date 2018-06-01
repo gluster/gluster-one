@@ -14,6 +14,10 @@
 #                                                                              *
 # Authors:              Dustin Black <dustin@redhat.com>                       *
 #                         https://github.com/dustinblack                       *
+#                       Daniel Messer                                          *
+#                         https://github.com/dmesser                           *
+#                       Marko Karg                                             *
+#                         https://github.com/mkarg75                           *
 #                       Christopher Blum                                       *
 #                         https://github.com/zeichenanonym                     *
 #                                                                              *
@@ -21,6 +25,7 @@
 #                                                                              *
 #*******************************************************************************
 
+from g1modules import *
 import argparse
 from argparse import RawTextHelpFormatter
 import json
@@ -40,7 +45,6 @@ import os
 import errno
 import shlex
 import signal
-from termios import tcflush, TCIOFLUSH
 import math
 import getpass, crypt, random
 import pexpect
@@ -148,8 +152,13 @@ g1_inventory = ""
 playbook_path = g1_path + "ansible/"
 config_ad = ''
 idmap_module = ''
+needsBootstrapping = 'needs_bootstrap' in oem_id['flavor']['node'] and oem_id['flavor']['node']['needs_bootstrap'] is True
 # regular expression to validate domain name based on RFCs
 domain_check = re.compile(
+    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
+)
+# regular expression to validate FQDN or IP based on RFCs
+fqdn_or_ip_check = re.compile(
     "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
 )
 
@@ -171,6 +180,7 @@ if nm_storage_interface.startswith("bond-") or nm_storage_interface.startswith("
 else:
     storage_interface = nm_storage_interface
 
+
 # Init logging to log to console screen and file
 # Create logger
 logger = logging.getLogger()
@@ -191,7 +201,6 @@ logfileHandler.setFormatter(logfileFormatter)
 logger.addHandler(consoleHandler)
 logger.addHandler(logfileHandler)
 
-
 def abortSetup(message=''):
     # This may be called at any time during the setup process to abort
     print "\r\n"
@@ -208,74 +217,29 @@ def abortSetup(message=''):
     sys.exit(1)
 
 
-def user_input(msg):
-    # Function to capture raw_input w/ key buffer flush
-    tcflush(sys.stdin, TCIOFLUSH)
-    keyin = raw_input(msg)
-    return keyin
+def stopDhcpService():
+    # Function to stop specialized DHCP server
+    killDnsmasq()
+    host_command('/bin/firewall-cmd --remove-service=dhcp')
+    host_command('/bin/nmcli con reload %s' % nm_mgmt_interface)
+    host_command('/bin/nmcli con up %s' % nm_mgmt_interface)
 
-
-def yes_no(answer, do_return=False, default='yes'):
-    # Simple yes/no prompt function
-    yes = set(['yes', 'y', 'ye'])
-    no = set(['no', 'n'])
-    if default is 'no':
-        no.add('')
-    else:
-        yes.add('')
-    while True:
-        choice = user_input(answer).lower()
-        if choice in yes:
-            return True
-        elif choice in no:
-            if do_return:
-                return False
-            else:
-                abortSetup("Deployment cancelled by user.")
-        else:
-            print "Please enter either 'yes' or 'no'\r\n"
-
-def set_ha_node_count():
-    ha_node_count = int(
-        math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
-    if int(ha_node_count) < int(min_ha_nodes):
-        ha_node_count = int(min_ha_nodes)
-    elif int(ha_node_count) > int(max_ha_nodes):
-        ha_node_count = int(max_ha_nodes)
-    logger.debug("HA node count is %i" % int(ha_node_count))
-    return ha_node_count
-
-def natural_sort(string):
-    convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
-    return sorted(string, key = alphanum_key)
-
-def ipValidator(user_message,
-                null_valid=False,
-                check_dupes=True,
-                check_subnet=True):
-    # Function for input and validation of storage network IP addresses
-    while True:
-        input_string = user_input(user_message)
-        if null_valid and not input_string:
-            return ''
-        try:
-            ip = IPAddress(input_string)
-        except:
-            logger.warning("The IP address entered is invalid")
-            continue
-        if ip not in storage_subnet[1:-1] and check_subnet:
-            logger.warning(
-                "The IP address is not within the storage network %s" %
-                str(storage_subnet))
-            continue
-        if str(ip) in consumed_ips and check_dupes:
-            logger.warning("The IP address is already in use")
-            continue
-        consumed_ips.append(str(ip))
-        break
-    return str(ip)
-
+def killDnsmasq():
+    # Function to stop any existing dnsmasq processes
+    logger.debug("Killing any existing dnsmasq processes")
+    p1 = Popen(shlex.split('ps -e'), stdout=PIPE)
+    p2 = Popen(
+        shlex.split('grep dnsmasq'),
+        stdin=p1.stdout,
+        stdout=PIPE,
+        stderr=STDOUT)
+    pOut, _ = p2.communicate()
+    for line in pOut.splitlines():
+        if 'dnsmasq' in line:
+            pid = int(line.split(None, 1)[0])
+            os.kill(pid, signal.SIGKILL)
+    logger.debug("Wiping the dnsmasq.leases file")
+    host_command("echo '' > /var/lib/dnsmasq/dnsmasq.leases", shell=True)
 
 def host_command(command, shell=False):
     # Function to execute system commands
@@ -305,7 +269,52 @@ def host_command(command, shell=False):
     return proc_output
 
 
-def run_ansible_playbook(playbook, continue_on_fail=False):
+def set_ha_node_count():
+    ha_node_count = int(
+        math.ceil(int(len(g1Hosts)) / float(ha_node_factor)))
+    if int(ha_node_count) < int(min_ha_nodes):
+        ha_node_count = int(min_ha_nodes)
+    elif int(ha_node_count) > int(max_ha_nodes):
+        ha_node_count = int(max_ha_nodes)
+    logger.debug("HA node count is %i" % int(ha_node_count))
+    return ha_node_count
+
+
+def natural_sort(string):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(string, key = alphanum_key)
+
+
+def ipValidator(user_message,
+                null_valid=False,
+                check_dupes=True,
+                check_subnet=True,
+                hint=''):
+    # Function for input and validation of storage network IP addresses
+    while True:
+        input_string = user_input(user_message, hint)
+        if null_valid and not input_string:
+            return ''
+        try:
+            ip = IPAddress(input_string)
+        except:
+            logger.warning("The IP address entered is invalid")
+            continue
+        if ip not in storage_subnet[1:-1] and check_subnet:
+            logger.warning(
+                "The IP address is not within the storage network %s" %
+                str(storage_subnet))
+            continue
+        if str(ip) in consumed_ips and check_dupes:
+            logger.warning("The IP address is already in use")
+            continue
+        consumed_ips.append(str(ip))
+        break
+    return str(ip)
+
+
+def run_ansible_playbook(playbook, continue_on_fail=False, become=False, askConnPass=False, askSudoPass=False):
     # Function to run ansible playbooks
     FIFO = "/var/tmp/g1.pipe-" + "".join(
         random.sample(rand_filename_sample, rand_filename_len))
@@ -315,7 +324,22 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
         if oe.errno != errno.EEXIST:
             abortSetup("Error creating FIFO")
     watch_ansible = Popen(shlex.split("tail -f " + FIFO))
-    playbookCmd = "ansible-playbook -i " + peerInventory + " --ssh-common-args=\'-o StrictHostKeyChecking=no\' --user ansible --sudo --private-key=" + ansible_ssh_key + " --extra-vars=\"{fifo: " + FIFO + "}\" " + playbook
+
+    playbookCmdArgs = ["ansible-playbook", "-i", peerInventory, "--ssh-common-args", "'-o StrictHostKeyChecking=no'", "--user", "ansible", "--private-key", ansible_ssh_key, "--extra-vars=\"{fifo: " + FIFO + "}\""]
+    
+    if become:
+        playbookCmdArgs.append("-b")
+
+    if askConnPass:
+        playbookCmdArgs.append("-k")
+
+    if askSudoPass:
+        playbookCmdArgs.append("-K")
+
+    playbookCmdArgs.append(playbook)
+
+    playbookCmd = ' '.join(playbookCmdArgs)
+
     if int(args.loglevel) == 10:
         playbookCmd = playbookCmd + " -vvv"
     logger.debug("Ansible playbook command: " + playbookCmd)
@@ -342,24 +366,6 @@ def run_ansible_playbook(playbook, continue_on_fail=False):
                 "Continuing deployment; please see logs for failure details.")
             return False
     return True
-
-
-def killDnsmasq():
-    # Function to stop any existing dnsmasq processes
-    logger.debug("Killing any existing dnsmasq processes")
-    p1 = Popen(shlex.split('ps -e'), stdout=PIPE)
-    p2 = Popen(
-        shlex.split('grep dnsmasq'),
-        stdin=p1.stdout,
-        stdout=PIPE,
-        stderr=STDOUT)
-    pOut, _ = p2.communicate()
-    for line in pOut.splitlines():
-        if 'dnsmasq' in line:
-            pid = int(line.split(None, 1)[0])
-            os.kill(pid, signal.SIGKILL)
-    logger.debug("Wiping the dnsmasq.leases file")
-    host_command("echo '' > /var/lib/dnsmasq/dnsmasq.leases", shell=True)
 
 
 def startDhcpService():
@@ -404,14 +410,6 @@ def startDhcpService():
     # TODO: Discuss subnet for initial DHCP config
     host_command('/sbin/dnsmasq --interface=%s --dhcp-range=%s,%s,12h' %
                  (mgmt_interface, mgmt_subnet[2], mgmt_subnet[-2]))
-
-
-def stopDhcpService():
-    # Function to stop specialized DHCP server
-    killDnsmasq()
-    host_command('/bin/firewall-cmd --remove-service=dhcp')
-    host_command('/bin/nmcli con reload %s' % nm_mgmt_interface)
-    host_command('/bin/nmcli con up %s' % nm_mgmt_interface)
 
 
 def collectDeploymentInformation():
@@ -466,13 +464,21 @@ def collectDeploymentInformation():
 
     logger.debug("Storage network is %s" % str(storage_subnet))
 
+    # Define hint to use for storage subnet IP inputs
+    #NOTE: We could probably do better here than just stripping the
+    #      last octet -- something more specific to the subnet as
+    #      entered by the user.
+    global storageIpHint
+    storageIpHint = str(storage_subnet).split('.')
+    storageIpHint = str('.'.join(storageIpHint[0:3])) + '.'
+
     if not config_ad:
         print "\r\nGateway and DNS fields may be left blank for now, if you prefer.\r\n"
 
     global gatewayAddress
 
     while True:
-        gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True)
+        gatewayAddress = ipValidator("   Gateway IP address: ", null_valid=True, hint=str(storageIpHint) + "1")
         if gatewayAddress is '' and config_ad:
             logger.warning("Gateway address is required for Active Directory connection")
             continue
@@ -499,9 +505,8 @@ def collectDeploymentInformation():
         break
 
     print "\r\nNTP will be configured for time synchronization. You may enter"
-    print "up to four NTP servers below. If you would prefer to use the RHEL"
-    print "public NTP servers, simply press Enter at the first prompt and the"
-    print "default servers will be applied.\r\n"
+    print "up to four NTP servers below. If you would prefer to use the default"
+    print "public NTP servers, simply press Enter at the first prompt.\r\n"
 
     print "NOTE: Using the default public NTP servers requires that all of the"
     print "      %s nodes have access to the Internet.\r\n" % brand_short
@@ -524,9 +529,6 @@ def collectDeploymentInformation():
         inputMessage += ": "
         while True:
             ntpInput = user_input(inputMessage)
-            fqdn_or_ip_check = re.compile(
-                    "^(?=.{1,253}$)(?!.*\.\..*)(?!\..*)([a-zA-Z0-9-]{,63}\.){,127}[a-zA-Z0-9-]{1,63}$"
-            )
             isvalid = fqdn_or_ip_check.match(ntpInput)
             if isvalid is not None or ntpInput is '':
                 break
@@ -571,7 +573,7 @@ def collectNodeInformation():
             nodeInfo[nodeNum]['hostname'] = str(hostname)
             break
 
-        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ")
+        nodeInfo[nodeNum]['ip'] = ipValidator("   Storage IP address: ", hint=storageIpHint)
 
         host_interface_information[node + "-" + nm_mgmt_interface] = {
             "ifname":
@@ -611,8 +613,10 @@ def collectNodeInformation():
 
     global vip_list
     global vips
+    global vip_hosts
     vip_list = []
     vips = []
+    vip_hosts = []
 
     # Enumerate the list of VIPs if we are using the NFS client
     if use_nfs or use_smb:
@@ -622,11 +626,12 @@ def collectNodeInformation():
             storage_subnet)
         for i in range(int(ha_node_count)):
             vipNum = str(i + 1)
-            vip = ipValidator("   VIP address %s: " % str(vipNum))
+            vip = ipValidator("   VIP address %s: " % str(vipNum), hint=storageIpHint)
             vips.append(str(vip))
             vip_list.append("VIP_%s.%s=\"%s\"" %
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name), str(vip)))
+            vip_hosts.append(str(nodeInfo[str(i + 1)]['ip']))
         vip_list = natural_sort(vip_list)
 
     return host_interface_information
@@ -697,8 +702,10 @@ def autoNodeInformation():
 
     global vip_list
     global vips
+    global vip_hosts
     vip_list = []
     vips = []
+    vip_hosts = []
 
     # Enumerate the list of VIPs if we are using the NFS client
     if use_nfs or use_smb:
@@ -715,6 +722,7 @@ def autoNodeInformation():
                             (str(nodeInfo[str(i + 1)]['hostname']),
                              str(domain_name),
                              str(storage_subnet[storageIPCounter])))
+            vip_hosts.append(str(nodeInfo[str(i + 1)]['ip']))
         logger.debug("VIP list is: %s" % str(vip_list))
 
     return host_interface_information
@@ -732,13 +740,14 @@ try:
     print "all %s nodes are connected to the management" % brand_short
     print "network infrastructure and are booted.\r\n"
 
-    yes_no('Do you wish to continue? [Y/n] ')
+    yes_no('Do you wish to continue? [Y/n] ', abortSetup)
 
     logger.debug("** Begin %s %s**" % (brand_parent, brand_project))
 
+    g1Hosts = []
+
     # === PHASE 1 ===
-    # NOTE: The purpose of this initial phase of deployment is to dynamically
-    # build the node inventory
+    # NOTE: In this phase we discover the nodes. Either they are vanilla systems (RHS Ready) in which case we build the inventory manually and bootstrap the nodes (Phase 1a). Or they are pre-configured nodes (RHS One) in which case we discover them (Phase 1b).
 
     print "\r\n"
     logger.info("Begin %s inventory phase" % brand_short)
@@ -756,7 +765,11 @@ try:
             nodes_min = 4
             nodes_multiple = 2
             replica = 'yes'
-            if str(oem_id['flavor']['arbiter_size']) == "None":
+            try:
+                str(oem_id['flavor']['arbiter_size_factor'])
+            except NameError:
+                abortSetup("Error: No arbiter_size_factor detected in OEMID file")
+            if str(oem_id['flavor']['arbiter_size_factor']) == "None":
                 replica_count = str('\'2\'')
                 arbiter_count = str('\'0\'')
             else:
@@ -845,7 +858,7 @@ try:
         print "Active Directory username and password for an account with rights"
         print "to add systems to the domain.\r\n"
 
-        config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, True)
+        config_ad = yes_no('Would you like to configure your %s nodes for Active Directory now? [Y/n] ' % brand_short, do_return=True)
 
         if config_ad:
             logger.info("Proceeding with Active Directory configuration")
@@ -874,7 +887,7 @@ try:
 
     print "\r\n"
 
-    yes_no('Do you wish to continue? [Y/n] ')
+    yes_no('Do you wish to continue? [Y/n] ', abortSetup)
 
 
     if use_smb:
@@ -1001,140 +1014,217 @@ try:
     print "\r\n"
     collectDeploymentInformation()
 
-    logger.debug("Ansible inventory file: " + peerInventory)
-    f = open(peerInventory, 'w')
-    f.write("[gluster_nodes]\r\n")
-    f.close()
+    if needsBootstrapping:
 
-    print "\r\n"
+        # === PHASE 1a ===
+        # NOTE: The OEMID file indicates the nodes need bootstrapping. Hence we need to ask the user where they are since they do not run the the discovery service and have not been boostrapped.
 
-    logger.info(
-        "\033[31mConfiguring this node as the deployment master...\033[0m")
+        logger.debug("Node config indicates bootstrapping is needed.")
 
-    print "\r\n"
+        print "\r\nPlease enter the IP addresses of the %i nodes on the management" % int(desiredNumOfNodes)
+        print "network. These nodes will be boostrapped using the user \033[31m%s\033[0m" % os.environ['USER']
+        print "This account must be present on all systems and must have \033[31msudo\033[0m privileges.\r\n"
 
-    # Set this node up as the deployment master
-    print "The Gluster colonizer requires DHCP service on the management"
-    print "network. If the service is not already available on the"
-    print "management network, we can start a temporary DHCP server on this"
-    print "node now. This local DHCP service will only operate for the"
-    print "duration of the deployment process.\r\n"
 
-    start_dhcp = yes_no('Do you wish to start the DHCP service here? [y/N] ',
-                        do_return=True, default='no')
+        entryHint = ''
+        for idx in range(int(desiredNumOfNodes)):
+            nodeNum = str(idx + 1)
+            mgmtNodeIP = str(ipValidator("   Node %i: " % int(nodeNum), check_subnet = False, hint=entryHint))
+            g1Hosts.append(mgmtNodeIP)
+            threeOctet = mgmtNodeIP.split('.')
+            entryHint = str('.'.join(threeOctet[0:3])) + '.'
 
-    print "\r\n"
 
-    if start_dhcp:
-        logger.info("Configuring local DHCP service...")
-        startDhcpService()
-        logger.debug("Management subnet is %s" % mgmt_subnet)
-    else:
-        logger.info("Proceeding with external DHCP service")
         print "\r\n"
-        logger.info("Detecting management subnet...")
-        #TODO: This needs improvement to get rid of the shell approach
-        while True:
-            try:
-                host_command('/bin/systemctl start NetworkManager')
-                p1 = Popen(shlex.split('/bin/nmcli con show %s' % nm_mgmt_interface), stdout=PIPE)
-                p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
-                p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
-                p1.stdout.close()
-                p2.stdout.close()
-                ip = IPNetwork(p3.communicate()[0])
-                mgmt_subnet = IPNetwork("%s/%s" % (ip.network, ip.prefixlen))
-                break
-            except:
-                logger.warning("Unable to detect management network")
-                logger.warning("Please ensure the DHCP service is available")
-                yes_no('Do you wish to attempt detection again? [Y/n] ')
-                print "\r\n"
-                continue
-        logger.info("Management subnet is %s" % mgmt_subnet)
+        logger.info("Manual node entries validated.")
+        print "\r\n"
+    else:
+        # === PHASE 1b ===
+        # NOTE: The purpose of this version of the initial phase of deployment is to dynamically build the node inventory
 
-    print "\r\n"
+        print "\r\n"
 
-    yes_no("We will now begin node discovery. Do you wish to continue? [Y/n] ")
+        logger.info(
+            "\033[31mConfiguring this node as the deployment master...\033[0m")
 
-    print "\r\n"
+        print "\r\n"
 
-    logger.info("Searching for %i %s nodes." % (desiredNumOfNodes,
-                                                brand_short))
-    print "This may take several minutes while all nodes come online...\r\n"
+        # Set this node up as the deployment master
+        print "The Gluster colonizer requires DHCP service on the management"
+        print "network. If the service is not already available on the"
+        print "management network, we can start a temporary DHCP server on this"
+        print "node now. This local DHCP service will only operate for the"
+        print "duration of the deployment process.\r\n"
 
-    currentNumOfHosts = 0
-    g1Hosts = []
+        start_dhcp = yes_no('Do you wish to start the DHCP service here? [y/N] ',
+                            do_return=True, default='no')
 
-    logger.debug("Building Ansible host inventory...")
+        print "\r\n"
 
-    # Get nodes from gluster-discovery (gluster-zeroconf project)
-    #TODO: Add logic for validation of hosts and check for duplicates.
-    #Possibly borrow from dnsmasq-lease-interpreter.py script
-    #TODO: Check for if we found too many nodes
-    node_search_timeout = 20  #attempts
-    counter = 1
-    discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
-        random.sample(rand_filename_sample, rand_filename_len))
-    while (currentNumOfHosts) < desiredNumOfNodes:
-        g1Hosts = []
-        pOut = open(discovery_file, 'w')
-        p1 = Popen("/bin/gluster-discovery", stdout=PIPE, shell=True)
-        p2 = Popen(shlex.split("sort -u"), stdin=p1.stdout, stdout=pOut)
-        p1.stdout.close()
-        output = p2.communicate()[0]
-        pOut.close()
-        #FIXME: The gluster-discovery tool returns host IPs non-deterministically.
-        #       Need a check to ensure IPs are on the right subnet.
-        # Checking all subnet IPs except network and broadcast
-        with open(discovery_file, 'r') as source:
-            # Will read only the desired number of nodes (lines)
-            discoveries = source.readlines()
-            ips = []
-            for discovery in discoveries:
-                discovered_ip = discovery.split()[2]
-                try:
-                    if discovered_ip not in mgmt_subnet:
-                        continue
-                # Any connected peers may separately report hostnames instead of IPs
-                except AddrFormatError:
-                    continue
-                try:
-                    ips.append(discovered_ip)
-                except IndexError:
-                    continue
-            g1Hosts = ips[:desiredNumOfNodes]
-        currentNumOfHosts = len(g1Hosts)
-        if currentNumOfHosts == 1:
-            print 'Found %i node so far...  %i attempts remaining   \r' % (
-                currentNumOfHosts, int(node_search_timeout) - int(counter)),
-            sys.stdout.flush()
-        #TODO: Add check for too many hosts
+        if start_dhcp:
+            logger.info("Configuring local DHCP service...")
+            startDhcpService()
+            logger.debug("Management subnet is %s" % mgmt_subnet)
         else:
-            print 'Found %i nodes so far...  %i attempts remaining   \r' % (
-                currentNumOfHosts, int(node_search_timeout) - int(counter)),
-            sys.stdout.flush()
-        time.sleep(1)
-        counter += 1
-        if counter > node_search_timeout:
-            abortSetup(
-                "Timeout searching for nodes. Ensure all nodes are online and connected."
-            )
+            logger.info("Proceeding with external DHCP service")
+            print "\r\n"
+            logger.info("Detecting management subnet...")
+            #TODO: This needs improvement to get rid of the shell approach
+            while True:
+                try:
+                    host_command('/bin/systemctl start NetworkManager')
+                    p1 = Popen(shlex.split('/bin/nmcli d show %s' % mgmt_interface), stdout=PIPE)
+                    p2 = Popen(shlex.split('grep IP4.ADDRESS\\\\[1\\\\]'), stdin=p1.stdout, stdout=PIPE)
+                    p3 = Popen(shlex.split('awk "{print $2}"'), stdin=p2.stdout, stdout=PIPE)
+                    p1.stdout.close()
+                    p2.stdout.close()
+                    ip = IPNetwork(p3.communicate()[0])
+                    mgmt_subnet = IPNetwork("%s/%s" % (ip.network, ip.prefixlen))
+                    break
+                except:
+                    logger.warning("Unable to detect management network")
+                    logger.warning("Please ensure the DHCP service is available")
+                    yes_no('Do you wish to attempt detection again? [Y/n] ', abortSetup)
+                    print "\r\n"
+                    continue
+            logger.info("Management subnet is %s" % mgmt_subnet)
 
-    # Remove \n from end of each line and merge lines with commas
-    g1Hosts = [s.rstrip() for s in g1Hosts]
-    g1_inventory = ','.join(map(str, g1Hosts))
+        # Define hint to use for management subnet IP inputs
+        #NOTE: We could probably do better here than just stripping the
+        #      last octet -- something more specific to the subnet as
+        #      entered by the user.
+        mgmtIpHint = str(mgmt_subnet).split('.')
+        mgmtIpHint = str('.'.join(mgmtIpHint[0:3])) + '.'
 
-    print "\r\n"
-    logger.info("All nodes located.")
+        print "\r\n"
+
+        yes_no("We will now begin node discovery. Do you wish to continue? [Y/n] ", abortSetup)
+
+        print "\r\n"
+
+        logger.info("Searching for %i %s nodes." % (desiredNumOfNodes,
+                                                    brand_short))
+        print "This may take several minutes while all nodes come online...\r\n"
+
+        currentNumOfHosts = 0
+        g1Hosts = []
+
+        logger.debug("Building Ansible host inventory...")
+
+        # Get nodes from gluster-discovery (gluster-zeroconf project)
+        #TODO: Add logic for validation of hosts and check for duplicates.
+        #Possibly borrow from dnsmasq-lease-interpreter.py script
+        #TODO: Check for if we found too many nodes
+        node_search_timeout = 20  #attempts
+        counter = 1
+        discovery_file = "/var/tmp/gluster-discovery.out-" + "".join(
+            random.sample(rand_filename_sample, rand_filename_len))
+        while (currentNumOfHosts) < desiredNumOfNodes:
+            g1Hosts = []
+            pOut = open(discovery_file, 'w')
+            p1 = Popen("/bin/gluster-discovery", stdout=PIPE, shell=True)
+            p2 = Popen(shlex.split("sort -u"), stdin=p1.stdout, stdout=pOut)
+            p1.stdout.close()
+            output = p2.communicate()[0]
+            pOut.close()
+            #FIXME: The gluster-discovery tool returns host IPs non-deterministically.
+            #       Need a check to ensure IPs are on the right subnet.
+            # Checking all subnet IPs except network and broadcast
+            with open(discovery_file, 'r') as source:
+                # Will read only the desired number of nodes (lines)
+                discoveries = source.readlines()
+                ips = []
+                for discovery in discoveries:
+                    discovered_ip = discovery.split()[2]
+                    try:
+                        if discovered_ip not in mgmt_subnet:
+                            continue
+                    # Any connected peers may separately report hostnames instead of IPs
+                    except AddrFormatError:
+                        continue
+                    try:
+                        ips.append(discovered_ip)
+                    except IndexError:
+                        continue
+                g1Hosts = ips[:desiredNumOfNodes]
+            currentNumOfHosts = len(g1Hosts)
+            if currentNumOfHosts == 1:
+                print 'Found %i node so far...  %i attempts remaining   \r' % (
+                    currentNumOfHosts, int(node_search_timeout) - int(counter)),
+                sys.stdout.flush()
+            #TODO: Add check for too many hosts
+            else:
+                print 'Found %i nodes so far...  %i attempts remaining   \r' % (
+                    currentNumOfHosts, int(node_search_timeout) - int(counter)),
+                sys.stdout.flush()
+            time.sleep(1)
+            counter += 1
+            if counter > node_search_timeout:
+                abortSetup(
+                    "Timeout searching for nodes. Ensure all nodes are online and connected."
+                )
+
+        # Remove \n from end of each line and merge lines with commas
+        g1Hosts = [s.rstrip() for s in g1Hosts]
+
+        print "\r\n"
+        logger.info("All nodes located.")
 
     # Write the ansible inventory file
+    logger.debug("Ansible inventory file: " + peerInventory)
     with open(peerInventory, 'a') as inventory:
+        inventory.write("[gluster_nodes]\r\n")
         for host in g1Hosts:
             inventory.write(host + "\r\n")
 
-    logger.info("Inventory complete.")
-    logger.debug("Ansible inventory: " + g1_inventory)
+    logger.info("Inventory complete.\r\n")
+    logger.debug("Ansible inventory: " + ','.join(map(str, g1Hosts)))
+
+    if needsBootstrapping:
+        logger.debug("Begin bootstrapping")
+        print "\r\nIn the following step, you will be prompted for the SSH and"
+        print "the SUDO passwords for the ansible user on the target nodes."
+        print "The users and passwords must already be configured on all nodes"
+        print "in order to continue.\r\n" 
+
+        yes_no("Do you wish to proceed? [Y/n] ", abortSetup)
+
+        print "\r\nFor the ansible user..."
+
+        run_ansible_playbook(playbook_path + '/g1-key-dist.yml', False, True, True, True)
+        run_ansible_playbook(playbook_path + '/g1-bootstrap.yml')
+
+    # === PHASE 2 ===
+    # NOTE: Validate all nodes against the OEMID file
+
+    logger.info("\r\nBegin %s validation phase\r\n" % brand_short)
+
+    # Check each node against expectations in OEMID file
+    logger.info("Comparing nodes to expected configurations...")
+
+    needsCustomization = 'customization_file_name' in oem_id['flavor']['node']
+
+    if needsCustomization:
+        logger.debug("Customization file is %s" % needsCustomization)
+        flavor_path = g1_path + 'oemid/' + oem_id['flavor']['node']['flavor_path']
+        # Add custom module path and import flavor module
+        sys.path.insert(0, flavor_path)
+        flavor_module = __import__(oem_id['flavor']['node']['flavor_module_file_name'])
+        # Collect custom variables from module function
+        global flavor_extra_vars
+        flavor_extra_vars = flavor_module.flavorVars(logger, abortSetup)
+        flavor_extra_vars += ",mgmt_interface: " + mgmt_interface + ",storage_interface: " + storage_interface
+        print "\r\n"
+        run_ansible_playbook(flavor_path +
+                         oem_id['flavor']['node']['verify_file_name'] + ' --extra-vars="{' + flavor_extra_vars + '}"')
+    else:
+        run_ansible_playbook(g1_path + 'oemid/' +
+                         oem_id['flavor']['node']['verify_file_name'])
+
+    logger.info("\r\nAll node validations passed")
+
+    # === PHASE 3 ===
+    # NOTE: Capture essential configuration information
 
     # Set the HA node count
     if use_nfs:
@@ -1212,7 +1302,7 @@ try:
 
     print "\r\n"
 
-    print "Please confirm your deployment details:"
+    print "\033[31mPlease confirm your deployment details:\033[0m"
 
     print "\r\n"
 
@@ -1266,7 +1356,7 @@ try:
 
     print "\r\n"
 
-    yes_no("Do you wish to continue with this configuration? [Y/n] ")
+    yes_no("Do you wish to continue with this configuration? [Y/n] ", abortSetup)
 
     print "\r\n"
 
@@ -1290,82 +1380,57 @@ try:
                                 str(domain_name))
         mount_opts = fuse_mount_opts
 
+    # Update ansible ssh keys and root password only if these are
+    # pre-configured nodes
+    if not needsBootstrapping:
+        # Create and deploy new ssh keys for ansible user
+        print "Your systems have factory SSH keys for the ansible user. These"
+        print "keys \033[31mshould not be considered secure\033[0m. It is highly recommended"
+        print "that we replace these keys now with a newly-generated set.\r\n"
+        new_ssh_keys = yes_no(
+            'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
+            do_return=True)
 
-    # Create and deploy new ssh keys for ansible user
-    print "Your systems have factory SSH keys for the ansible user. These"
-    print "keys \033[31mshould not be considered secure\033[0m. It is highly recommended"
-    print "that we replace these keys now with a newly-generated set.\r\n"
-    new_ssh_keys = yes_no(
-        'Would you like to proceed with creating a new set of SSH keys? [Y/n] ',
-        True)
+        print "\r\n"
 
-    print "\r\n"
-
-    if new_ssh_keys:
-        logger.info("New ansible user SSH keys will be exchanged")
-    else:
-        logger.warning("Existing ansible user SSH keys will be kept")
-
-    # Reset root password
-    print "\r\nThe default root password on your %s nodes must be reset." % brand_short
-    print "\033[31mBe careful to select a secure password, and note that the"
-    print "password will be updated for the root user on all nodes.\033[0m\r\n"
-
-    while True:
-        # random password salt
-        pwsalt = ''.join(
-            random.SystemRandom().choice(string.ascii_letters + string.digits)
-            for _ in range(8))
-        try:
-            root_password_hashed = crypt.crypt(
-                getpass.getpass("Please enter the new root password: "),
-                "$6$" + pwsalt)
-        except Exception as err:
-            print('ERROR:', err)
-        # check for blank password
-        if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
-            continue
-        # confirm password
-        if root_password_hashed == crypt.crypt(
-                getpass.getpass("Confirm password: "), "$6$" + pwsalt):
-            logger.info("New root password collected")
-            break
+        if new_ssh_keys:
+            logger.info("New ansible user SSH keys will be exchanged")
         else:
-            print "Passwords do not match!\r\n"
-            continue
+            logger.warning("Existing ansible user SSH keys will be kept")
 
-    # === PHASE 2 ===
-    # NOTE: Validate all nodes against the OEMID file
+        # Reset root password
+        print "\r\nThe default root password on your %s nodes must be reset." % brand_short
+        print "\033[31mBe careful to select a secure password, and note that the"
+        print "password will be updated for the root user on all nodes.\033[0m\r\n"
 
-    print "\r\n"
-    logger.info("Begin %s validation phase" % brand_short)
-    print "\r\n"
+        while True:
+            # random password salt
+            pwsalt = ''.join(
+                random.SystemRandom().choice(string.ascii_letters + string.digits)
+                for _ in range(8))
+            try:
+                root_password_hashed = crypt.crypt(
+                    getpass.getpass("Please enter the new root password: "),
+                    "$6$" + pwsalt)
+            except Exception as err:
+                print('ERROR:', err)
+            # check for blank password
+            if root_password_hashed == crypt.crypt('', "$6$" + pwsalt):
+                continue
+            # confirm password
+            if root_password_hashed == crypt.crypt(
+                    getpass.getpass("Confirm password: "), "$6$" + pwsalt):
+                logger.info("New root password collected")
+                break
+            else:
+                print "Passwords do not match!\r\n"
+                continue
 
-    # Check each node against expectations in OEMID file
-    logger.info("Comparing nodes to expected configurations...")
-    run_ansible_playbook(g1_path + 'oemid/' +
-                         oem_id['flavor']['node']['verify_file_name'])
-    logger.info("All node validations passed")
-
-    # === PHASE 3 ===
+    # === PHASE 4 ===
     # NOTE: Initiate deployment
 
     print "\r\n"
     logger.info("Begin %s deployment phase" % brand_short)
-    print "\r\n"
-
-    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ')
-    print "\r\n"
-    print "\033[31mWARNING: This step will delete any existing Gluster configurations"
-    print "         and will wipe the LVM block devices and filesystems for drives"
-    print "         other than the system drive."
-    print "\r"
-    print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
-    yes_no('Are you sure you want to continue? [Y/n] ')
-
-    print("\r\nPlease be patient; these steps may take a while...\r\n")
-
-    logger.info("Initiating Gluster deployment...")
 
     # Build the backend configuration dictionary from the OEMID file
     brickcount = 1
@@ -1379,11 +1444,11 @@ try:
             'tp':
             'TP' + str(brickcount),
             'vg':
-            'VG' + str(brickcount),
+            'GLVG' + str(brickcount),
             'device':
             str(device),
-            'arbiter_size':
-            str(oem_id['flavor']['arbiter_size'])
+            'arbiter_size_factor':
+            str(oem_id['flavor']['arbiter_size_factor'])
         }]
         brickcount += 1
     logger.debug("Backend config" + str(backend_configuration))
@@ -1400,7 +1465,7 @@ try:
     # TODO: I suspect there is a more pythonic way to handle the below with fewer lines
     # Build replica peer sets if the voltype is replica
     if str(oem_id['flavor']['voltype']) == "replica":
-        logging.debug("Building replica peer sets...")
+        logger.debug("Building replica peer sets...")
         bricks_per_node = len(oem_id['flavor']['node']['backend_devices'])
         replica_peers = []
         for i in range(bricks_per_node):
@@ -1424,8 +1489,8 @@ try:
                              (peer_set_num, peer_set[peer_set_num]))
                 peer_set_num += 1
 
-        # Add the arbiter bricks if the arbiter_size is defined in the OEMID file
-        if str(oem_id['flavor']['arbiter_size']) != "None":
+        # Add the arbiter bricks if the arbiter_size_factor is defined in the OEMID file
+        if str(oem_id['flavor']['arbiter_size_factor']) != "None":
             logger.debug("Adding arbiter bricks to replica peer sets...")
             peer_set_num = 0
             for count, device in enumerate(
@@ -1461,6 +1526,54 @@ try:
             else:
                 peer_list_remain += group
 
+    # === PHASE 4.a ===
+    # NOTE: Reset the nodes.
+
+    print "\r\n"
+    print "\033[31mWARNING: The next step will delete any existing Gluster configurations"
+    print "         and will wipe the LVM block devices and filesystems for drives"
+    print "         other than the system drive."
+    print "\r"
+    print "         THIS WILL DELETE ANY EXISTING DATA FROM THE SYSTEMS!\033[0m\r\n"
+    yes_no('Are you sure you want to continue? [Y/n] ', abortSetup)
+
+    print("\r\nPlease be patient; these steps may take a while...\r\n")
+
+    logger.info("Ensuring clean state...")
+
+    playbook_args = playbook_path + '/g1-reset.yml --user ansible --extra-vars="{cache_devices: ' + str(cache_devices) + ',arbiter: ' +  str('yes' if str(oem_id['flavor']['arbiter_size_factor']) != "None" else 'no') + ',backend_configuration: ' + str( backend_configuration ) + '}"'
+
+    # Run the g1-reset ansible playbook
+    run_ansible_playbook(playbook_args)
+
+    # === PHASE 4.b ===
+    # NOTE: Customize the nodes if required.
+
+    if needsCustomization:
+        customizationFile = flavor_path + oem_id['flavor']['node']['customization_file_name']
+
+        if not os.path.isfile(customizationFile):
+            abortSetup(("Customization file %s specified but not found." % customizationFile))
+
+        print "\r\n"
+        logger.info("Nodes are being prepared...")
+        print "\r\n"
+
+        logger.debug("Running customization playbook %s" % customizationFile)
+
+        run_ansible_playbook(customizationFile + ' --extra-vars="{' + flavor_extra_vars + '}"')
+
+    print "\r\n"
+
+    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ', abortSetup)
+
+    print("\r\nPlease be patient; these steps may take a while...\r\n")
+
+    # === PHASE 4.c ===
+    # NOTE: Initiate actual deployment of Gluster.
+
+    logger.info("Initiating Gluster deployment...")
+
     #FIXME: Clean up this ugly mess
     # Build the ansible playbook arguments
     playbook_args = playbook_path + '/g1-deploy.yml --extra-vars="{cache_devices: ' + str(
@@ -1485,7 +1598,7 @@ try:
         redundancy_count
         ) + ',use_nfs: ' + str(use_nfs) + ',use_smb: ' + str(use_smb) + ',config_ad: ' + str(config_ad) + ',vip_list: ' + str(
         vip_list
-    ) + ',ha_cluster_nodes: \'' + str(
+        ) + ',ha_cluster_nodes: \'' + str(
         ha_cluster_nodes
     ) + '\'' + ',hacluster_password: \'' + str(
         hacluster_password) + '\'' + ',default_volname: ' + str(
@@ -1504,14 +1617,13 @@ try:
                     mount_protocol) + ',mount_host: ' + str(
                         mount_host) + ',mount_opts: \'' + str(
                             mount_opts
-                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',nodes_min: ' + str(
+                            ) + '\'' + ',fuse_mount_opts: \'' + str(fuse_mount_opts) + '\'' + ',vips: ' + str(vips) + ',vip_hosts: ' + str(vip_hosts) + ',nodes_min: ' + str(
                             nodes_min) + ',nodes_deployed: ' + str(
                                 desiredNumOfNodes) + ',tuned_profile: ' + str(
                                     oem_id['flavor']['node']['tuned']
                                 ) + ',gluster_vol_set: ' + str(
-                                    oem_id['flavor']['node']['gluster_vol_set']
-                                ) + ',root_password_hashed: ' + re.sub(
-                                    '\$', '\\\$', root_password_hashed)
+                                    oem_id['flavor']['gluster_vol_set']
+                                )
 
     if 'peer_set' in globals():
         playbook_args += ',replica_peers: ' + str(peer_list_min)
@@ -1520,10 +1632,10 @@ try:
         #TODO: Add try/except to catch missing parameters
         playbook_args += ',ctdb_replica_count: ' + str(ha_node_count)
         playbook_args += ',storage_subnet_prefix: ' + str(storage_subnet.prefixlen)
-        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['node']['gluster_vol_set_smb'])
+        playbook_args += ',gluster_vol_set_smb: ' + str(oem_id['flavor']['gluster_vol_set_smb'])
 
     global arbiter
-    if str(oem_id['flavor']['arbiter_size']) != "None":
+    if str(oem_id['flavor']['arbiter_size_factor']) != "None":
         arbiter = True
     else:
         arbiter = False
@@ -1536,7 +1648,7 @@ try:
     playbook_args += '}"'
 
     # Run playbook to replace ansible user ssh keys
-    if new_ssh_keys:
+    if not needsBootstrapping and new_ssh_keys:
         run_ansible_playbook(playbook_path + "/g1-key-dist.yml")
 
     # Run the primary g1-deploy ansible playbook
@@ -1590,6 +1702,11 @@ try:
         logger.debug("Build ansible-playbook command for CTDB service restart playbook")
         run_ansible_playbook(playbook_path + '/g1-smb-ad-restart-services.yml', continue_on_fail=True)
 
+    # Run playbook to reset root passwords
+    # if this is a pre-configured node
+    if not needsBootstrapping:
+        run_ansible_playbook(playbook_path + "/g1-root-pw.yml" + " --extra-vars=\"{root_password_hashed: " + re.sub('\$', '\\\$', root_password_hashed) + "}\"", continue_on_fail=True)
+
     # Run post-install ansible playbook
     playbook_args = playbook_path + '/g1-post-install.yml --extra-vars="{'
     playbook_args += 'default_volname: ' + str(default_volname)
@@ -1626,7 +1743,7 @@ try:
     print "\r"
 
     run_perf_tests = yes_no(
-        'Would you like to start the performance tests now? [Y/n] ', True)
+        'Would you like to start the performance tests now? [Y/n] ', do_return=True)
 
     print "\r\n"
 

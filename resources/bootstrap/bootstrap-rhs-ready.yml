@@ -1,0 +1,266 @@
+---
+
+- include: check-prerequisites.yml
+
+- hosts: localhost
+  name: "Generate SSH keypairs locally"
+
+  vars:
+    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+
+  tasks:
+
+    - name: generate ssh key for current user {{ current_user }}
+      user:
+        name: "{{ current_user }}"
+        generate_ssh_key: yes
+        ssh_key_bits: 4096
+        ssh_key_type: rsa
+        state: present
+
+- hosts: rhs-ready-apollo
+  name: "Bootstrap HPE Apollo 4200 nodes for RHS one"
+
+  become: true
+
+  vars:
+    current_user: "{{ansible_user|default(lookup('env', 'USER')) }}"
+
+  vars_prompt:
+
+    - name: bonding_mode
+      prompt: "\n\nThis playbook will configure a network bond of interface ens1f0 and ens2f0. Please type 'lacp' for 802.3ad or 'tlb' or balance-tlb as the bonding mode."
+      default: 'lacp'
+      private: no
+
+    - name: apply_disk_config
+      prompt: "\n\nThis playbook will configure two RAID6 sets, each of 12 hard disks. It will also initialize the NVMe devices. This will DESTROY any data on all those devices. The OS disks are not touched. Select 'yes' if you agree or 'no' if you prepared the RAID sets and NVMe devices yourself as /dev/sdb, /dev/sdc and /dev/nvme0n1, /dev/nvme1n1 respectively."
+      default: 'no'
+      private: no
+
+  tasks:
+
+    - assert:
+        that:
+          - bonding_mode == 'lacp' or bonding_mode == 'tlb'
+        msg: "Incorrect network bonding mode defined: {{ bonding_mode }}"
+
+    - assert:
+        that:
+          - apply_disk_config == 'yes' or apply_disk_config == 'no'
+        msg: "Invalid response. Please specify either 'yes' or 'no'."
+
+    - name: add generated ssh key to hosts
+      authorized_key:
+        user: "{{ current_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: add sudoers configuration for user {{ current_user }}
+      lineinfile:
+        path: /etc/sudoers.d/ansible
+        line: "ansible        ALL=(ALL)       NOPASSWD: ALL"
+        create: yes
+        state: present
+
+    - name: enable non-interactive sudo access for user {{ current_user }}
+      lineinfile:
+        path: /etc/sudoers
+        line: "#Defaults requiretty"
+        regexp: "^Defaults(.*?)requiretty"
+        backrefs: yes
+        state: present
+
+    - name: disable DNS lookup in sshd
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "UseDNS no"
+        state: present
+      notify:
+        - reload sshd
+
+    - name: install gluster
+      yum: name={{ item }} state=present
+      with_items:
+        - "@RH-Gluster-Core"
+        - "@RH-Gluster-NFS-Ganesha"
+        - "@RH-Gluster-Tools"
+        - "@scalable-file-systems"
+        - nfs-utils
+        - vim
+        - vim-enhanced
+        - net-tools
+        - telnet
+        - wget
+        - mlocate
+        - firewalld
+        - sysstat
+        - net-snmp-utils
+        - redhat-support-tool
+        - NetworkManager
+        - NetworkManager-team
+        - NetworkManager-glib
+        - teamd
+        - gstatus
+        - ctdb
+      notify:
+        - enable firewalld
+        - enable networkmanager
+
+    - name: install colonizer
+      yum: name={{ item }} state=present
+      with_items:
+        - gluster-colonizer
+        - gluster-zeroconf-avahi
+      notify:
+        - enable zeroconf
+        - allow zeroconf
+
+    - name: configure avahi daemon to only allow {{ ansible_default_ipv4.alias }}
+      lineinfile:
+        line: "allow-interfaces={{ ansible_default_ipv4.alias }}"
+        path: /etc/avahi/avahi-daemon.conf
+        insertafter: "\\[server\\]"
+        state: present
+
+    - name: configure system panic settings
+      blockinfile:
+        block: |
+          kernel.unknown_nmi_panic = 1
+          kernel.softlockup_panic = 1
+          kernel.nmi_watchdog = 1
+        path: /etc/sysctl.d/panic.conf
+        create: yes
+        state: present
+
+    - name: retrieve NetworkManager connection names for onboard nics
+      shell: nmcli -f UUID,DEVICE -t connection show | grep {{ item }}
+      changed_when: false
+      register: nmcli_conn_show_loms_cmd
+      with_items:
+        - eno1
+
+    - name: rename NetworkManager connection name for onboard nics
+      shell: nmcli connection modify {{ item.stdout.split(':')[0] }} connection.id {{ item.stdout.split(':')[1] }}
+      with_items:
+        - "{{ nmcli_conn_show_loms_cmd.results }}"
+
+    - name: delete any existing bonding connection
+      shell: nmcli connection delete {{ item }}
+      ignore_errors: true
+      failed_when: false
+      changed_when: false
+      with_items:
+        - bond0
+        - bond0-ens1f0
+        - bond0-ens2f0
+        - ens1f0
+        - ens2f0
+
+    - name: delete any existing bonding device
+      shell: nmcli device delete {{ item }}
+      ignore_errors: true
+      failed_when: false
+      changed_when: false
+      with_items:
+        - bond0
+        - bond0-ens1f0
+        - bond0-ens2f0
+
+    - name: create network team for gluster data traffic
+      nmcli:
+        type: bond
+        conn_name: bond0
+        mode: "{{ (bonding_mode == 'lacp') | ternary('802.3ad', 'balance-tlb') }}"
+        state: present
+      changed_when: false
+
+    - name: add network nics on ens1f0 and ens2f0 to the network team
+      nmcli:
+        type: bond-slave
+        master: bond0
+        conn_name: "bond0-{{ item }}"
+        ifname: "{{ item }}"
+        state: present
+      with_items:
+        - ens1f0
+        - ens2f0
+      changed_when: false
+
+    - name: verify bond connection state
+      shell: cat /sys/class/net/bond0/bonding/mii_status
+      register: bonding_state_cmd
+      until: bonding_state_cmd.stdout == 'up'
+      retries: 5
+      delay: 5
+      changed_when: false
+
+    - block:
+
+        - name: enumerate raid controller using hpssacli
+          shell: hpssacli controller all show
+          register: hpssacli_controller_show_cmd
+          changed_when: false
+
+        - set_fact:
+            array_controller_slot: "{{ hpssacli_controller_show_cmd.stdout | regex_search('Smart Array .* in Slot ([0-9])', '\\1') | first }}"
+
+        - name: looking for logical drives except OS RAID
+          shell: hpssacli controller slot={{ array_controller_slot }} ld all show
+          changed_when: false
+          register: hpssacli_pd_show_cmd
+
+        - set_fact:
+            additional_logical_drives: "{{ hpssacli_pd_show_cmd.stdout | regex_findall('array ([B-Z])', '\\1') | sort(true) }}"
+
+        - name: delete all logical drives except OS RAID
+          shell: hpssacli controller slot={{ array_controller_slot }} array {{ item | upper }} delete forced
+          changed_when: false
+          with_items: "{{ additional_logical_drives }}"
+
+        - name: create RAID configuration template
+          template:
+            src: ssainput.ini.j2
+            dest: /tmp/ssainput.ini
+
+        - name: create RAID configuration
+          shell: hpssascripting -i /tmp/ssainput.ini
+          changed_when: false
+
+        - name: wipe devices
+          shell: wipefs -af {{ item }}
+          with_items:
+            - /dev/sdb
+            - /dev/sdc
+            - /dev/nvme0n1
+            - /dev/nvme1n1
+          failed_when: false
+          changed_when: false
+
+      when: apply_disk_config == 'yes'
+
+    #- name: enumerate
+
+  handlers:
+
+    - name: enable firewalld
+      service: name=firewalld state=started enabled=yes
+
+    - name: enable networkmanager
+      service: name=NetworkManager state=started enabled=yes
+
+    - name: reload sshd
+      service: name=sshd state=reloaded
+
+    - name: enable avahi socket
+      systemd: unit=avahi-daemon.socket state=started enabled=yes
+      listen: enable zeroconf
+
+    - name: enable avahi service
+      systemd: unit=avahi-daemon.service state=started enabled=yes
+      listen: enable zeroconf
+
+    - name: allow zeroconf
+      firewalld: service=mdns state=enabled permanent=true immediate=true
+
+...

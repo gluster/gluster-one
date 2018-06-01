@@ -1,0 +1,30 @@
+The supported HPE Apollo 4200 Gen9 server must meet the
+below requirements in order to use this set of OEMID
+flavor files:
+
+- Model: ProLiant XL420 Gen9
+- Virtual CPUs: 40 (hyperthreading assumed)
+- Total memory: 64GB minimum
+- OS: Red Hat Enterprise Linux 7.4
+- ??RAID controller details??
+- Disks: 24x physical disks minimum ??size??
+- SSD: 1x NVMe ??size??
+- Network:
+  - Device eno1 connected to management network
+  - Devices ens1f0 and ens2f0 connected
+    to storage network
+
+Additional software packages:
+  - hpssacli for command-line RAID management
+    (This can be automatically installed from
+     the Internet by the Gluster Colonizer)
+
+Operating system requirements:
+  - Red Hat Gluster Storage ??version??
+  - Ansible ??version??
+  - User 'ansible' on all nodes with the same
+    password and with sudo privleges
+  - firewalld service enabled
+  - NetworkManager service enabled
+  - iptables service _not_ enabled
+  - SELinux enabled and enforcing

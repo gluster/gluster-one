@@ -29,15 +29,13 @@
     - shell: /bin/bash -c 'echo "Distributing new SSH keys..." > {{ fifo }}'
 
     - name: Install new ansible public key as authorized_key
-      copy: 
-        owner: ansible
-        group: ansible
-        mode: 0600
-        content: "{{ ansible_id_rsa.ssh_public_key }}"
-        dest: /home/ansible/.ssh/authorized_keys
+      authorized_key:
+        user: ansible
+        state: present
+        key: "{{ ansible_id_rsa.ssh_public_key }}"
 
     - name: Distribute new ansible public key
-      copy: 
+      copy:
         owner: ansible
         group: ansible
         mode: 0700
@@ -45,9 +43,37 @@
         dest: /home/ansible/.ssh/id_rsa.pub
 
     - name: Distribute new ansible private key
-      copy: 
+      copy:
         owner: ansible
         group: ansible
         mode: 0700
         content: "{{ ansible_ssh_private }}"
         dest: /home/ansible/.ssh/id_rsa
+
+    - name: add sudoers configuration for the ansible user
+      lineinfile:
+        path: /etc/sudoers.d/ansible
+        line: "ansible        ALL=(ALL)       NOPASSWD: ALL"
+        create: yes
+        state: present
+
+    - name: allow non-interactive sudo access
+      lineinfile:
+        path: /etc/sudoers
+        line: "#Defaults requiretty"
+        regexp: "^Defaults(.*?)requiretty"
+        backrefs: yes
+        state: present
+
+    - name: disable DNS lookup in sshd
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "UseDNS no"
+        state: present
+      notify:
+        - reload sshd
+
+  handlers:
+
+      - name: reload sshd
+        service: name=sshd state=reloaded

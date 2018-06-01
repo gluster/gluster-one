@@ -5,6 +5,7 @@
     ha_base_dir: "/var/run/gluster/shared_storage/nfs-ganesha"
     ha_name: "gluster-ganesha-ha"
 
+
   tasks:
     - name: Build mntpath variable
       set_fact:
@@ -17,6 +18,35 @@
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
+     #NOTE: We assume all backend_devices are the same size and just check the first one
+    - name: Set backend device name
+      set_fact:
+        backend_dev: "{{ backend_configuration[0]['device'].split('/')[2] }}"
+      when: arbiter == True
+
+    - name: Get backend device size
+      set_fact:
+        backend_dev_size: "{{ ansible_devices[backend_dev]['size'].split(' ')[0] }}"
+      when: arbiter == True
+
+    #Unfortunately it seems impossible to control the units output by ansible
+    #facts, so we have to determine those units here and act accordingly
+    - name: Get backend device size units
+      set_fact:
+        backend_dev_units: "{{ ansible_devices[backend_dev]['size'].split(' ')[1] }}"
+      when: arbiter == True
+
+    - name: Set conversion factor for MB
+      set_fact:
+        mb_conversion:  "{{ 1024|pow(3) if backend_dev_units == 'PB' else 1024|pow(2) if backend_dev_units == 'TB' else 1024 if backend_dev_units == 'GB' else 1 if backend_dev_units == 'MB' else (1/1024) if backend_dev_units == 'KB' }}"
+      when: arbiter == True
+
+    #NOTE: The additonal .009765625 factor keeps the result in base 2
+    - name: Calculate arbiter brick size in MB
+      set_fact:
+        arbiter_size: "{{ (backend_dev_size|float * backend_configuration[0]['arbiter_size_factor']|float * mb_conversion|float * 0.009765625) }}"
+      when: arbiter == True
+
     - name: Set PV data alignment for RAID
       set_fact:
         pv_dalign: "{{ diskcount|int * dalign|int }}"
@@ -27,109 +57,15 @@
         pv_dalign: "{{ dalign }}"
       when: disktype != 'RAID'
 
-    - shell: /bin/bash -c 'echo "Cleaning up any existing Gluster configurations..." > {{ fifo }}'
-
-    - name: Stop glusterd service
-      systemd:
-        name: glusterd
-        state: stopped
-
-    - name: Kill all Gluster processes
-      shell: /bin/bash -c 'pkill -9 {{ item }}'
-      with_items:
-        - glusterfs
-        - glusterfsd
-      ignore_errors: yes
-
-    - name: Clear existing Gluster configuration
-      file:
-        path: "/var/lib/glusterd/{{ item }}"
-        state: absent
-      with_items:
-        - glusterd.info
-        - glustershd
-        - bitd
-        - glusterfind
-        - glustershd
-        - nfs
-        - peers
-        - quotad
-        - scrub
-        - snaps
-        - ss_brick
-        - vols
-      ignore_errors: yes
-
     - name: Start glusterd service
       systemd:
         name: glusterd
         state: started
 
-    - name: Unmount data bricks
-      mount:
-        name: "{{ item.0.path }}"
-        state: "{{ item.1 }}"
-      with_nested:
-        - "{{ mntpaths }}"
-        - ['absent', 'unmounted']
-
-    - name: Unmount arbiter bricks
-      mount:
-        name: "{{ item.0.path }}"
-        state: "{{ item.1 }}"
-      with_nested:
-        - "{{ arbiter_mntpaths }}"
-        - ['absent', 'unmounted']
-      when: arbiter == True
-
-      #- name: Deactivate VGs
-      #shell: /bin/bash -c 'vgchange -a n --activationmode partial {{ item.vg }}'
-      #with_items: "{{ backend_configuration }}"
-      #register: result
-      #failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-
-    - name: Clear LVM
-      lvg:
-        vg: "{{ item.vg }}"
-        state: absent
-        force: yes
-      with_items: "{{ backend_configuration }}"
-
-    - name: Clear cache LVM
-      lvg:
-        vg: "FAST{{ item.vg }}"
-        state: absent
-        force: yes
-      with_items: "{{ backend_configuration }}"
-
-    - name: Remove PV
-      shell: /bin/bash -c 'pvremove --force {{ item.device }}'
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_items: "{{ backend_configuration }}"
-
-    - name: Remove cache PV
-      #FIXME: The 'p' is needed below for nvme drives, but should not be
-      #       there for devices with normal /dev/sdX disk paths.
-      shell: /bin/bash -c 'pvremove --force {{ item.0 }}p{{ item.1["id"]|int + 1 }}'
-      register: result
-      failed_when: "result.rc != 0 and 'not found' not in result.stderr"
-      with_nested:
-        - "{{ cache_devices }}"
-        - "{{ backend_configuration }}"
-
-    - name: Cleanup data devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item["device"] }}'
-      with_items: "{{ backend_configuration }}"
-
-    - name: Cleanup cache devices
-      shell: /bin/bash -c '/sbin/wipefs -af {{ item }}'
-      with_items: "{{ cache_devices }}"
-
     - shell: /bin/bash -c 'echo "Creating LVM structures..." > {{ fifo }}'
 
     - name: Create data volume groups
-      vg: 
+      vg:
         action: create
         disks: "{{ item.device }}"
         vgname: "{{ item.vg }}"
@@ -144,7 +80,7 @@
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
     - name: Create data thin pools
-      lvol: 
+      lvol:
         vg: "{{ item.vg }}"
         lv: "{{ item.tp }}"
         size: "100%FREE"
@@ -160,6 +96,8 @@
     # NOTE: The GPT partition table is not being created correctly when
     #       included in the 'Create cache partitions' play below (bug?).
     #       The below two plays are a hack to work around this problem.
+    #       This was relevant w/ ansible 2.3, but may no longer be an
+    #       issue with 2.5.
     - name: Set cache disk labels
       parted:
         label: gpt
@@ -184,15 +122,20 @@
         number: 1
       with_items: "{{ cache_devices }}"
 
+    #FIXME: We have a problem here between ansible versions.
+    #About 2.3.2.0, it is important that label is either omitted or empty.
+    #About 2.4-ish+, it is important that label is gpt
     - name: Create arbiter partitions
       parted:
+        label: gpt
+        #label: ''
         state: present
         device: "{{ item[0] }}"
-        number: 1
-        name: p1
+        number: "{{ item[1]['id']|int + 1 }}"
+        name: "p{{ item[1]['id']|int + 1 }}"
         flags: [ lvm ]
-        part_start: 0%
-        part_end: "{{ item[1]['arbiter_size'] }}GiB"
+        part_start: "{{ item[1]['id']|int * arbiter_size|int + 1 }}MiB"
+        part_end: "{{ (item[1]['id']|int + 1) * arbiter_size|int }}MiB"
         unit: s
       with_nested:
         - "{{ cache_devices }}"
@@ -200,29 +143,44 @@
       when: arbiter == True
       register: result
 
+    - set_fact:
+        last_result: "{{ result['results']|last }}"
+      when: arbiter == True
+
+    - set_fact:
+        last_part: "{{ last_result['partitions']|last }}"
+      when: arbiter == True
+
     - name: Get end point of arbiter partition
       set_fact:
-        arbiter_end: "{{ result['results'][0]['partitions'][0]['end']|int }}"
+        arbiter_end: "{{ last_part['end']|int }}"
       when: arbiter == True
 
     - name: Calculate cache partition sizes
       set_fact:
-        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices }}"
-    
-    - name: Define partition incrementer
-      set_fact:
-        part_incr: 1
+        cache_part_size: "{{ ((fast_dev_end|int - arbiter_end|default(50)|int) - 50) / numdevices|int }}"
 
-    - set_fact:
-        part_incr: "{{ part_incr|int + 1 }}"
-      when: arbiter == True
+    - name: Define starting number for cache partitions
+      set_fact:
+        cache_part_start: "{{ 1 if arbiter != True else (1 + numdevices|int) }}"
+
+    # We use the offsets for each cache partition to write 4MB of zeroes 
+    # there. This is the only way to be sure there's no old lvm metadata 
+    # anymore which would cause duplicate PVs etc. 
+    - name: Clean up residual LVM metadata from all cache partition offsets
+      shell: /bin/bash -c "/usr/bin/dd if=/dev/zero of={{ item[0] }} bs=512 obs=512 count=8192 seek={{ ( 512|int * (arbiter_end|default(50)|int + ((item[1]['id']|int * cache_part_size|int))) + 1|int) }} oflag=seek_bytes,sync"
+      with_nested:
+        - "{{ cache_devices }}"
+        - "{{ backend_configuration }}"
 
     - name: Create cache partitions
       parted:
+        label: gpt
+        #label: ''
         state: present
         device: "{{ item[0] }}"
-        number: "{{ item[1]['id']|int + part_incr|int }}"
-        name: "p{{ item[1]['id']|int + part_incr|int }}"
+        number: "{{ item[1]['id']|int + cache_part_start|int }}"
+        name: "p{{ item[1]['id']|int + cache_part_start|int }}"
         flags: [ lvm ]
         part_start: "{{ (arbiter_end|default(50)|int + (item[1]['id']|int * cache_part_size|int)) + 1|int }}s"
         part_end: "{{ (arbiter_end|default(50)|int + ((item[1]['id']|int + 1) * cache_part_size|int))|int }}s"
@@ -231,11 +189,23 @@
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
 
+    - name: Get cache device partition naming convention
+      shell: "lsblk -lp | grep part | grep -m 1 {{ item }} | awk '{print $1}'"
+      register: result
+      with_items: "{{ cache_devices }}"
+
+      #NOTE: Assuming only one cache device; this will break with multiple cache devices
+    - name: Isolate any partition prefix characters
+      set_fact:
+        part_prefix: '{{ result.results.0.stdout.split(cache_devices.0)[1] | default("") | regex_replace("[0-9]+$", "") }}'
+
+      #NOTE: If we use the result of the create arbiter partitions play above, we can
+      #      probably create the disks list using the dictionary there, which would be
+      #      more accurate and would get rid of the hard-coded p here.
     - name: Create fast volume groups, initially only with arbiter PVs
-      vg: 
+      vg:
         action: create
-        #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p1"
+        disks: "{{ item[0] }}{{ part_prefix }}{{ (item[1]['id']|int + 1) }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -268,8 +238,7 @@
     - name: Add cache partitions to fast VGs
       vg:
         action: create
-        #FIXME: Hard-coded the p again for NVMe devices
-        disks: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        disks: "{{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
         vgname: "FAST{{ item[1]['vg'] }}"
         diskcount: "{{ diskcount }}"
         disktype: "{{ disktype }}"
@@ -284,7 +253,8 @@
       register: result
       failed_when: "result.rc != 0 and 'already exists' not in result.msg and 'is already in volume group' not in result.msg"
 
-    - shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}p{{ item[1]['id']|int + 2}}"
+    - name: Add cache partitions to fast VGs
+      shell: /bin/bash -c "/sbin/vgextend FAST{{ item[1]['vg'] }} {{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
       with_nested:
         - "{{ cache_devices }}"
         - "{{ backend_configuration }}"
@@ -295,8 +265,7 @@
         vg: "FAST{{ item[1]['vg'] }}"
         lv: "cpool{{ item[1]['id']|int + 1 }}"
         opts: "--type cache-pool --chunksize {{ pv_dalign }}k --poolmetadataspare n"
-        #FIXME: Hard-coded p again for NVMe
-        pvs: "{{ item[0] }}p{{ item[1]['id']|int + part_incr|int }}"
+        pvs: "{{ item[0] }}{{ part_prefix }}{{ item[1]['id']|int + cache_part_start|int }}"
         size: "100%FREE"
       with_nested:
         - "{{ cache_devices }}"
@@ -349,7 +318,7 @@
         poolname: "arbiter-{{ item.tp }}"
         vgname: "{{ item.vg }}"
         lvname: "arbiter-{{ item.thinLV }}"
-        virtualsize: "{{ item['arbiter_size'] }}G"
+        virtualsize: "{{ arbiter_size }}M"
       with_items: "{{ backend_configuration }}"
       when: arbiter == True
 
@@ -380,7 +349,7 @@
 
     - name: Create the arbiter brick mount points, skips if present
       file: path={{ item.0.path }} state=directory
-      with_nested: 
+      with_nested:
         - "{{ arbiter_mntpaths }}"
         - "{{ backend_configuration }}"
       when: arbiter == True
@@ -404,7 +373,7 @@
 
     - name: Set the arbiter mount SELinux context
       file: path={{ item.0.path }} setype=glusterd_brick_t
-      with_nested: 
+      with_nested:
         - "{{ arbiter_mntpaths }}"
         - "{{ backend_configuration }}"
       when: arbiter == True
@@ -471,6 +440,22 @@
         group: root
         mode: 0644
 
+    - shell: /bin/bash -c 'echo "Testing storage network..." > {{ fifo }}'
+
+    # This is actually necessary to kick-start the interface after bonding
+    - name: Test reachability of host for peer probing
+      delegate_to: 127.0.0.1
+      run_once: true
+    # The net_ping module apparently isn't in the RH ansible build :-/
+    #  net_ping:
+    #    dest: "{{ hostnames[0] }}"
+    #    count: 5
+      shell: /bin/ping -c 5 {{ hostnames[0] }}
+      register: result
+      until: result.rc == 0
+      retries: 5
+      delay: 2
+
     - shell: /bin/bash -c 'echo "Creating Gluster trusted storage pool..." > {{ fifo }}'
 
     #NOTE: The delegate_to host must match the master host or it is possible for a
@@ -514,11 +499,11 @@
     - debug: var=brickstring_fuse verbosity=2
     - debug: var=brickstring_nfs verbosity=2
     - debug: var=brickstring_smb verbosity=2
-      
+
     - name: Create Gluster volume for FUSE
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      volume:  
+      volume:
         action:         create
         volume:         "{{ default_volname }}"
         bricks:         "{{ brickstring_fuse }}"
@@ -561,18 +546,12 @@
     - include: g1-smb-ctdb.yml
       when: use_smb == True
 
-      #- shell: /bin/bash -c 'echo "Configuring Samba for Active Directory..." > {{ fifo}}'
-      #when: config_ad == True
-
-      #- include: g1-smb-ad.yml
-      #when: config_ad == True
-
     - shell: /bin/bash -c 'echo "Starting Gluster volumes..." > {{ fifo }}'
 
     - name: Starts a volume
       delegate_to: "{{ play_hosts[0] }}"
       run_once: true
-      volume: 
+      volume:
         action: start
         volume: "{{ item }}"
         force: "{{ force | default(False) }}"
@@ -580,11 +559,3 @@
         - "{{ default_volname }}"
       register: result
       failed_when: "result.rc != 0 and ('already started' not in result.msg)"
-
-    - shell: /bin/bash -c 'echo "Updating root password..." > {{ fifo }}'
-
-    - name: Update root password on all the cluster nodes
-      user:
-        name: root
-        password: "{{ root_password_hashed }}"
-

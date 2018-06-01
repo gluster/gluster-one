@@ -1,0 +1,52 @@
+- hosts: gluster_nodes
+  name: "Bootstrapping nodes."
+  become: yes
+  any_errors_fatal: True
+
+  tasks:
+    - shell: /bin/bash -c 'echo "Installing package dependencies..." > {{ fifo }}'
+
+    - name: install gluster and colonizer dependencies
+      yum: name={{ item }} state=present
+      with_items:
+        - "@RH-Gluster-Core"
+        - "@RH-Gluster-NFS-Ganesha"
+        - "@RH-Gluster-Tools"
+        - "@scalable-file-systems"
+        - nfs-utils
+        - vim
+        - vim-enhanced
+        - net-tools
+        - telnet
+        - wget
+        - mlocate
+        - firewalld
+        - sysstat
+        - net-snmp-utils
+        - redhat-support-tool
+        - NetworkManager
+        - NetworkManager-team
+        - NetworkManager-glib
+        - teamd
+        - gstatus
+        - ctdb
+        - gdeploy
+        - fio
+
+    - shell: /bin/bash -c 'echo "Configuring system settings..." > {{ fifo }}'
+
+    - name: configure system panic settings
+      blockinfile:
+        block: |
+          kernel.unknown_nmi_panic = 1
+          kernel.softlockup_panic = 1
+          kernel.nmi_watchdog = 1
+        path: /etc/sysctl.d/panic.conf
+        create: yes
+        state: present
+
+    - name: enable firewalld
+      service: name=firewalld state=started enabled=yes
+
+    - name: enable networkmanager
+      service: name=NetworkManager state=started enabled=yes

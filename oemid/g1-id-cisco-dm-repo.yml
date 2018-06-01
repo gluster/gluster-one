@@ -1,0 +1,48 @@
+# Gluster Colonizer OEMID file for
+# Cisco UCS nodes in disperse configuration
+# for media repository
+
+flavor:
+   name: Digital Media Repository
+   g1_path: /usr/share/gluster-colonizer/
+   node:
+       name: Cicso-UCS-node
+       needs_bootstrap: true
+       verify_file_name: verify-cisco-dm.yml
+       mgmt_interface: eth0
+       storage_interface: eth1
+       backend_devices:
+         - /dev/sda
+         - /dev/sdb
+         - /dev/sdc
+         - /dev/sdd
+         - /dev/sde
+         - /dev/sdf
+         - /dev/sdg
+         - /dev/sdh
+         - /dev/sdi
+         - /dev/sdj
+         - /dev/sdk
+         - /dev/sdl
+       #Note: Only one cache device is currenly supported
+       cache_devices:
+         - /dev/sdn
+       disktype: JBOD         #JBOD|RAID
+       diskcount: 1          #Number of data disks; for 12 disk RAID 6 this is 10; for {J,RAID}BOD it is 1
+       dalign: 256            #<integer in KB>
+       tuned: rhgs-sequential-io   #tuned profile name
+   gluster_vol_set:
+       server.event-threads: 4
+       client.event-threads: 4
+   gluster_vol_set_smb:
+       server.allow-insecure: on
+       performance.cache-samba-metadata: on
+       storage.batch-fsync-delay-usec: 0
+       performance.readdir-ahead: on
+       performance.parallel-readdir: on
+       group: nl-cache
+   volname: gluster1
+   voltype: disperse          #replica|disperse
+   #Arbiter size should be roughly 0.1% or <brick_size>/1024 for the NAS flavor
+   #Size in percent for the arbiter brick relative to the data brick
+   arbiter_size_factor: None  #<float in %>|None
