@@ -2,9 +2,10 @@
 
 flavor:
     name: Media Repo
-    g1_path: /root/g1/
+    g1_path: /usr/share/gluster-colonizer/
     node:
         name: KVM-node
+        needs_bootstrap: false
         verify_file_name: verify-qemu.yml
         mgmt_interface: eth0
         storage_interface: eth1
