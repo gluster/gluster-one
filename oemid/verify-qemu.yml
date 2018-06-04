@@ -5,6 +5,11 @@
   vars:
     ignore_disk_names: ["vda", "sda"]
   tasks:
+    - set_fact:
+        ansdev: "{{ ansdev | default('[]') }} + [ '{{ item }}' ]"
+      with_items: "{{ ansible_devices.keys() }}"
+      # Ignore device mapper entries
+      when: not item | search('dm-')
     - assert:
         that: 
           - ansible_processor_vcpus == 2
@@ -14,10 +19,10 @@
           - ansible_system_vendor == 'QEMU'
           - ansible_distribution == 'RedHat'
           - ansible_distribution_major_version == '7'
-          - (ansible_devices|length) == 4
+          - (ansdev|length) == 4
 
     - name: check if disk sizes and naming is as expected
-      with_items: "{{ (ansible_devices.keys() | difference(ignore_disk_names)) }}"
+      with_items: "{{ (ansdev | difference(ignore_disk_names)) }}"
       assert:
         that:
           - ansible_devices[item]['size'] == '200.00 GB'
