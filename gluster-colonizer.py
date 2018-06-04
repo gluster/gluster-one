@@ -1530,6 +1530,10 @@ try:
     # NOTE: Reset the nodes.
 
     print "\r\n"
+
+    yes_no('Next we will initiate the Gluster deployment - OK? [Y/n] ', abortSetup)
+
+    print "\r\n"
     print "\033[31mWARNING: The next step will delete any existing Gluster configurations"
     print "         and will wipe the LVM block devices and filesystems for drives"
     print "         other than the system drive."
@@ -1562,12 +1566,6 @@ try:
         logger.debug("Running customization playbook %s" % customizationFile)
 
         run_ansible_playbook(customizationFile + ' --extra-vars="{' + flavor_extra_vars + '}"')
-
-    print "\r\n"
-
-    yes_no('Next we will initiate the Gluster installation - OK? [Y/n] ', abortSetup)
-
-    print("\r\nPlease be patient; these steps may take a while...\r\n")
 
     # === PHASE 4.c ===
     # NOTE: Initiate actual deployment of Gluster.
