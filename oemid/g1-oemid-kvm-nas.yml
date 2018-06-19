@@ -23,8 +23,16 @@ flavor:
         cluster.lookup-optimize: on
         features.cache-invalidation: on
         performance.cache-invalidation: on
-        performance.stat-prefetch: on
         group: metadata-cache
+        # Performance options that are _bad_ for database workloads
+        performance.stat-prefetch: on
+        performance.open-behind: on
+        performance.write-behind: on
+        performance.quick-read: on
+        performance.strict-o-direct: off
+        performance.read-ahead: on
+        performance.readdir-ahead: on
+        performance.io-cache: on
     gluster_vol_set_smb:
         server.allow-insecure: on
         performance.cache-samba-metadata: on
