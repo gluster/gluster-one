@@ -1,0 +1,24 @@
+# Replace any items in <> to match your configuration
+
+# WARNING: This template is intended to wipe all default brick
+# filesystem and thin LV configurations on all nodes. This should only
+# be used _after_ first using the remove-default-volume template.
+#
+# Note that the VGs, thin pools, and lvmcache configurations remain
+# intact with the intention that only new thin LVs will be created
+# for bricks to use with new volumes.
+
+# Add all hostnames
+[hosts]
+<hostname1>
+<hostname2>
+<hostname3>
+<hostname4>
+<...>
+
+[backend-reset]
+# For 'replica 3 arbiter 1' volume
+lvs={,arbiter-}brick1
+# For 'disperse-data 4 redundancy 2' volume
+#lvs=brick{1..12}
+unmount=yes
