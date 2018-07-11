@@ -1,0 +1,23 @@
+# Replace any items in <> to match your configuration
+
+# Add all hostnames
+[hosts]
+<hostname1>
+<hostname2>
+<hostname3>
+<hostname4>
+<...>
+
+# Add all hostnames to 'bricks' that are not currently
+# part of the default volume. Volume geometry must be
+# maintained in the brick order. Example structure below
+# assumes a "replica 3 arbiter 1" volume.
+[volume]
+action=add-brick
+volname=<gluster1>
+bricks=<hostnameX>:</gluster/bricks/brick1>,<hostnameY>:</gluster/bricks/brick1>,<hostnameZ>:</gluster/bricks/arbiter-brick1>
+
+[volume]
+action=rebalance
+volname=<gluster1>
+state=start
