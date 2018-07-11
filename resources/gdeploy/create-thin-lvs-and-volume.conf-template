@@ -1,0 +1,11 @@
+# Replace any items in <> to match your configuration
+
+# Add all hostnames
+[hosts]
+<hostname1>
+<hostname2>
+<hostname3>
+<hostname4>
+<...>
+
+#TODO
