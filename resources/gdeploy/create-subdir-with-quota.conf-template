@@ -1,0 +1,37 @@
+# Replace any items in <> to match your configuration
+
+# Add all hostnames
+[hosts]
+<hostname1>
+<hostname2>
+<hostname3>
+<hostname4>
+<...>
+
+[quota]
+action=enable
+volname=<gluster1>
+
+# The subdirectory must be created from the client mount
+[clients]
+action=mount
+volname=<gluster1>
+hosts=<hostname1>
+fstype=glusterfs
+client_mount_points=</gluster/client/gluster1>
+
+[shell]
+action=execute
+command=mkdir </gluster/client/gluster1/my_subdirectory>
+
+[clients]
+action=unmount
+volname=<gluster1>
+hosts=<hostname1>
+client_mount_points=</gluster/client/gluster1>
+
+[quota]
+action=limit-usage
+volname=<gluster1>
+path=</my_subdirectory>
+size=<8GB,10GB>
