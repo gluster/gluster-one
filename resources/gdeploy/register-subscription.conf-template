@@ -1,0 +1,21 @@
+# Replace any items in <> to match your configuration
+
+# Add all hostnames
+[hosts]
+<hostname1>
+<hostname2>
+<hostname3>
+<hostname4>
+<...>
+
+[RH-subscription]
+action=register
+username=<username>
+password=<password>
+#activationkey=<activationkey>
+#auto-attach=true
+pool=<pool_id>
+disable-repos=yes
+repos=rhel-7-server-rpms,rh-gluster-3-for-rhel-7-server-rpms,rh-gluster-3-samba-for-rhel-7-server-rpms,rh-gluster-3-nfs-for-rhel-7-server-rpms,rhel-7-server-ansible-2-rpms
+ignore_register_errors=no
+ignore_attach_pool_errors=no
