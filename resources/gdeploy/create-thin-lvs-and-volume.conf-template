@@ -12,17 +12,19 @@
 [lv1]
 action=create
 vgname=GLVG1
+poolname=TP1
 lvname=<brick1>
 lvtype=thin
-size=<10GB>
+virtualsize=<10GB>
 mount=</gluster/bricks/brick1>
 
 [lv2]
 action=create
 vgname=GLVG1
+poolname=TP1
 lvname=<arbiter-brick1>
 lvtype=thin
-size=<1GB>
+virtualsize=<1GB>
 mount=</gluster/bricks/arbiter-brick1>
 
 [volume]
