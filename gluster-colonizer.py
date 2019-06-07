@@ -963,6 +963,7 @@ try:
             print "   3. Skip selection and configure manually\r\n"
 
             idmap_module = ''
+            idmap_range = "1000000-4000000"
             while True:
                 input_string = user_input("idmap module? [1] ")
                 if str(input_string) is "2":
@@ -986,7 +987,6 @@ try:
                 print "\r\nThe default idmap range is 1000000-4000000. If you would like to change"
                 print "this, enter a new value here with the same notation (m-n)."
 
-                idmap_range = "1000000-4000000"
                 while True:
                     input_string = user_input("\r\nidmap range? [1000000-4000000] ")
                     if input_string is "":
