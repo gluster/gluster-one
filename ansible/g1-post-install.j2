@@ -36,7 +36,7 @@ can be accessed via the storage network hostnames or IP addressed configured
 during the deployment:
 
 {% for hostname in hostnames %}
-{{ hostname }}.{{ domain_name }}
+{{ hostname }}
 {% endfor %}
 
 The Gluster native client utilizes client-side intelligence for data placement
