@@ -9,7 +9,7 @@ group_reporting
 startdelay=0
 numjobs=4
 stonewall
-exec_prerun=sync; echo 3 > /proc/sys/vm/drop_caches
+exec_prerun=bash -c 'sync && echo 3 > /proc/sys/vm/drop_caches'
 
 [seqwrite]
 description=Sequential Write Test 90/10
