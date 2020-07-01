@@ -31,7 +31,7 @@
         - 'realm = {{ ad_domain_name }}'
         - 'netbios name = {{ ad_netbios_name }}'
         - 'security = ads'
-        - '# Auto-configured by the gluster-colonizer'
+        - '# Auto-configured by gluster-one'
 
     - shell: /bin/bash -c 'echo "Configuring nsswitch.conf file..." > {{ fifo }}'
 

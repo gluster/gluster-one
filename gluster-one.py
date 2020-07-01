@@ -10,7 +10,7 @@
 # gluster-colnizer.py:  This script initiates a Gluster deployment based on a  *
 #                       recipe defined in a set of OEMID files.                *
 #                                                                              *
-# Usage:                $ gluster-colonizer.py -f <OEMID FILE>                 *
+# Usage:                $ gluster-one.py -f <OEMID FILE>                 *
 #                                                                              *
 # Authors:              Dustin Black <dustin@redhat.com>                       *
 #                         https://github.com/dustinblack                       *
@@ -53,7 +53,7 @@ pp = pprint.PrettyPrinter(indent=2)
 
 # Get command arguments
 parser = argparse.ArgumentParser(
-    description='Setup Gluster using the colonizer deployment system',
+    description='Setup Gluster using the ONE deployment system',
     formatter_class=RawTextHelpFormatter)
 parser.add_argument(
     '-f',
@@ -92,21 +92,15 @@ try:
 except:
     brand_distributor = "Gluster"
     brand_parent = "Gluster"
-    brand_project = "Colonizer"
-    brand_short = "Colonizer"
-    # banner created with: figlet -f slant "Gluster Colonizer"
+    brand_project = "ONE"
+    brand_short = "ONE"
+    # banner created with: figlet -f slant "Gluster ONE"
     brand_banner = """
-   ________           __
-  / ____/ /_  _______/ /____  _____
- / / __/ / / / / ___/ __/ _ \/ ___/
-/ /_/ / / /_/ (__  ) /_/  __/ /
-\____/_/\__,_/____/\__/\___/_/
-
-   ______      __            _
-  / ____/___  / /___  ____  (_)___  ___  _____
- / /   / __ \/ / __ \/ __ \/ /_  / / _ \/ ___/
-/ /___/ /_/ / / /_/ / / / / / / /_/  __/ /
-\____/\____/_/\____/_/ /_/_/ /___/\___/_/"""
+   ________           __               ____  _   ________
+  / ____/ /_  _______/ /____  _____   / __ \/ | / / ____/
+ / / __/ / / / / ___/ __/ _ \/ ___/  / / / /  |/ / __/   
+/ /_/ / / /_/ (__  ) /_/  __/ /     / /_/ / /|  / /___   
+\____/_/\__,_/____/\__/\___/_/      \____/_/ |_/_____/"""
 
 # Configure random filename sampling
 rand_filename_sample = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -147,7 +141,7 @@ default_volname = oem_id['flavor']['volname']
 ad_netbios_name = ""
 ad_domain_name = ""
 consumed_ips = []
-readme_file = "/root/colonizer.README.txt"
+readme_file = "/root/gluster-one.README.txt"
 g1_inventory = ""
 playbook_path = g1_path + "ansible/"
 config_ad = ''
@@ -191,7 +185,7 @@ consoleHandler.setLevel(int(args.loglevel))
 consoleFormatter = logging.Formatter('%(message)s')
 consoleHandler.setFormatter(consoleFormatter)
 # Create log file formatter & handler for logs
-logfile = 'gluster-colonizer.log'
+logfile = 'gluster-one.log'
 logfileHandler = logging.FileHandler(logfile)
 logfileHandler.setLevel(logging.DEBUG)
 logfileFormatter = logging.Formatter(
@@ -1050,7 +1044,7 @@ try:
         print "\r\n"
 
         # Set this node up as the deployment master
-        print "The Gluster colonizer requires DHCP service on the management"
+        print "Gluster ONE requires DHCP service on the management"
         print "network. If the service is not already available on the"
         print "management network, we can start a temporary DHCP server on this"
         print "node now. This local DHCP service will only operate for the"

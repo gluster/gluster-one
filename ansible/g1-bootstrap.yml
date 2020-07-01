@@ -6,7 +6,7 @@
   tasks:
     - shell: /bin/bash -c 'echo "Installing package dependencies..." > {{ fifo }}'
 
-    - name: install gluster and colonizer dependencies
+    - name: install gluster and ONE dependencies
       yum: name={{ item }} state=present
       with_items:
         - "@RH-Gluster-Core"

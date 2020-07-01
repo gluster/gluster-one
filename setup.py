@@ -1,18 +1,18 @@
 from setuptools import setup
 
 
-name = 'gluster-colonizer'
+name = 'gluster-one'
 
 setup(
     name=name,
     version='1.0.4',
-    description='Gluster colonizer is node executor for quick deployments',
+    description='Gluster ONE is node executor for quick deployments',
     license='GPLv3',
     author='Dustin Black',
     author_email='dblack@redhat.com',
-    url='https://github.com/gluster/gluster-colonizer',
-    packages=['gluster-colonizer'],
-    package_dir={'gluster-colonizer':''},
+    url='https://github.com/gluster/gluster-one',
+    packages=['gluster-one'],
+    package_dir={'gluster-one':''},
     classifiers=[
         'Development Status :: 4 - Beta'
         'Environment :: Console'

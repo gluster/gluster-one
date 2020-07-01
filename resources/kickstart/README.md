@@ -1,1 +1,1 @@
-Example kickstart files to stand up nodes prepared for the Gluster Colonizer
+Example kickstart files to stand up nodes prepared for the Gluster ONE
